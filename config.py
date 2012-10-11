@@ -1,0 +1,4 @@
+
+DATABASE = "questionmonkey"
+DEBUG = True
+

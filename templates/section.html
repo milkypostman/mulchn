@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}index{% endblock %}
+{% block row %}
+<div class="span4 offset4 content">
+  <h1>{{ section }}</h1>
+  <ul class="questions slicklist">
+    {% for question in questions %}
+    <li class="question">
+      <div class="question-text">{{question.question}}</div>
+      <ul class="answers slicklist">
+        {% for answer in question.answers %}
+        <li class="answer">
+          {{ answer }} <i class="icon-ok pull-right"></i>
+        </li>
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock row %}
