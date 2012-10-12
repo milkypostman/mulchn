@@ -18,20 +18,32 @@ def after_request(exception):
     del g.db
 
 
-@app.route("/s/<section>/")
-def view_section(section):
-    questions = g.db["questions.{0}".format(section)].find()
+def categories():
+    return sorted(c['name'] for c in g.db.categories.find())
+
+
+def render(template, **kwargs):
+    kwargs['categories'] = categories()
+    return render_template(template, **kwargs)
+
+@app.route("/add/", {"POST", "GET"})
+def add():
+    return render("add.html")
+
+
+
+@app.route("/<category>/")
+def view_category(category):
+    questions = g.db["{0}".format(category)].find()
     questions = list(questions)
-    return render_template("section.html",
+    return render("category.html",
                            questions=questions,
-                           section=section)
+                           category=category)
 
 
 @app.route("/")
 def root():
-    sections = [c[10:] for c in g.db.collection_names()
-                if c.startswith("questions.")]
-    return render_template("index.html", sections=sections)
+    return render("index.html")
 
 if __name__ == '__main__':
     app.run()

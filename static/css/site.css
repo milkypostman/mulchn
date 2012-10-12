@@ -5,48 +5,41 @@ body {
 .questions {
 }
 
-.content {
-    padding: 60px 0px 0px 0px;
-    background: #fff;
+.container {
+    margin-top: 50px;
+    max-width: 600px;
 }
 
-
-/* .nav-list > li:first-child > a { */
-/*     border-top-left-radius: 6px; */
-/*     border-top-right-radius: 6px; */
-/*     padding: 10px; */
-/* } */
-
-/* .nav-list > li:last-child > a { */
-/*     border-bottom-left-radius: 6px; */
-/*     border-bottom-right-radius: 6px; */
-/*     border: none; */
-/* } */
-
-/* .nav-list > li > a { */
-/*     border-bottom: 1px solid #e3e3e3; */
-/* } */
-
-/* .answers.nav-list { */
-/*     margin: 5px 0; */
-/* } */
-
-/* .answers.nav-list > li > a { */
-/*     border-radius: 0; */
-/*     border: none; */
-/* } */
+.question-section {
+    /* max-width: 352px; */
+    /* margin: 0px auto; */
+}
 
 .answers {
     display: none;
 }
 
 .answer i {
-    display: none;
+    opacity: 0;
 }
+
+.answer:hover i {
+    opacity: .5;
+}
+
+.answer.vote i {
+    opacity: 1.0;
+}
+
+/* .answer:hover { */
+/*     display: inline; */
+/*     opacity: .5; */
+/* } */
 
 .question-text {
     font-size: 120%;
     font-weight: bold;
+    margin: 0 5px;
     /* margin: 3px; */
 }
 
@@ -58,8 +51,9 @@ body {
     
 .slicklist > li {
     border: 1px solid #e3e3e3;
-    padding: 15px;
+    padding: 15px 15px;
     background: #eee;
+    background: #fff;
 }
 
 
@@ -69,13 +63,20 @@ body {
 }
 
 .slicklist > li.active {
-    background: #e0e0e0;
+    /* padding-bottom: 0; */
+    /* background: #e0e0e0; */
+    /* color: white; */
+}
+
+.slicklist > li.active:hover {
+    background: #fff;
     /* color: white; */
 }
 
 .slicklist > li:first-child {
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
+    border-bottom: none;
 }
 
 .slicklist > li:last-child {
@@ -89,20 +90,25 @@ body {
     background: none;
     border: none;
     padding: 10px;
-    /* border-left: 1px solid #e3e3e3; */
-    /* border-right: 1px solid #e3e3e3; */
-    border-radius: 6px;
+    border-top: 1px solid #e3e3e3;
+    border-radius: 0;
 }
+
+/* .slicklist > li > .slicklist > li:first-child { */
+/*     border-bottom: 1px solid #e3e3e3; */
+/* } */
 
 
 
 .slicklist > li > .slicklist > li:first-child {
+    border-top: none;
     margin-top: 20px;
 }
 
 
 .slicklist > li > .slicklist > li:hover {
-    background: white;
+    color: red;
+    
 }
 /* .answers { */
 /*     /\* margin-top: 10px; *\/ */

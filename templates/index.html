@@ -1,12 +1,6 @@
 {% extends "base.html" %}
 {% block title %}index{% endblock %}
-{% block row %}
-<div class="span4 offset4 content">
-<h1>sections</h1>
-<ul>
-{% for section in sections %}
-<li><a class="section" href="/s/{{ section }}/">{{ section }}</a></li>
-{% endfor %}
-</ul>
-</div>
-{% endblock row %}
+{% block content %}
+<h1>Velcro</h1>
+<p>welcome to the site. click on a link on the side to select a category.</p>
+{% endblock %}

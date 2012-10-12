@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}add question{% endblock %}
+{% block subbrand %}{{category}}{% endblock %}
+{% block content %}
+<form action="/add/" method="POST">
+  <legend>Add Question</legend>
+  <input id="category" class="span12" type="text" placeholder="Category"
+         data-provide="typeahead"
+         data-source='["{{ categories|join("\", \"") }}"]'>
+  <input id="question" type="text" class="span12" placeholder="Question..." />
+  {% for i in range(6) %}
+  <input id="answer.{{i}}" type="text" class="span12" placeholder="Answer {{i}}" />
+  {% endfor %}
+  <button type="submit" class="btn">Submit</button>
+</form>
+{% endblock %}

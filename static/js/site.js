@@ -2,7 +2,7 @@ var selAnswer;
 
 
 $(window).load(function () {
-    // $(".answers").hide();
+    // $(".answers i").hide();
     // $(".answers").first().show();
     $(".question").click(function(obj) {
         var t = $(this);
@@ -30,8 +30,13 @@ $(window).load(function () {
         }
         return false;
     });
+    // $(".answer").hover(function (obj) {
+    //     $(this).children("i").fadeTo("fast", .5);
+    //     }, function (obj) {
+    //         $(this).children("i").fadeOut();
+    //     });
     $(".answer").click(function (obj) {
-        $(this).children("i").fadeIn();
+        $(this).addClass("vote");
         return false;
     })
 })
