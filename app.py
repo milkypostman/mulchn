@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
-from pymongo import Connection
 
 from flask import Flask
 from flask import g
 from flask import render_template
+from pymongo import Connection
+
+import os
+
+
 app = Flask(__name__)
 app.config.from_object('config')
 app.config.from_envvar('QQ_SETTINGS', silent=True)
@@ -26,7 +30,7 @@ def render(template, **kwargs):
     kwargs['categories'] = categories()
     return render_template(template, **kwargs)
 
-@app.route("/add/", {"POST", "GET"})
+@app.route("/add/")
 def add():
     return render("add.html")
 
@@ -46,4 +50,5 @@ def root():
     return render("index.html")
 
 if __name__ == '__main__':
-    app.run()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host="0.0.0.0", port=port)
