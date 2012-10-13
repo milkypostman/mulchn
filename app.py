@@ -4,13 +4,14 @@
 from flask import Flask
 from flask import g
 from flask import request
-from flask import abort
+from flask import abort, flash, redirect, url_for
 from flask import jsonify
 from flask import render_template
 from flask import Response
 from flask.ext.wtf import Form, TextField, Required, FieldList
 from wtforms.validators import StopValidation
 from pymongo import Connection
+from bson.objectid import ObjectId, InvalidId
 
 import os
 
@@ -65,19 +66,37 @@ def question(question=None):
     if request.method == "PUT":
         form = AddForm()
         if form.validate_on_submit():
-            g.db.questions.insert({field.name:field.data for field in form})
-            return Response()
+            resp = g.db.questions.insert({field.name:field.data for field in form
+                                   if field.type != "CSRFTokenField"})
+            return unicode(resp)
         else:
             d = errors_dict(form)
             resp = jsonify(d)
             resp.status_code = 404
             return resp
-    return "GET"
 
 
-@app.route("/add/")
+    try:
+        obj = g.db.questions.find_one({"_id":ObjectId(question)})
+    except InvalidId:
+        obj = None
+
+    if obj is None:
+        abort(404)
+
+
+    return str(obj)
+
+
+@app.route("/add/", methods=["POST", "GET"])
 def add():
     form = AddForm()
+    if request.method == "POST" and form.validate():
+        resp = g.db.questions.insert({field.name:field.data for field in form
+                               if field.type != "CSRFTokenField"})
+        flash("Question submitted.")
+        return redirect(url_for('category', category=form.category.data))
+
     return render("add.html", form=form)
 
 

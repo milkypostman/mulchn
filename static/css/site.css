@@ -51,6 +51,7 @@ body {
     
 .slicklist > li {
     border: 1px solid #ddd;
+    border-top: none;
     padding: 15px 15px;
     background: #eee;
     background: #fff;
@@ -73,17 +74,16 @@ body {
     /* color: white; */
 }
 
-.slicklist > li:first-child {
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    border-bottom: none;
-}
-
 .slicklist > li:last-child {
-    border: 1px solid #ddd;
     border-top: none;
     border-bottom-left-radius: 6px;
     border-bottom-right-radius: 6px;
+}
+
+.slicklist > li:first-child {
+    border-top: 1px solid #ddd;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
 }
 
 .slicklist > li > .slicklist > li {
