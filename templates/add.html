@@ -1,16 +1,32 @@
 {% extends "base.html" %}
 {% block title %}add question{% endblock %}
-{% block subbrand %}{{category}}{% endblock %}
 {% block content %}
-<form action="/add/" method="POST">
+<form id="qform" method="PUT">
   <legend>Add Question</legend>
-  <input id="category" class="span12" type="text" placeholder="Category"
+  {% for field in form  %}
+  {% if field.name == "category" %}
+  <div class="control-group">
+  <input id="{{field.name}}" name="{{field.name}}" class="span12" type="text" placeholder="{{field.label.text}}"
          data-provide="typeahead"
          data-source='["{{ categories|join("\", \"") }}"]'>
-  <input id="question" type="text" class="span12" placeholder="Question..." />
-  {% for i in range(6) %}
-  <input id="answer.{{i}}" type="text" class="span12" placeholder="Answer {{i}}" />
+  </div>
+  {% elif field.type == "FieldList" %}
+  {% for subfield in field  %}
+  <div class="control-group">
+  {{ subfield(placeholder="{0} {1}".format(subfield.label.text, loop.index), class_="span12") }}
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="control-group">
+  {{ field(placeholder=field.label.text, class_="span12") }}
+  </div>
+  {% endif %}
   {% endfor %}
   <button type="submit" class="btn">Submit</button>
 </form>
+{% endblock %}
+
+{% block js %}
+{{ super() }}
+<script src="/static/js/add.js"></script>
 {% endblock %}

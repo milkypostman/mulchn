@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{category}}{% endblock %}
+
 {% block content %}
 <ul class="questions slicklist">
   {% for question in questions %}
@@ -15,4 +16,9 @@
   </li>
   {% endfor %}
 </ul>
+{% endblock %}
+
+{% block js %}
+{{ super() }}
+<script src="/static/js/question.js"></script>
 {% endblock %}

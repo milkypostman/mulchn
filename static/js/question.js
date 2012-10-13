@@ -1,6 +1,5 @@
 var selAnswer;
 
-
 $(window).load(function () {
     // $(".answers i").hide();
     // $(".answers").first().show();
