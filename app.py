@@ -21,6 +21,9 @@ class AddForm(Form):
     question = TextField("Question", validators=[Required()])
     answers = FieldList(TextField("Answer", validators=[Required()]), min_entries=2, max_entries=5)
 
+    def validate_category(form, field):
+        if field.data not in categories():
+            raise StopValidation("Invalid category.")
 
 
 def categories():

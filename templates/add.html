@@ -5,7 +5,7 @@
   <legend>Add Question</legend>
   {% for field in form  %}
   {% if field.name == "category" %}
-  <div class="control-group{{ field.errors and " error"}}">
+  <div class="control-group{{ field.errors and " error" or ""}}">
     {% if field.errors %}
     <ul class="help-inline">{% for error in field.errors %}<li>{{ error|e }}</li>{% endfor %}</ul>
     {% endif %}    
@@ -16,7 +16,7 @@
   </div>
   {% elif field.type == "FieldList" %}
   {% for subfield in field  %}
-  <div class="control-group{{ field.errors and " error"}}">
+  <div class="control-group{{ field.errors and " error" or ""}}">
     {% if subfield.errors %}
     <ul class="help-inline">{% for error in subfield.errors %}<li>{{ error|e }}</li>{% endfor %}</ul>
     {% endif %}    
@@ -24,7 +24,7 @@
   </div>
   {% endfor %}
   {% else %}
-  <div class="control-group{{ field.errors and " error"}}">
+  <div class="control-group{{ field.errors and " error" or ""}}">
     {% if field.errors %}
     <ul class="help-inline">{% for error in field.errors %}<li>{{ error|e }}</li>{% endfor %}</ul>
     {% endif %}    
