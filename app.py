@@ -43,7 +43,8 @@ app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
 @app.before_request
 def before_request():
-    g.db = Connection()[app.config['DATABASE']]
+    mongo_url = os.environ.get('MONGOHQ_URL', 'localhost')
+    g.db = Connection(mongo_url)[app.config['DATABASE']]
 
 
 @app.teardown_request
