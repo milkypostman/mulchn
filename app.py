@@ -38,7 +38,7 @@ def render(template, **kwargs):
 
 app = Flask(__name__)
 app.config.from_object('config')
-app.config.from_envvar('QQ_SETTINGS', silent=True)
+app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
 
 @app.before_request
