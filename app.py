@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
 
+from bson.objectid import ObjectId, InvalidId
 from flask import Flask
-from flask import g
-from flask import request
+from flask import Response
 from flask import abort, flash, redirect, url_for
+from flask import g
 from flask import jsonify
 from flask import render_template
-from flask import Response
+from flask import request
 from flask.ext.wtf import Form, TextField, Required, FieldList
-from wtforms.validators import StopValidation
 from pymongo import Connection
-from bson.objectid import ObjectId, InvalidId
+from urlparse import urlsplit
+from wtforms.validators import StopValidation
 
 import os
 
@@ -43,8 +44,9 @@ app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
 @app.before_request
 def before_request():
-    mongo_url = os.environ.get('MONGOHQ_URL', 'localhost')
-    g.db = Connection(mongo_url)[app.config['DATABASE']]
+    mongo_url = os.environ.get('MONGOHQ_URL', app.config['MONGODB_URL'])
+    mongo_db = urlsplit(mongo_url).path[1:]
+    g.db = Connection(mongo_url)[mongo_db]
 
 
 @app.teardown_request
