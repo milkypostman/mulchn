@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-
 from bson.objectid import ObjectId, InvalidId
+from datetime import datetime
 from flask import Flask
 from flask import Response
 from flask import abort, flash, redirect, url_for
@@ -9,30 +9,42 @@ from flask import g
 from flask import jsonify
 from flask import render_template
 from flask import request
-from flask.ext.wtf import Form, TextField, Required, FieldList
+from flask.ext import wtf
+from itertools import izip_longest
 from pymongo import Connection
 from urlparse import urlsplit
 from wtforms.validators import StopValidation
 
 import os
 
+"""
+db.questions.remove({added : {$gt: ISODate("2012-10-15T20:18:20.138Z")}})
+"""
 
-class AddForm(Form):
-    category = TextField("Category", validators=[Required()])
-    question = TextField("Question", validators=[Required()])
-    answers = FieldList(TextField("Answer", validators=[Required()]), min_entries=2, max_entries=5)
+class TagListField(wtf.Field):
+    widget = wtf.TextInput()
 
-    def validate_category(form, field):
-        if field.data not in categories():
-            raise StopValidation("Invalid category.")
+    def _value(self):
+        return u', '.join(self.data) if self.data else ''
+
+    def process_formdata(self, valuelist):
+        if valuelist:
+            self.data = [x.strip() for x in valuelist[0].split(',')]
+        else:
+            self.data = []
+
+class AddForm(wtf.Form):
+    tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.Required()])
+    question = wtf.TextField("Question", validators=[wtf.Required()])
+    answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.Required()]), min_entries=2, max_entries=5)
 
 
-def categories():
-    return sorted(c['name'] for c in g.db.categories.find())
+def tags():
+    return sorted(c['name'] for c in g.db.tags.find())
 
 
 def render(template, **kwargs):
-    kwargs['categories'] = categories()
+    # kwargs['tags'] = tags()
     return render_template(template, **kwargs)
 
 
@@ -66,22 +78,46 @@ def errors_dict(fields):
 
     return errors
 
-@app.route("/question/", methods=['PUT'])
-@app.route("/question/<question>/", methods=['GET'])
-def question(question=None):
-    if request.method == "PUT":
-        form = AddForm()
+
+@app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
+def question_add():
+
+    if request.method in ["PUT", "POST"]:
+        formdata = request.form.copy()
+        formdata.update(request.files)
+
+        answer_fields = sorted(f for f in formdata.iteritems() if f[0].startswith("answers"))
+        answer_keys = [f[0] for f in answer_fields]
+        answer_vals = [f[1] for f in answer_fields if f[1] != ""]
+
+        answer_fields = izip_longest(answer_keys, answer_vals)
+
+        for key, val in answer_fields:
+            if val is not None:
+                formdata[key] = val
+            else:
+                del formdata[key]
+
+        form = AddForm(formdata)
+
         if form.validate_on_submit():
-            resp = g.db.questions.insert({field.name:field.data for field in form
-                                   if field.type != "CSRFTokenField"})
-            return unicode(resp)
-        else:
+            question = {field.name:field.data for field in form if field.type != "CSRFTokenField"}
+            question['added'] = datetime.now()
+            g.db.questions.insert(question)
+            flash("Added Question: {0}".format(question['question']))
+            return redirect(url_for('root'))
+        elif request.is_xhr:
             d = errors_dict(form)
             resp = jsonify(d)
             resp.status_code = 404
             return resp
+    else:
+        form = AddForm()
+    return render("add.html", form=form)
 
 
+@app.route("/question/<question>/", methods=['GET'])
+def question(question):
     try:
         obj = g.db.questions.find_one({"_id":ObjectId(question)})
     except InvalidId:
@@ -90,7 +126,6 @@ def question(question=None):
     if obj is None:
         abort(404)
 
-
     return str(obj)
 
 
@@ -98,26 +133,30 @@ def question(question=None):
 def add():
     form = AddForm()
     if request.method == "POST" and form.validate():
-        resp = g.db.questions.insert({field.name:field.data for field in form
-                               if field.type != "CSRFTokenField"})
+        question = {field.name:field.data for field in form
+                               if field.type != "CSRFTokenField"}
+        question['added'] = datetime.now()
+        resp = g.db.questions.insert(question)
         flash("Question submitted.")
-        return redirect(url_for('category', category=form.category.data))
-
-    return render("add.html", form=form)
+        return redirect(url_for('tag', tag=form.tag.data))
 
 
-@app.route("/<category>/")
-def category(category):
-    questions = g.db.questions.find({'category':category})
+
+@app.route("/<tag>/")
+def tag(tag):
+    questions = g.db.questions.find({'tags':tag})
     questions = list(questions)
-    return render("category.html",
+    return render("questions.html",
                            questions=questions,
-                           category=category)
+                           tag=tag)
 
 
 @app.route("/")
 def root():
-    return render("index.html")
+    questions = g.db.questions.find().sort('added', -1)
+    questions = list(questions)
+    return render("questions.html",
+                           questions=questions)
 
 
 

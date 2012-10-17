@@ -1,26 +1,16 @@
 {% extends "base.html" %}
 {% block title %}add question{% endblock %}
 {% block content %}
-<form id="qform" method="POST">
+<form id="question-form" method="POST">
   <legend>Add Question</legend>
   {% for field in form  %}
-  {% if field.name == "category" %}
-  <div class="control-group{{ field.errors and " error" or ""}}">
-    {% if field.errors %}
-    <ul class="help-inline">{% for error in field.errors %}<li>{{ error|e }}</li>{% endfor %}</ul>
-    {% endif %}    
-    <input id="{{field.name}}" name="{{field.name}}" class="span12" type="text" placeholder="{{field.label.text}}"
-           value="{{field.data or "" }}"
-           data-provide="typeahead"
-           data-source='["{{ categories|join("\", \"") }}"]'>
-  </div>
-  {% elif field.type == "FieldList" %}
+  {% if field.type == "FieldList" %}
   {% for subfield in field  %}
-  <div class="control-group{{ field.errors and " error" or ""}}">
+  <div class="control-group answers-input{{ field.errors and " error" or ""}}">
     {% if subfield.errors %}
     <ul class="help-inline">{% for error in subfield.errors %}<li>{{ error|e }}</li>{% endfor %}</ul>
     {% endif %}    
-    {{ subfield(placeholder="{0} {1}".format(subfield.label.text, loop.index), class_="span12") }}
+    {{ subfield(placeholder="{0} {1}".format(subfield.label.text, loop.index), class_="span12 answer") }}
   </div>
   {% endfor %}
   {% else %}
@@ -32,7 +22,8 @@
   </div>
   {% endif %}
   {% endfor %}
-  <button type="submit" class="btn">Submit</button>
+  <div class="control-group"><button type="submit" class="btn">Submit</button><span class="badge pull-right" id="add_answer">Add Answer</span></div>
+  
 </form>
 {% endblock %}
 
@@ -40,3 +31,4 @@
 {{ super() }}
 <script src="/static/js/add.js"></script>
 {% endblock %}
+

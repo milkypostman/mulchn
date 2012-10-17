@@ -1,36 +1,24 @@
-
-$(window).load(function () {
-    console.log("load function");
-    $('#qform').submit(function () {
-        $(".help-inline").remove();
-        $(".error").removeClass("error");
-
-        $.ajax({
-            url: "/question/",
-            data: $(this).serialize(),
-            type: "PUT",
-            success: function(data) {
-                console.log("/question/" + data + "/");
-                window.location.href = "/question/" + data + "/";
-            },
-            error: function(error) {
-                ejson = $.parseJSON(error.responseText);
-                $.each(ejson, function(id, errlist) {
-                    widget = $("#" + id);
-                    errorul = "<ul class='help-inline'>";
-                    for(var i=0; i < errlist.length; i++)
-                    {
-                        errorul += "<li>" + errlist[i] + "</li>";
-                    }
-                    errorul += "</ul>";
-                    widget.before(errorul);
-                    widget.parent().addClass("error");
-                    console.log(widget.parent("div"));
-
-                });
-            }
-        });
-
-        return false;
+$(document).ready(function () {
+    $('#add_answer').click(function () {
+        var num = clone_answer('.answers-input:last', 4);
+        if (num >= 4) {
+            $('#add_answer').fadeOut();
+        }
     });
-})
+});
+
+function clone_answer(selector, max_num) {
+    var elem = $(selector)
+
+    var new_input = elem.find(':input').clone(true);
+    var num = parseInt(new_input.attr('id').replace(/.*-(\d{1,4})/m, '$1'));
+    if (num >= max_num) { return; }
+    var id = new_input.attr('id').replace('-' + num, '-' + (num+1));
+    var placeholder = new_input.attr('placeholder').replace(num+1, num+2);
+    new_input.attr({'name': id, 'id': id, 'placeholder': placeholder}).val('');
+    var new_element = elem.clone(true);
+    new_element.html(new_input);
+    elem.after(new_element);
+    return num+1;
+}
+
