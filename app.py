@@ -33,10 +33,11 @@ class TagListField(wtf.Field):
         else:
             self.data = []
 
+
 class AddForm(wtf.Form):
-    tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.Required()])
-    question = wtf.TextField("Question", validators=[wtf.Required()])
-    answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.Required()]), min_entries=2, max_entries=5)
+    tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.InputRequired()])
+    question = wtf.StringField("Question", validators=[wtf.DataRequired()])
+    answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
 
 
 def tags():
