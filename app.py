@@ -172,7 +172,7 @@ def login_twitter():
                               app.config['TWITTER_CONSUMER_SECRET'])
     client = oauth.Client(consumer)
 
-    callback = '{0}{1}'.format(app.config['SITE_URL'], url_for('login_twitter_authenticated'))
+    callback = 'http://{0}{1}'.format(app.config['SERVER_NAME'], url_for('login_twitter_authenticated'))
     resp, content = client.request(app.config['TWITTER_REQUEST_TOKEN_URL'],
                                    "POST",
                                    body=urllib.urlencode({'oauth_callback':callback}))
