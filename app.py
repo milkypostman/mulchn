@@ -184,10 +184,7 @@ def login_twitter():
 
 
 
-    print redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHORIZE_URL"],
-                                        request_token['oauth_token']))
-
-    return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHORIZE_URL"],
+    return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHENTICATE_URL"],
                                         request_token['oauth_token']))
 
 @app.route("/login/twitter/authenticated/")
