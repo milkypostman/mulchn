@@ -30,9 +30,9 @@
 }
 
 .slicklist > li:last-child {
-    border-top: none;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
+    /* border-top: none; */
+    /* border-bottom-left-radius: 5px; */
+    /* border-bottom-right-radius: 5px; */
 }
 
 .slicklist > li:first-child {
@@ -45,13 +45,13 @@
     background: none;
     border: none;
     padding: 10px;
-    border-top: 1px solid #ddd;
-    border-radius: 0;
+    /* border-top: 1px solid #ddd; */
+    /* border-radius: 0; */
 }
 
 
 .slicklist > li > .slicklist > li:first-child {
-    border-top: none;
+    /* border-top: none; */
     margin-top: 20px;
 }
 

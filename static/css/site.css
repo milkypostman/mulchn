@@ -1,8 +1,25 @@
 body {
     background: #fff;
-    padding: 40px;
+    padding-top: 60px;
 }
 
+@media (max-width: 979px) {
+    body {
+        padding-top: 20px;
+    }
+    .navbar-fixed-top .navbar-inner {
+        /* padding: 0px; */
+    }
+
+    .navbar-fixed-top {
+        margin-left: 0px;
+        margin-right: 0px;
+    }
+}
+
+@media (max-width: 767px)
+bootstrap-responsive.min.css:9
+.navbar-fixed-top, .navbar-fixed-bottom, .navbar-static-top
 #add_answer {
     cursor: pointer;
 }
