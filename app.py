@@ -4,18 +4,28 @@ from bson.objectid import ObjectId, InvalidId
 from datetime import datetime
 from flask import Flask
 from flask import Response
-from flask import abort, flash, redirect, url_for
+from flask import abort
+from flask import flash
 from flask import g
 from flask import jsonify
+from flask import redirect
 from flask import render_template
 from flask import request
+from flask import session
+from flask import url_for
 from flask.ext import wtf
 from itertools import izip_longest
 from pymongo import Connection
 from urlparse import urlsplit
 from wtforms.validators import StopValidation
 
+import oauth2 as oauth
 import os
+import time
+import urllib
+import urlparse
+import twitter
+
 
 """
 db.questions.remove({added : {$gt: ISODate("2012-10-15T20:18:20.138Z")}})
@@ -150,6 +160,75 @@ def tag(tag):
     return render("questions.html",
                            questions=questions,
                            tag=tag)
+
+
+
+@app.route("/login/twitter/")
+def login_twitter():
+    # if 'twitter_access_token' in session:
+    #     return redirect(url_for("register_twitter"))
+
+    consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
+                              app.config['TWITTER_CONSUMER_SECRET'])
+    client = oauth.Client(consumer)
+
+    resp, content = client.request(app.config['TWITTER_REQUEST_TOKEN_URL'],
+                                   "POST",
+                                   body=urllib.urlencode(
+                                       {'oauth_callback':'http://localhost:5000/login/twitter/authenticated/'}))
+    if resp['status'] != '200':
+        abort(404)
+
+    request_token = dict(urlparse.parse_qsl(content))
+    session['twitter_request_token_secret'] = request_token['oauth_token_secret']
+
+
+
+    print redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHORIZE_URL"],
+                                        request_token['oauth_token']))
+
+    return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHORIZE_URL"],
+                                        request_token['oauth_token']))
+
+@app.route("/login/twitter/authenticated/")
+def login_twitter_authenticated():
+    token = oauth.Token(request.args['oauth_token'],
+                        session['twitter_request_token_secret'])
+
+    token.set_verifier(request.args['oauth_verifier'])
+
+
+    consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
+                              app.config['TWITTER_CONSUMER_SECRET'])
+    client = oauth.Client(consumer, token)
+
+    resp, content = client.request(app.config['TWITTER_ACCESS_TOKEN_URL'],
+                                   "POST")
+    access_token = dict(urlparse.parse_qsl(content))
+    session['twitter_access_token'] = access_token
+
+    if resp['status'] != '200':
+        return redirect(url_for("login_twitter"))
+
+
+    return redirect(url_for("register_twitter"))
+
+
+
+@app.route("/register/twitter/")
+def register_twitter():
+    print session
+    if not 'twitter_access_token' in session:
+        return redirect(url_for("login_twitter"))
+
+    access_token = session['twitter_access_token']
+
+    api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
+                      consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
+                      access_token_key = access_token['oauth_token'],
+                      access_token_secret = access_token['oauth_token_secret'])
+    return str(api.VerifyCredentials())
+
 
 
 @app.route("/")
