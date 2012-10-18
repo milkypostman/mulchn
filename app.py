@@ -214,7 +214,6 @@ def login_twitter_authenticated():
 
 @app.route("/register/twitter/")
 def register_twitter():
-    print session
     if not 'twitter_access_token' in session:
         return redirect(url_for("login_twitter"))
 
