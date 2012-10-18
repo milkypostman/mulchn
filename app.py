@@ -221,7 +221,11 @@ def register_twitter():
                       consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
                       access_token_key = access_token['oauth_token'],
                       access_token_secret = access_token['oauth_token_secret'])
-    return str(api.VerifyCredentials())
+    try:
+        return str(api.VerifyCredentials())
+    except twitter.TwitterError:
+        session.pop('twitter_access_token')
+        return redirect(url_for("login_twitter"))
 
 
 
