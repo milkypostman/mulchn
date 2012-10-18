@@ -165,8 +165,8 @@ def tag(tag):
 
 @app.route("/login/twitter/")
 def login_twitter():
-    # if 'twitter_access_token' in session:
-    #     return redirect(url_for("register_twitter"))
+    if 'twitter_access_token' in session:
+        return redirect(url_for("register_twitter"))
 
     consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
                               app.config['TWITTER_CONSUMER_SECRET'])
