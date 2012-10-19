@@ -116,12 +116,7 @@ def question_add():
             question['added'] = datetime.now()
             g.db.questions.insert(question)
             flash("Added Question: {0}".format(question['question']))
-            return redirect(url_for('root'))
-        elif request.is_xhr:
-            d = errors_dict(form)
-            resp = jsonify(d)
-            resp.status_code = 404
-            return resp
+            return redirect(url_for('questions'))
     else:
         form = AddForm()
     return render("add.html", form=form)
