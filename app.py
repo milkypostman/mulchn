@@ -77,7 +77,7 @@ def close_mongodb(exception):
     del g.db
 
 @app.before_request
-def add_user():
+def find_user():
     if 'user_id' in session and not 'user' in session:
         user =  g.db.users.find_one({'_id':session['user_id']})
         if user is None:
@@ -85,6 +85,13 @@ def add_user():
         else:
             g.user = user
 
+
+@app.context_processor
+def inject_user():
+    try:
+        return dict(user = g.user)
+    except AttributeError:
+        return dict()
 
 
 def errors_dict(fields):
@@ -107,12 +114,14 @@ def question_add():
         formdata = request.form.copy()
         formdata.update(request.files)
 
+        # cleanup answer fields if people were sloppy
+        # FIXME: will not work with double digits
         answer_fields = sorted(f for f in formdata.iteritems() if f[0].startswith("answers"))
         answer_keys = [f[0] for f in answer_fields]
         answer_vals = [f[1] for f in answer_fields if f[1] != ""]
-
         answer_fields = izip_longest(answer_keys, answer_vals)
 
+        # relabel answers
         for key, val in answer_fields:
             if val is not None:
                 formdata[key] = val
@@ -208,16 +217,22 @@ def login_twitter_authenticated():
     data = dict(urlparse.parse_qsl(content))
 
     try:
-        session['user_id'] = g.db.users.find_one({'twitter.user_id': data['user_id']})['_id']
+        user = g.db.users.find_one({'twitter.user_id': data['user_id']})
+        session['user_id'] = user["_id"]
     except TypeError:
-        session['user_id'] = g.db.users.insert({'username': data['screen_name'],
-                                                'twitter': data})
+        user = {'username': data['screen_name'], 'twitter': data}
+        session['user_id'] = g.db.users.insert(user)
 
 
+    flash("Logged in as {0}.".format(user['username']))
     return redirect(url_for("questions"))
 
 
-
+@app.route("/logout/")
+def logout():
+    if session.pop('user_id', None) is not None and hasattr(g, 'user'):
+        flash("{0} has been logged out.".format(g.user['username']))
+    return redirect(url_for("questions"))
 
 @app.route("/register/twitter/")
 def register_twitter():

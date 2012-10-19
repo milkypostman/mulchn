@@ -24,7 +24,12 @@
               <li><a class="" href="{{ url_for('question_add') }}">+</a></li>
             </ul>
             <ul class="nav pull-right">
-              <li><a class="" href="{{ url_for('login_twitter') }}">login</a></li>
+            {% if user %}
+            <li><a href="">{{ user['username'] }}</a></li>
+            <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
+            {% else %}
+            <li><a class="" href="{{ url_for('login_twitter') }}">login</a></li>
+            {% endif %}
             </ul>
           </div>
         </div>
