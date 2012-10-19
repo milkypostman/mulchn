@@ -66,14 +66,14 @@ app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
 
 @app.before_request
-def before_request():
+def init_mongodb():
     mongo_url = os.environ.get('MONGOHQ_URL', app.config['MONGODB_URL'])
     mongo_db = urlsplit(mongo_url).path[1:]
     g.db = Connection(mongo_url)[mongo_db]
 
 
 @app.teardown_request
-def after_request(exception):
+def close_mongodb(exception):
     del g.db
 
 
@@ -225,7 +225,7 @@ def register_twitter():
 
 
 @app.route("/")
-def root():
+def questions():
     questions = g.db.questions.find().sort('added', -1)
     questions = list(questions)
     return render("questions.html",
