@@ -76,6 +76,16 @@ def init_mongodb():
 def close_mongodb(exception):
     del g.db
 
+@app.before_request
+def add_user():
+    if 'user_id' in session and not 'user' in session:
+        user =  g.db.users.find_one({'_id':session['user_id']})
+        if user is None:
+            session.pop('user_id')
+        else:
+            g.user = user
+
+
 
 def errors_dict(fields):
     errors = {}
@@ -158,9 +168,6 @@ def tag(tag):
 
 @app.route("/login/twitter/")
 def login_twitter():
-    if 'twitter_access_token' in session:
-        return redirect(url_for("register_twitter"))
-
     consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
                               app.config['TWITTER_CONSUMER_SECRET'])
     client = oauth.Client(consumer)
@@ -194,14 +201,21 @@ def login_twitter_authenticated():
 
     resp, content = client.request(app.config['TWITTER_ACCESS_TOKEN_URL'],
                                    "POST")
-    access_token = dict(urlparse.parse_qsl(content))
-    session['twitter_access_token'] = access_token
 
     if resp['status'] != '200':
         return redirect(url_for("login_twitter"))
 
+    data = dict(urlparse.parse_qsl(content))
 
-    return redirect(url_for("register_twitter"))
+    try:
+        session['user_id'] = g.db.users.find_one({'twitter.user_id': data['user_id']})['_id']
+    except TypeError:
+        session['user_id'] = g.db.users.insert({'username': data['screen_name'],
+                                                'twitter': data})
+
+
+    return redirect(url_for("questions"))
+
 
 
 
