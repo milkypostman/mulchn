@@ -238,11 +238,12 @@ def user_answer(answers):
 
 @app.route("/v1/questions/")
 def v1_questions():
-    questions = list(g.db.questions.find().sort('added', -1))
 
     votes = {}
     if hasattr(g, 'user'):
         votes = user_answers()
+
+    questions = list(g.db.questions.find().sort('added', -1))
 
     return jsonify({'questions':questions, 'votes':votes})
 
