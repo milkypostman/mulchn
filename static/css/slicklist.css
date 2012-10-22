@@ -5,60 +5,34 @@
 }
     
 .slicklist > li {
-    border: 1px solid #ddd;
-    border-top: none;
     padding: 15px 15px;
-    background: #eee;
-    background: #fff;
 }
 
 
 .slicklist > li:hover {
-    background: #e0e0e0;
-    cursor: pointer;
 }
 
 .slicklist > li.active {
     /* padding-bottom: 0; */
-    /* background: #e0e0e0; */
-    /* color: white; */
 }
 
 .slicklist > li.active:hover {
-    background: #fff;
-    /* color: white; */
 }
 
-.slicklist > li:last-child {
-    /* border-top: none; */
-    /* border-bottom-left-radius: 5px; */
-    /* border-bottom-right-radius: 5px; */
-}
 
-.slicklist > li:first-child {
-    border-top: 1px solid #ddd;
-    /* border-top-left-radius: 5px; */
-    /* border-top-right-radius: 5px; */
-}
 
 .slicklist > li > .slicklist > li {
-    background: none;
     border: none;
     padding: 10px;
-    /* border-top: 1px solid #ddd; */
-    /* border-radius: 0; */
 }
 
 
 .slicklist > li > .slicklist > li:first-child {
-    /* border-top: none; */
     margin-top: 20px;
 }
 
 
 .slicklist > li > .slicklist > li:hover {
-    color: red;
-    
 }
 
 

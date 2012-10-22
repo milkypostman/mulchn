@@ -1,24 +1,8 @@
 {% extends "base.html" %}
 {% block title %}feed{% endblock %}
 
-{% block content %}
-<ul class="questions slicklist">
-  {% for question in questions %}
-  <li class="question">
-    <div class="question-text">{{question.question}}</div>
-    <ul class="answers slicklist">
-      {% for answer in question.answers %}
-      <li class="answer">
-        <i class="icon-ok"></i> {{ answer }}
-      </li>
-      {% endfor %}
-    </ul>
-  </li>
-  {% endfor %}
-</ul>
-{% endblock %}
-
 {% block js %}
 {{ super() }}
 <script src="/static/js/question.js"></script>
+<script src="/static/js/questions.js"></script>
 {% endblock %}

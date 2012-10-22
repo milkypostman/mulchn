@@ -7,13 +7,14 @@ from flask import Response
 from flask import abort
 from flask import flash
 from flask import g
-from flask import jsonify
+from flask import json
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
 from flask.ext import wtf
+from flaskext.coffee import coffee
 from itertools import izip_longest
 from pymongo import Connection
 from urlparse import urlsplit
@@ -50,6 +51,21 @@ class AddForm(wtf.Form):
     answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
 
 
+def json_handler(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, ObjectId):
+        return unicode(obj)
+    raise TypeError, \
+        'Object of type {0} with value {0} is not JSON serializable'.format(
+            type(obj), repr(objc))
+
+def jsonify(*args, **kwargs):
+    return app.response_class(json.dumps(dict(*args, **kwargs),
+                                         default=json_handler,
+                                         indent=None if request.is_xhr else 2),
+                              mimetype="application/json")
+
 def tags():
     return sorted(c['name'] for c in g.db.tags.find())
 
@@ -64,12 +80,13 @@ app = Flask(__name__)
 app.config.from_object('config')
 app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
+coffee(app)
 
 @app.before_request
 def init_mongodb():
     mongo_url = os.environ.get('MONGOHQ_URL', app.config['MONGODB_URL'])
     mongo_db = urlsplit(mongo_url).path[1:]
-    g.db = Connection(mongo_url)[mongo_db]
+    g.db = Connection(mongo_url, tz_aware=True)[mongo_db]
 
 
 @app.teardown_request
@@ -107,6 +124,24 @@ def errors_dict(fields):
     return errors
 
 
+@app.errorhandler(401)
+def invalid_login():
+    return jsonify({'errors': [{'message':"Access denied."}]}), 401
+
+@app.route("/question/<question>/", methods=['GET'])
+def question(question):
+    try:
+        obj = g.db.questions.find_one({"_id":ObjectId(question)})
+    except InvalidId:
+        obj = None
+
+    if obj is None:
+        abort(404)
+
+    return str(obj)
+
+
+
 @app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
 def question_add():
 
@@ -131,8 +166,10 @@ def question_add():
         form = AddForm(formdata)
 
         if form.validate_on_submit():
-            question = {field.name:field.data for field in form if field.type != "CSRFTokenField"}
-            question['added'] = datetime.now()
+            question = dict(question=form['question'].data, author=g.user['_id'])
+            question['answers'] = [{'_id': ObjectId(), 'answer':ans} for ans in form['answers'].data]
+            # question = {field.name:field.data for field in form if field.type != "CSRFTokenField"}
+            question['added'] = datetime.utcnow()
             g.db.questions.insert(question)
             flash("Added Question: {0}".format(question['question']))
             return redirect(url_for('questions'))
@@ -141,30 +178,68 @@ def question_add():
     return render("add.html", form=form)
 
 
-@app.route("/question/<question>/", methods=['GET'])
-def question(question):
-    try:
-        obj = g.db.questions.find_one({"_id":ObjectId(question)})
-    except InvalidId:
-        obj = None
-
-    if obj is None:
+def clean_old_votes(question):
+    qid = ObjectId(question)
+    uid = ObjectId(g.user['_id'])
+    q = g.db.questions.find_one({'_id':qid}, {'answers':1})
+    if q is None:
         abort(404)
+    for ans in q['answers']:
+        g.db.questions.update({'_id':qid, 'answers._id':ans['_id']},
+                              {"$pull" : {"answers.$.votes": {"user":uid}}})
 
-    return str(obj)
+@app.route("/v1/question/vote/", methods=['GET', 'POST','PUT'])
+def v1_vote():
+    if not hasattr(g, 'user'):
+        return invalid_login()
+
+    data = request.form
+    votedata = {'user': g.user['_id']}
+    votedata.update({key:data[key] for key in
+                     ['latitude',
+                      'longitude',
+                      'accuracy',
+                      'speed',
+                      'geotimestamp',
+                  ] if key in data})
 
 
-@app.route("/add/", methods=["POST", "GET"])
-def add():
-    form = AddForm()
-    if request.method == "POST" and form.validate():
-        question = {field.name:field.data for field in form
-                               if field.type != "CSRFTokenField"}
-        question['added'] = datetime.now()
-        resp = g.db.questions.insert(question)
-        flash("Question submitted.")
-        return redirect(url_for('tag', tag=form.tag.data))
 
+    clean_old_votes(data['question'])
+    qid = ObjectId(data['question'])
+    ret = g.db.questions.update({'_id':qid, 'answers._id':ObjectId(data['answer'])},
+                          {'$addToSet': {'answers.$.votes': votedata}})
+
+    ret = g.db.questions.find_one({"_id": qid})
+    uid = g.user['_id']
+    user_answers = g.db.questions.find_one({"answers.votes.user": uid},
+                                           {"answers.$._id": 1})["answers"]
+
+    ret['user_answer_id'] = user_answer_id(user_answers)
+
+    return jsonify(ret)
+
+
+def user_answer_id(user_answers):
+    ## if clean_old_votes is working this should never happen
+    if len(user_answers) > 1:
+        app.logger.error("Question {0} has multiple votes for {1}!".format(qid, uid))
+
+    return user_answers[0]['_id']
+
+
+@app.route("/v1/questions/")
+def v1_questions():
+    questions = g.db.questions.find().sort('added', -1)
+    answer_ids = {}
+    if hasattr(g, 'user'):
+        answer_ids = {q['_id']:user_answer_id(q['answers']) for q in
+                        g.db.questions.find({"answers.votes.user": g.user['_id']},
+                                            {"answers.$._id": 1})}
+    questions = [dict(q, user_answer_id=answer_ids[q['_id']]) if q['_id'] in answer_ids else q
+                 for q in questions]
+
+    return jsonify({'questions':questions})
 
 
 @app.route("/<tag>/")
@@ -174,6 +249,10 @@ def tag(tag):
     return render("questions.html",
                            questions=questions,
                            tag=tag)
+
+@app.route("/login/")
+def login():
+    return redirect(url_for('login_twitter'))
 
 @app.route("/login/twitter/")
 def login_twitter():
@@ -228,11 +307,14 @@ def login_twitter_authenticated():
     return redirect(url_for("questions"))
 
 
+
 @app.route("/logout/")
 def logout():
     if session.pop('user_id', None) is not None and hasattr(g, 'user'):
         flash("{0} has been logged out.".format(g.user['username']))
     return redirect(url_for("questions"))
+
+
 
 @app.route("/register/twitter/")
 def register_twitter():
@@ -253,12 +335,10 @@ def register_twitter():
 
 
 
+
 @app.route("/")
 def questions():
-    questions = g.db.questions.find().sort('added', -1)
-    questions = list(questions)
-    return render("questions.html",
-                           questions=questions)
+    return render("questions.html")
 
 
 

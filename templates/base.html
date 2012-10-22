@@ -47,8 +47,10 @@
       {% endwith %}
       <div class="row-fluid">
         <div class="span12">
+          <div id="content">
           {% block content %}
           {% endblock %}
+          </div>
         </div>
       </div>
       {% endblock container %}
@@ -56,6 +58,7 @@
     {% block js %}
     <script src="/static/js/jquery-1.8.2.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/underscore-min.js"></script>
     <script src="/static/js/main.js"></script>
     {% endblock js %}
   </body>
