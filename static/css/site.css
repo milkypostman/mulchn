@@ -73,9 +73,44 @@ body {
     font-weight: bold;
 }
 
-.vote-count {
+.vote-count-prefix {
+    display: none;
+}
+
+.voted .vote-count-prefix {
+    display: block;
+}
+
+.vote-info {
+    bottom: 0;
+    font-size: 80%;
+    color: silver;
+}
+
+.voted .vote-info {
+    display: none;
+}
+
+.vote-count, .vote-count-prefix {
     margin-left: 5px;
 }
+
+.question .vote-count-prefix {
+    color: silver;
+}
+
+.question .vote-count, .question.active .vote-count-prefix {
+    color: gray;
+}
+
+.question.active .vote-count {
+    color: black;
+}
+
+.question.active .answer .vote-count-prefix {
+    color: silver;
+}
+
 
 @media (max-width: 980px) {
     .navbar-fixed-top .navbar-inner {

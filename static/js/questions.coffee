@@ -1,20 +1,3 @@
-# {% block content %}
-# <ul class="questions slicklist">
-#   {% for question in questions %}
-#   <li class="question" id="{{ question._id }}">
-#     <div class="question-text">{{ question.question }}</div>
-#     <ul class="answers slicklist">
-#       {% for answer in question.answers %}
-#       <li class="answer" id="{{ answer._id }}">
-#         <i class="icon-ok"></i> {{ answer.answer }}
-#       </li>
-#       {% endfor %}
-#     </ul>
-#   </li>
-#   {% endfor %}
-# </ul>
-# {% endblock %}
-
 _.templateSettings = {
   interpolate: /\{\{(.+?)\}\}/g,
   evaluate: /\{\%(.+?)\%\}/g,
@@ -27,7 +10,12 @@ answerVotes = (answer) ->
 
 questionTmpl = _.template('
 <li class="question" id="{{ question._id }}">
-  <div class="question-text">{{ question.question }}  <div class="vote-count pull-right"></div>
+  <div class="question-header">
+    <span class="question-text">{{ question.question }}</span>
+      <div class="vote-info pull-right">no choice selected</div>
+      <div class="vote-count pull-right"></div>
+      <div class="vote-count-prefix pull-right">results:</div>
+  </div>
 </div>
   <ul class="answers slicklist">
     {{ answers }}
@@ -39,6 +27,7 @@ answerTmpl = _.template('
 <li class="answer" id="{{ answer._id }}">
   <i class="icon-ok"></i> {{ answer.answer }}
   <div class="vote-count pull-right"></div>
+  <div class="vote-count-prefix pull-right">.</div>
   <div class="vote-percent pull-right"></div>
 </li>')
 
@@ -111,13 +100,14 @@ updateQuestion = (question, vote) ->
 
     for ans in question.answers
       av = answerVotes(ans)
-      $("##{ans._id} .vote-percent").html("#{Math.round(av / totalVotes * 100)}% :")
+      $("##{ans._id} .vote-percent").html("#{Math.round(av / totalVotes * 100)}%")
       $("##{ans._id} .vote-count").html("#{av}")
 
-    $("##{question._id} .vote-count").first().html("votes #{totalVotes}")
+    $("##{question._id} .vote-count").first().html("#{totalVotes}")
     $("##{question._id} .answer").removeClass("vote")
     $("##{question._id} .answer").removeClass("working")
-    $("##{vote}.answer").addClass("vote")
+    $("##{question._id}").addClass("voted")
+    $("##{vote}").addClass("vote")
   
 
 selQuestion = undefined
