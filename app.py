@@ -145,6 +145,9 @@ def question(question):
 
 @app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
 def question_add():
+    if not hasattr(g, 'user'):
+        session['after_login'] = 'question_add'
+        return redirect(url_for('login_twitter'))
 
     if request.method in ["PUT", "POST"]:
         formdata = request.form.copy()
@@ -305,6 +308,10 @@ def login_twitter_authenticated():
 
 
     flash("Logged in as {0}.".format(user['username']))
+
+    if 'after_login' in session:
+        return redirect(url_for(session.pop('after_login')))
+
     return redirect(url_for("questions"))
 
 
