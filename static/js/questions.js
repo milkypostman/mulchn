@@ -180,7 +180,7 @@
         return $('.answer').click(vote);
       },
       error: function() {
-        return alert("ERROR");
+        return $('#questions').html("<p>An error has occurred.</p>");
       }
     });
     $('#content').append(loginDialog);

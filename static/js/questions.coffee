@@ -152,7 +152,8 @@ $(window).load ->
       $('.question').click(toggleQuestion)
       $('.answer').click(vote)
     error: ->
-      alert("ERROR")
+      $('#questions').html("<p>An error has occurred.</p>")
+      
     })
 
   $('#content').append(loginDialog)
