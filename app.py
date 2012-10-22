@@ -172,9 +172,10 @@ def question_add():
         if form.validate_on_submit():
             question = dict(question=form['question'].data, author=g.user['_id'])
             question['answers'] = [{'_id': ObjectId(), 'answer':ans} for ans in form['answers'].data]
-            # question = {field.name:field.data for field in form if field.type != "CSRFTokenField"}
             question['added'] = datetime.utcnow()
+
             g.db.questions.insert(question)
+
             flash("Added Question: {0}".format(question['question']))
             return redirect(url_for('questions'))
     else:
