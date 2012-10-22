@@ -21,6 +21,8 @@ _.templateSettings = {
 }
                 
         
+answerVotes = (answer) ->
+  if answer.votes then answer.votes.length else 0
 
 
 questionTmpl = _.template('
@@ -32,25 +34,17 @@ questionTmpl = _.template('
 </li>')
 
 answerTmpl = _.template('
-<li class="answer {{ extra_class }}" id="{{ answer._id }}">
+<li class="answer" id="{{ answer._id }}">
   <i class="icon-ok"></i> {{ answer.answer }}
-  {{ percent }}
+  <div class="vote-percent pull-right"></div>
 </li>')
 
-percentTmpl = _.template('
-<div class="vote-percent pull-right">{{ percent }}</div>')
 
 questionHtml = (question) ->
-  if question.user_answer_id
-    totalVotes = _.reduce(question.answers
-      (tot, ans) -> tot + ans.votes.length
-      0)
   questionTmpl({
     question:question,
     answers:(answerTmpl({
       answer:ans
-      percent: if question.user_answer_id then percentTmpl({ percent: ans.votes.length / totalVotes * 100 }) else ""
-      extra_class: if question.user_answer_id == ans._id then "vote" else ""
       }) for ans in question.answers).join ''
   })
 
@@ -96,6 +90,7 @@ vote = (evt) ->
     dataType: 'json'
     context: question
     success: (data) ->
+      console.log(new Date(data.added))
       updateQuestion(data)
     error: (error) ->
       data = $.parseJSON(error.responseText)
@@ -109,10 +104,11 @@ vote = (evt) ->
 updateQuestion = (data) ->
   if data.user_answer_id
     totalVotes = _.reduce(data.answers
-      (tot, ans) -> tot + ans.votes.length
+      (t, a) -> t + answerVotes(a)
       0)
 
-    ($("##{a._id} .vote-percent").html(a.votes.length / totalVotes * 100) for a in data.answers)
+
+    ($("##{a._id} .vote-percent").html(answerVotes(a) / totalVotes * 100) for a in data.answers)
     $("##{data._id} .answer").removeClass("vote")
     $("##{data._id} .answer").removeClass("working")
     $("##{data.user_answer_id}").addClass("vote")
@@ -129,8 +125,9 @@ toggleQuestion = (evt) ->
     selQuestion = undefined;
   else 
     if selQuestion
-      selQuestion.children(".answers").slideUp()
-      selQuestion.removeClass("active")
+      jselQuestion = $(selQuestion)
+      jselQuestion.children(".answers").slideUp()
+      jselQuestion.removeClass("active")
     jtarget.children(".answers").slideDown()
     jtarget.addClass("active")
     selQuestion = target
@@ -147,6 +144,7 @@ $(window).load ->
     url: '/v1/questions/',
     success: (data) ->
       $('#questions').html(questionsHtml(data.questions))
+      (updateQuestion(q) for q in data.questions)
       $('.question').click(toggleQuestion)
       $('.answer').click(vote)
     error: ->
