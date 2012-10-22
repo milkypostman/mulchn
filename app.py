@@ -80,7 +80,8 @@ app = Flask(__name__)
 app.config.from_object('config')
 app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
-coffee(app)
+if app.debug:
+    coffee(app)
 
 @app.before_request
 def init_mongodb():
