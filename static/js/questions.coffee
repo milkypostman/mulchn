@@ -34,6 +34,7 @@ questionTmpl = _.template('
 </li>')
 
 answerTmpl = _.template('
+
 <li class="answer" id="{{ answer._id }}">
   <i class="icon-ok"></i> {{ answer.answer }}
   <div class="vote-percent pull-right"></div>
@@ -90,8 +91,7 @@ vote = (evt) ->
     dataType: 'json'
     context: question
     success: (data) ->
-      console.log(new Date(data.added))
-      updateQuestion(data)
+      updateQuestion(data.question, data.vote)
     error: (error) ->
       data = $.parseJSON(error.responseText)
       if error.status == 401
@@ -101,17 +101,16 @@ vote = (evt) ->
     
   return false
 
-updateQuestion = (data) ->
-  if data.user_answer_id
-    totalVotes = _.reduce(data.answers
+updateQuestion = (question, vote) ->
+  if vote
+    totalVotes = _.reduce(question.answers
       (t, a) -> t + answerVotes(a)
       0)
 
-
-    ($("##{a._id} .vote-percent").html(answerVotes(a) / totalVotes * 100) for a in data.answers)
-    $("##{data._id} .answer").removeClass("vote")
-    $("##{data._id} .answer").removeClass("working")
-    $("##{data.user_answer_id}").addClass("vote")
+    ($("##{a._id} .vote-percent").html(answerVotes(a) / totalVotes * 100) for a in question.answers)
+    $("##{question._id} .answer").removeClass("vote")
+    $("##{question._id} .answer").removeClass("working")
+    $("##{vote}.answer").addClass("vote")
   
 
 selQuestion = undefined
@@ -133,18 +132,23 @@ toggleQuestion = (evt) ->
     selQuestion = target
   return false
 
-questions = '
+questionsUl = '
   <ul id="questions" class="questions slicklist">
   </ul>'
 
+questions = []
+votes = {}
+
 $(window).load ->
-  $('#content').append(questions)
+  $('#content').append(questionsUl)
   
   $.ajax({
     url: '/v1/questions/',
     success: (data) ->
-      $('#questions').html(questionsHtml(data.questions))
-      (updateQuestion(q) for q in data.questions)
+      questions = data.questions
+      votes = data.votes
+      $('#questions').html(questionsHtml(questions))
+      (updateQuestion(q, votes[q._id]) for q in questions)
       $('.question').click(toggleQuestion)
       $('.answer').click(vote)
     error: ->

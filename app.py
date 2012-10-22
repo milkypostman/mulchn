@@ -211,39 +211,39 @@ def v1_vote():
 
     clean_old_votes(data['question'])
     qid = ObjectId(data['question'])
-    ret = g.db.questions.update({'_id':qid, 'answers._id':ObjectId(data['answer'])},
+    g.db.questions.update({'_id':qid, 'answers._id':ObjectId(data['answer'])},
                           {'$addToSet': {'answers.$.votes': votedata}})
 
-    ret = g.db.questions.find_one({"_id": qid})
-    uid = g.user['_id']
-    user_answers = g.db.questions.find_one({"answers.votes.user": uid},
-                                           {"answers.$._id": 1})["answers"]
-
-    ret['user_answer_id'] = user_answer_id(user_answers)
+    question = g.db.questions.find_one({"_id": qid})
+    ret = {}
+    ret['question'] = question
+    ret['vote'] = data['answer']
 
     return jsonify(ret)
 
 
-def user_answer_id(user_answers):
-    ## if clean_old_votes is working this should never happen
-    if len(user_answers) > 1:
-        app.logger.error("Question {0} has multiple votes for {1}!".format(qid, uid))
+def user_answers():
+    return {unicode(q['_id']):user_answer(q['answers']) for q in
+            g.db.questions.find({"answers.votes.user": g.user['_id']},
+                                {"answers.$._id": "1"})}
 
-    return user_answers[0]['_id']
+def user_answer(answers):
+    if len(answers) > 1:
+        app.logger.error("Answers ({0}) has multiple votes for {1}!".format(
+            ', '.join(a['_id'] for a in answers), uid))
+
+    return answers[0]['_id']
 
 
 @app.route("/v1/questions/")
 def v1_questions():
-    questions = g.db.questions.find().sort('added', -1)
-    answer_ids = {}
-    if hasattr(g, 'user'):
-        answer_ids = {q['_id']:user_answer_id(q['answers']) for q in
-                        g.db.questions.find({"answers.votes.user": g.user['_id']},
-                                            {"answers.$._id": 1})}
-    questions = [dict(q, user_answer_id=answer_ids[q['_id']]) if q['_id'] in answer_ids else q
-                 for q in questions]
+    questions = list(g.db.questions.find().sort('added', -1))
 
-    return jsonify({'questions':questions})
+    votes = {}
+    if hasattr(g, 'user'):
+        votes = user_answers()
+
+    return jsonify({'questions':questions, 'votes':votes})
 
 
 @app.route("/<tag>/")
