@@ -17,7 +17,8 @@
 
   questionTmpl = _.template('\
 <li class="question" id="{{ question._id }}">\
-  <div class="question-text">{{ question.question }}</div>\
+  <div class="question-text">{{ question.question }}  <div class="vote-count pull-right"></div>\
+</div>\
   <ul class="answers slicklist">\
     {{ answers }}\
   </ul>\
@@ -27,6 +28,7 @@
 \
 <li class="answer" id="{{ answer._id }}">\
   <i class="icon-ok"></i> {{ answer.answer }}\
+  <div class="vote-count pull-right"></div>\
   <div class="vote-percent pull-right"></div>\
 </li>');
 
@@ -116,16 +118,19 @@
   };
 
   updateQuestion = function(question, vote) {
-    var a, totalVotes, _i, _len, _ref;
+    var ans, av, totalVotes, _i, _len, _ref;
     if (vote) {
       totalVotes = _.reduce(question.answers, function(t, a) {
         return t + answerVotes(a);
       }, 0);
       _ref = question.answers;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        a = _ref[_i];
-        $("#" + a._id + " .vote-percent").html(answerVotes(a) / totalVotes * 100);
+        ans = _ref[_i];
+        av = answerVotes(ans);
+        $("#" + ans._id + " .vote-percent").html("" + (Math.round(av / totalVotes * 100)) + "% :");
+        $("#" + ans._id + " .vote-count").html("" + av);
       }
+      $("#" + question._id + " .vote-count").first().html("votes " + totalVotes);
       $("#" + question._id + " .answer").removeClass("vote");
       $("#" + question._id + " .answer").removeClass("working");
       return $("#" + vote + ".answer").addClass("vote");

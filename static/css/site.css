@@ -45,6 +45,10 @@ body {
     border-bottom: none;
 }
 
+.answer {
+    padding-right: 0 !important;
+}
+
 
 .answer i {
     opacity: 0;
@@ -69,6 +73,9 @@ body {
     font-weight: bold;
 }
 
+.vote-count {
+    margin-left: 5px;
+}
 
 @media (max-width: 980px) {
     .navbar-fixed-top .navbar-inner {
