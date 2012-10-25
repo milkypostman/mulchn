@@ -14,18 +14,24 @@ from flask import request
 from flask import session
 from flask import url_for
 from flask.ext import wtf
-from flaskext.coffee import coffee
 from itertools import izip_longest
 from pymongo import Connection
 from urlparse import urlsplit
 from wtforms.validators import StopValidation
 
 import oauth2 as oauth
-import os
+import os, os.path
+import subprocess
 import time
 import urllib
 import urlparse
 import twitter
+
+app = Flask(__name__)
+app.config.from_object('config')
+app.config.from_envvar('MULCHN_SETTINGS', silent=True)
+
+
 
 
 """
@@ -60,8 +66,8 @@ def json_handler(obj):
         'Object of type {0} with value {0} is not JSON serializable'.format(
             type(obj), repr(objc))
 
-def jsonify(*args, **kwargs):
-    return app.response_class(json.dumps(dict(*args, **kwargs),
+def jsonify(data):
+    return app.response_class(json.dumps(data,
                                          default=json_handler,
                                          indent=None if request.is_xhr else 2),
                               mimetype="application/json")
@@ -75,13 +81,6 @@ def render(template, **kwargs):
     return render_template(template, **kwargs)
 
 
-
-app = Flask(__name__)
-app.config.from_object('config')
-app.config.from_envvar('MULCHN_SETTINGS', silent=True)
-
-if app.debug:
-    coffee(app)
 
 @app.before_request
 def init_mongodb():
@@ -183,14 +182,13 @@ def question_add():
     return render("add.html", form=form)
 
 
-def clean_old_votes(question):
-    qid = ObjectId(question)
+def clean_old_votes(questionId):
     uid = ObjectId(g.user['_id'])
-    q = g.db.questions.find_one({'_id':qid}, {'answers':1})
+    q = g.db.questions.find_one({'_id':questionId}, {'answers':1})
     if q is None:
         abort(404)
     for ans in q['answers']:
-        g.db.questions.update({'_id':qid, 'answers._id':ans['_id']},
+        g.db.questions.update({'_id':questionId, 'answers._id':ans['_id']},
                               {"$pull" : {"answers.$.votes": {"user":uid}}})
 
 @app.route("/v1/question/vote/", methods=['GET', 'POST','PUT'])
@@ -198,33 +196,27 @@ def v1_vote():
     if not hasattr(g, 'user'):
         return invalid_login()
 
-    data = request.form
+    print request.json
+    data = request.json
     votedata = {'user': g.user['_id']}
-    votedata.update({key:data[key] for key in
-                     ['latitude',
-                      'longitude',
-                      'accuracy',
-                      'speed',
-                      'geotimestamp',
-                  ] if key in data})
+    if data.get('position'):
+        votedata['position'] = data['position']
 
-
-
-    clean_old_votes(data['question'])
-    qid = ObjectId(data['question'])
-    g.db.questions.update({'_id':qid, 'answers._id':ObjectId(data['answer'])},
+    qid = ObjectId(data['_id'])
+    clean_old_votes(qid)
+    vote = ObjectId(data['vote'])
+    g.db.questions.update({'_id':qid, 'answers._id':vote},
                           {'$addToSet': {'answers.$.votes': votedata}})
 
-    question = g.db.questions.find_one({"_id": qid})
-    ret = {}
-    ret['question'] = question
-    ret['vote'] = data['answer']
+    ret = question_dict(g.db.questions.find_one({"_id": qid}),
+                        {qid:vote})
+    ret['vote'] = vote
 
     return jsonify(ret)
 
 
 def user_answers():
-    return {unicode(q['_id']):user_answer(q['answers']) for q in
+    return {q['_id']:user_answer(q['answers']) for q in
             g.db.questions.find({"answers.votes.user": g.user['_id']},
                                 {"answers.$._id": "1"})}
 
@@ -236,6 +228,32 @@ def user_answer(answers):
     return answers[0]['_id']
 
 
+ANSWER_KEYS = {
+    'votes': lambda v: len(v),
+    'answer': lambda a: a,
+    '_id': lambda i: i,
+}
+
+def answer_dict(answer):
+    return {key:func(answer[key]) for key, func in ANSWER_KEYS.iteritems()
+            if key in answer}
+
+
+QUESTION_KEYS = {
+    'answers': lambda answers: [answer_dict(a) for a in answers],
+    'question': lambda a: a,
+    '_id': lambda i: i,
+    'added': lambda a: a,
+}
+
+def question_dict(question, votes):
+    ret = {key:func(question[key]) for key, func in QUESTION_KEYS.iteritems()}
+    if question["_id"] in votes:
+        ret['vote'] = votes[question["_id"]]
+
+    return ret
+
+
 @app.route("/v1/questions/")
 def v1_questions():
 
@@ -243,9 +261,15 @@ def v1_questions():
     if hasattr(g, 'user'):
         votes = user_answers()
 
-    questions = list(g.db.questions.find().sort('added', -1))
+    questions = [question_dict(q, votes) for q in g.db.questions.find().sort('added', -1)]
 
-    return jsonify({'questions':questions, 'votes':votes})
+
+    print json.dumps(questions,
+                     default=json_handler,
+                     indent=None if request.is_xhr else 2)
+
+
+    return jsonify(questions)
 
 
 @app.route("/<tag>/")
@@ -352,7 +376,29 @@ def questions():
 
 
 
+def coffeescript_paths():
+    static_dir = app.root_path + app.static_url_path
+    return [os.path.join(path, fn)
+            for path, _, filenames in os.walk(static_dir)
+            for fn in filenames
+            if os.path.splitext(fn)[1] == '.coffee']
+
+
+def compile_coffeescript():
+    static_url_path = app.static_url_path
+    static_dir = app.root_path + app.static_url_path
+
+    cs_paths = coffeescript_paths()
+
+    for cs_path in cs_paths:
+        print("Compiling {0}".format(cs_path))
+        subprocess.call(['coffee', '-c', cs_path], shell=False)
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host="0.0.0.0", port=port)
+    compile_coffeescript()
+    app.run(host="0.0.0.0", port=port, extra_files=coffeescript_paths())
+
+
+

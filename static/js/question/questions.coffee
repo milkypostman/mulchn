@@ -43,6 +43,10 @@ questionHtml = (question) ->
 questionsHtml = (questions) ->
   (questionHtml(q) for q in questions).join ''
 
+questionsUl = '
+  <ul id="questions" class="questions slicklist">
+  </ul>'
+
 geoPosition = undefined
 
 loginDialog = '<div class="modal" id="loginDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
@@ -128,6 +132,7 @@ toggleQuestion = (evt) ->
     jtarget.addClass("active")
     selQuestion = target
   return false
+
 
 questionsUl = '
   <ul id="questions" class="questions slicklist">

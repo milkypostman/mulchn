@@ -73,13 +73,13 @@ body {
     font-weight: bold;
 }
 
-.vote-count-prefix {
-    display: none;
-}
+/* .vote-count-prefix { */
+/*     display: none; */
+/* } */
 
-.voted .vote-count-prefix {
-    display: block;
-}
+/* .voted .vote-count-prefix { */
+/*     display: block; */
+/* } */
 
 .vote-info {
     bottom: 0;
@@ -87,9 +87,9 @@ body {
     color: silver;
 }
 
-.voted .vote-info {
-    display: none;
-}
+/* .voted .vote-info { */
+/*     display: none; */
+/* } */
 
 .vote-count, .vote-count-prefix {
     margin-left: 5px;
