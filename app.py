@@ -258,12 +258,6 @@ def v1_questions():
         votes = user_answers()
 
     questions = [question_dict(q, votes) for q in g.db.questions.find().sort('added', -1)]
-    print json.dumps(questions,
-                     default=json_handler,
-                     indent=None if request.is_xhr else 2)
-
-
-
 
     return jsonify(questions)
 
