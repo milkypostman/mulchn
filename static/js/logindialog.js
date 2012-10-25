@@ -12,10 +12,12 @@
 
       function LoginDialog() {
         this.render = __bind(this.render, this);
+
+        this.remove = __bind(this.remove, this);
         return LoginDialog.__super__.constructor.apply(this, arguments);
       }
 
-      LoginDialog.prototype.loginDialog = '<div class="modal" id="loginDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">\
+      LoginDialog.prototype.el = '<div class="modal" id="loginDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">\
       <div class="modal-header">\
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>\
         <h3 id="loginDialogHeader">Login Required</h3>\
@@ -29,12 +31,18 @@
       </div>\
     </div>';
 
+      LoginDialog.prototype.remove = function() {
+        console.log("remove");
+        return this.$el.remove();
+      };
+
       LoginDialog.prototype.render = function() {
-        $("#content").append(this.loginDialog);
+        $("#content").append(this.el);
         $('#loginDialog .btn-primary').click(function() {
           return window.location.href = "/login/";
         });
-        return $("#loginDialog").modal('show');
+        this.$el.on("hidden", this.remove);
+        return this.$el.modal('show');
       };
 
       return LoginDialog;

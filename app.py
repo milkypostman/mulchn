@@ -196,7 +196,6 @@ def v1_vote():
     if not hasattr(g, 'user'):
         return invalid_login()
 
-    print request.json
     data = request.json
     votedata = {'user': g.user['_id']}
     if data.get('position'):
@@ -205,6 +204,7 @@ def v1_vote():
     qid = ObjectId(data['_id'])
     clean_old_votes(qid)
     vote = ObjectId(data['vote'])
+
     g.db.questions.update({'_id':qid, 'answers._id':vote},
                           {'$addToSet': {'answers.$.votes': votedata}})
 
