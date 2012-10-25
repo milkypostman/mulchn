@@ -22,7 +22,7 @@ require.config {
   
 require ['lodash', 'question/list'], (_, QuestionList) ->
   questionList = new QuestionList()
-  questionList.update()
+  questionList.reset()
   questionList.render()
 
 

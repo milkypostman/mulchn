@@ -3,5 +3,15 @@ define ['jquery', 'lodash', 'backbone', 'question/model'], ($, _, Backbone, Ques
     model: QuestionModel
     url: '/v1/questions/'
 
+    updateOrAdd: (collection, response) =>
+      _.each(response, (ele) ->
+        collection.get(ele._id).set(ele)
+        )
+
+    update: =>
+      @fetch({add:true, success: @updateOrAdd})
+
+
+
 
 

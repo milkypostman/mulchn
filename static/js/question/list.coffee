@@ -35,6 +35,7 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
     active: false
 
     initialize: =>
+      # console.log("Item:initialize")
       @model.on("change", @render)
 
 
@@ -74,7 +75,9 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
         question: @model
         active: @active
         }))
-      return @
+
+      @
+
 
 
   class QuestionList extends Backbone.View
@@ -88,13 +91,15 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
 
 
     initialize: =>
+      # console.log("List:initialize")
       @collection = new QuestionCollection()
       @collection.on("add", @add)
       @collection.on("reset", @addAll)
       @selectedQuestion = undefined
       @childViews = {}
 
-      
+      setInterval(@collection.update, 10000);
+
     toggleQuestion: (event) =>
       targetId = event.currentTarget.id
 
@@ -107,19 +112,38 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
         @childViews[targetId].expand()
         @selectedQuestion = targetId
 
+
+    # this is specialized to add in the proper position
     add: (model) =>
       view = new QuestionItem({model: model})
       @childViews[model.id] = view
-      @$el.append(view.render().el);
+      for ele in @$el.children(view.tagName)
+        if model.id > ele.id
+          return $(ele).before(view.render().el)
+
+      @$el.append(view.render().el)
+
+    prepend: (model) =>
+      view = new QuestionItem({model: model})
+      @childViews[model.id] = view
+      @$el.prepend(view.render().el)
+
+    append: (model) =>
+      view = new QuestionItem({model: model})
+      @childViews[model.id] = view
+      @$el.append(view.render().el)
 
     addAll: =>
-      @collection.each(@add)
+      @$el.empty()
+      @collection.each(@append)
 
     render: =>
       $("#content").html(@el)
 
-    update: =>
-      @collection.fetch({add: true})
+      @
+
+    reset: =>
+      @collection.fetch()
 
 
 
