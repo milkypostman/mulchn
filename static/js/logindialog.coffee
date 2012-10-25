@@ -3,7 +3,7 @@ define ['jquery', 'backbone', 'bootstrap'], ($, Backbone) ->
   class LoginDialog extends Backbone.View
     loginDialog: '<div class="modal" id="loginDialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" style="display: none;">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">Ã—</button>
         <h3 id="loginDialogHeader">Login Required</h3>
       </div>
       <div class="modal-body">
