@@ -228,26 +228,23 @@ def user_answer(answers):
     return answers[0]['_id']
 
 
-ANSWER_KEYS = {
-    'votes': lambda v: len(v),
-    'answer': lambda a: a,
-    '_id': lambda i: i,
-}
+ANSWER_KEYS = ['answer', '_id']
 
 def answer_dict(answer):
-    return {key:func(answer[key]) for key, func in ANSWER_KEYS.iteritems()
-            if key in answer}
+    ret = {key:answer[key] for key in ANSWER_KEYS if key in answer}
+    if hasattr(g, 'user'):
+        ret['votes'] = len(answer.get('votes', []))
+
+    return ret
 
 
-QUESTION_KEYS = {
-    'answers': lambda answers: [answer_dict(a) for a in answers],
-    'question': lambda a: a,
-    '_id': lambda i: i,
-    'added': lambda a: a,
-}
+
+QUESTION_KEYS = ['question', '_id', 'added']
 
 def question_dict(question, votes):
-    ret = {key:func(question[key]) for key, func in QUESTION_KEYS.iteritems()}
+    ret = {key:question[key] for key in QUESTION_KEYS}
+    ret['answers'] = [answer_dict(ans) for ans in question['answers']]
+
     if question["_id"] in votes:
         ret['vote'] = votes[question["_id"]]
 
@@ -256,17 +253,16 @@ def question_dict(question, votes):
 
 @app.route("/v1/questions/")
 def v1_questions():
-
     votes = {}
     if hasattr(g, 'user'):
         votes = user_answers()
 
     questions = [question_dict(q, votes) for q in g.db.questions.find().sort('added', -1)]
-
-
     print json.dumps(questions,
                      default=json_handler,
                      indent=None if request.is_xhr else 2)
+
+
 
 
     return jsonify(questions)
@@ -397,7 +393,8 @@ def compile_coffeescript():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    compile_coffeescript()
+    if app.debug:
+        compile_coffeescript()
     app.run(host="0.0.0.0", port=port, extra_files=coffeescript_paths())
 
 

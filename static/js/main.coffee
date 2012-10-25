@@ -3,6 +3,7 @@ require.config {
   baseUrl: "/static/js"
   
   paths: {
+    bootstrap: 'lib/bootstrap.min',
     jquery: 'lib/jquery.min',
     lodash: 'lib/lodash.min',
     backbone: 'lib/backbone-min',
@@ -12,15 +13,17 @@ require.config {
   shim: {
     'backbone': {
       deps: ['jquery', 'lodash'],
-      exports: 'Backbone'
-      }
+      exports: 'Backbone',
+      },
+    'bootstrap' : ['jquery']
     }
   }
 
   
-require ['lodash', 'question/collectionview'], (_, QuestionCollectionView) ->
-  questionCollectionView = new QuestionCollectionView()
-  questionCollectionView.collection.fetch()
+require ['lodash', 'question/list'], (_, QuestionList) ->
+  questionList = new QuestionList()
+  questionList.update()
+  questionList.render()
 
 
   window.setTimeout(
