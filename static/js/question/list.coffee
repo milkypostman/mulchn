@@ -20,7 +20,7 @@ define ['jquery', 'lodash', 'backbone', 'user', 'location', 'dialog', 'logindial
           <% if (question.get("vote")) { %>
           <div class="vote-count pull-right"><%= answer.votes | 0 %></div>
           <div class="vote-count-prefix pull-right">.</div>
-          <div class="vote-percent pull-right"><%= answer.votes / question.votes() * 100 %>%</div>
+          <div class="vote-percent pull-right"><%= Math.round(answer.votes / question.votes() * 100) %>%</div>
           <% } %>
         </li>
       <% } %>
