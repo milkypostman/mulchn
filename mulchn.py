@@ -26,6 +26,7 @@ import time
 import urllib
 import urlparse
 import twitter
+import warnings
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -86,7 +87,10 @@ def render(template, **kwargs):
 def init_mongodb():
     mongo_url = os.environ.get('MONGOHQ_URL', app.config['MONGODB_URL'])
     mongo_db = urlsplit(mongo_url).path[1:]
-    g.db = Connection(mongo_url, tz_aware=True)[mongo_db]
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', UserWarning)
+        g.db = Connection(mongo_url, tz_aware=True)[mongo_db]
 
 
 @app.teardown_request
