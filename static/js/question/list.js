@@ -43,7 +43,7 @@
           <% if (question.get("vote")) { %>\
           <div class="vote-count pull-right"><%= answer.votes | 0 %></div>\
           <div class="vote-count-prefix pull-right">.</div>\
-          <div class="vote-percent pull-right"><%= answer.votes / question.votes() * 100 %>%</div>\
+          <div class="vote-percent pull-right"><%= Math.round(answer.votes / question.votes() * 100) %>%</div>\
           <% } %>\
         </li>\
       <% } %>\
@@ -102,7 +102,6 @@
           url: "/v1/question/vote/",
           error: function(model, response) {
             if (response.status === 401) {
-              console.log(model);
               model.unset("vote");
               $("#" + answer).removeClass("working");
               return new LoginDialog().render();
