@@ -125,8 +125,9 @@ def errors_dict(fields):
 
 
 @app.errorhandler(401)
-def invalid_login():
+def access_denied():
     return jsonify({'errors': [{'message':"Access denied."}]}), 401
+
 
 @app.route("/question/<question>/", methods=['GET'])
 def question(question):
@@ -139,7 +140,6 @@ def question(question):
         abort(404)
 
     return str(obj)
-
 
 
 @app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
@@ -169,7 +169,7 @@ def question_add():
         form = AddForm(formdata)
 
         if form.validate_on_submit():
-            question = dict(question=form['question'].data, author=g.user['_id'])
+            question = dict(question=form['question'].data, owner=g.user['_id'])
             question['answers'] = [{'_id': ObjectId(), 'answer':ans} for ans in form['answers'].data]
             question['added'] = datetime.utcnow()
 
@@ -194,7 +194,7 @@ def clean_old_votes(questionId):
 @app.route("/v1/question/vote/", methods=['GET', 'POST','PUT'])
 def v1_vote():
     if not hasattr(g, 'user'):
-        return invalid_login()
+        return access_denied()
 
     data = request.json
     votedata = {'user': g.user['_id']}
@@ -213,6 +213,27 @@ def v1_vote():
     ret['vote'] = vote
 
     return jsonify(ret)
+
+
+@app.route("/v1/question/<question>", methods=['DELETE'])
+def v1_question(question):
+    if not hasattr(g, 'user'):
+        return access_denied()
+
+    if request.method == 'DELETE':
+        try:
+            obj = g.db.questions.find_one({"_id":ObjectId(question)})
+        except InvalidId:
+            abort(404)
+
+        if obj['owner'] == g.user['_id']:
+            g.db.questions.remove({"_id": obj['_id']})
+        else:
+            access_denied()
+    else:
+        abort(404)
+
+    return jsonify({'response': 'OK'})
 
 
 def user_answers():
@@ -239,7 +260,7 @@ def answer_dict(answer):
 
 
 
-QUESTION_KEYS = ['question', '_id', 'added']
+QUESTION_KEYS = ['question', '_id', 'added', 'owner']
 
 def question_dict(question, votes):
     ret = {key:question[key] for key in QUESTION_KEYS}
@@ -381,8 +402,13 @@ def compile_coffeescript():
     cs_paths = coffeescript_paths()
 
     for cs_path in cs_paths:
-        print("Compiling {0}".format(cs_path))
-        subprocess.call(['coffee', '-c', cs_path], shell=False)
+        js_path = os.path.splitext(cs_path)[0] + '.js'
+        js_mtime = os.path.getmtime(js_path) if os.path.isfile(js_path) else -1
+
+        cs_mtime = os.path.getmtime(cs_path)
+        if cs_mtime > js_mtime:
+            print("Compiling {0}".format(cs_path))
+            subprocess.call(['coffee', '-c', cs_path], shell=False)
 
 
 if __name__ == '__main__':

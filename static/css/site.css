@@ -37,7 +37,7 @@ body {
     background: none;
 }
 
-.answers {
+.question-rest {
     display: none;
 }
 
@@ -73,6 +73,14 @@ body {
     font-weight: bold;
 }
 
+.answers-footer {
+    text-align: right;
+}
+
+.answers-footer .icon-trash {
+    opacity: .5;
+    text-size: 90%;
+}
 /* .vote-count-prefix { */
 /*     display: none; */
 /* } */

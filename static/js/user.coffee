@@ -1,24 +1,21 @@
-define ->
+define ['jquery'], ($) ->
   instance = null
   
-  class Location
+  class User
     constructor: () ->
       if instance != null
         throw new Error("Cannot instantiate more than one #{name}, use #{name}.getInstance()")
       @initialize()
 
-    updatePosition: (position) ->
-      @position = position
-
     initialize: ->
-      if navigator.geolocation
-        navigator.geolocation.getCurrentPosition((position) => @position = position)
+      @id = $("#userid").html()
+
 
     @getInstance = =>
       if instance == null
-        instance = new Location()
+        instance = new User()
 
       instance
 
-  Location.getInstance()
+  User.getInstance()
   

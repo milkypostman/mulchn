@@ -1,5 +1,5 @@
-define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/collection', 'question/model'],
-($, _, Backbone, Location, LoginDialog, QuestionCollection, QuestionModel) ->
+define ['jquery', 'lodash', 'backbone', 'user', 'location', 'dialog', 'logindialog', 'question/collection', 'question/model'],
+($, _, Backbone, User, Location, Dialog, LoginDialog, QuestionCollection, QuestionModel) ->
 
   class QuestionItem extends Backbone.View
     questionTmpl: _.template('
@@ -12,7 +12,8 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
           <div class="vote-info pull-right">no choice selected</div>
           <% } %>
       </div>
-      <ul class="answers slicklist" <% if (active) { %>style="display: block;"<% } %> >
+      <div class="question-rest" <% if (active) { %>style="display: block;"<% } %>>
+      <ul class="answers slicklist" >
       <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
         <li class="answer <% if (answer._id == question.get("vote")) { %>vote<% } %>" id="<%= answer._id %>">
           <i class="icon-ok"></i> <%= answer.answer %>
@@ -23,20 +24,42 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
           <% } %>
         </li>
       <% } %>
-      </ul>')
+      </ul>
+
+      <div class="answers-footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
+      </div>
+        ')
 
     tagName: "li"
 
 
     events: {
       "click .answer": "vote"
+      "click .delete": "delete"
     }
 
     active: false
 
     initialize: =>
-      # console.log("Item:initialize")
       @model.on("change", @render)
+
+    delete: (event) =>
+      question = $(event.currentTarget).closest(".question")
+      new Dialog({
+        closeButtonText: "Cancel"
+        primaryButtonText: "Delete"
+        title: "Delete Question?"
+        content: "<p>Are you sure you want to delete the question: <blockquote>#{@model.get("question")}</blockquote></p>"
+        ok: (dialog) =>
+          @model.destroy({
+            wait: true
+            success: ->
+              dialog.modal('hide')
+            error: ->
+              dialog.modal('hide')
+            })
+      }).render()
+      false
 
 
     vote: (event) =>
@@ -44,10 +67,26 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
       @model.save({vote: answer, position:Location.position}, {
         wait: true
         url: "/v1/question/vote/"
-        error: (model, response) ->
-          model.unset("vote")
-          $("##{answer}").removeClass("working")
-          new LoginDialog().render()
+        error: (model, response) =>
+          if response.status == 401
+            console.log(model)
+            model.unset("vote")
+            $("##{answer}").removeClass("working")
+            new LoginDialog().render()
+          else if response.status == 404
+            new Dialog({
+              closeButtonText: "Close"
+              title: "Question Missing"
+              content: "<p>Selected question no longer exists.</p>"
+            }).render()
+            @remove(model)
+          else
+            new Dialog({
+              closeButtonText: "Close"
+              title: "Unknown Error"
+              content: "<p>An unknown error has occurred.</p>"
+            }).render()
+
       })
       $("##{answer}").addClass("working")
       false
@@ -63,15 +102,16 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
     collapse: =>
       @active = false
       @$el.removeClass("active")
-      @$el.children(".answers").slideUp()
+      @$el.children(".question-rest").slideUp()
 
     expand: =>
       @active = true
       @$el.addClass("active")
-      @$el.children(".answers").slideDown()
+      @$el.children(".question-rest").slideDown()
 
     render: =>
       @$el.html(@questionTmpl({
+        user: User.id
         question: @model
         active: @active
         }))
@@ -91,10 +131,10 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
 
 
     initialize: =>
-      # console.log("List:initialize")
       @collection = new QuestionCollection()
       @collection.on("add", @add)
       @collection.on("reset", @addAll)
+      @collection.on("remove", @remove)
       @selectedQuestion = undefined
       @childViews = {}
 
@@ -122,6 +162,13 @@ define ['jquery', 'lodash', 'backbone', 'location', 'logindialog', 'question/col
           return $(ele).before(view.render().el)
 
       @$el.append(view.render().el)
+
+    remove: (model) =>
+      if @selectedQuestion == model.id
+        @selectedQuestion = undefined
+      view = @childViews[model.id]
+      view.$el.remove()
+      delete @childViews[model.id]
 
     prepend: (model) =>
       view = new QuestionItem({model: model})
