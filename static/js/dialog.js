@@ -32,7 +32,7 @@
         <%= content %>\
       </div>\
       <div class="modal-footer">\
-        <button class="btn" data-dismiss="modal" aria-hidden="true"><%= closeButtonText %></button>\
+        <button class="btn btn-close" data-dismiss="modal" aria-hidden="true"><%= closeButtonText %></button>\
           <% if (primaryButtonText) { %>\
           <button class="btn btn-primary"><%= primaryButtonText %></button>\
           <% } %>\
@@ -56,12 +56,27 @@
       Dialog.prototype.prefix = "";
 
       Dialog.prototype.initialize = function(options) {
-        this.ok = options.ok || this.ok;
-        this.title = options.title || this.title;
-        this.content = options.content || this.content;
-        this.closeButtonText = options.closeButtonText || this.closeButtonText;
-        this.primaryButtonText = options.primaryButtonText || this.primaryButtonText;
-        this.prefix = options.prefix || this.prefix;
+        if (!options) {
+          options = {};
+        }
+        if (options.ok) {
+          this.ok = options.ok;
+        }
+        if (options.title) {
+          this.title = options.title;
+        }
+        if (options.content) {
+          this.content = options.content;
+        }
+        if (options.closeButtonText) {
+          this.closeButtonText = options.closeButtonText;
+        }
+        if (options.primaryButtonText) {
+          this.primaryButtonText = options.primaryButtonText;
+        }
+        if (options.prefix) {
+          this.prefix = options.prefix;
+        }
         this.setElement(_.template(this.elTemplate, {
           prefix: this.prefix,
           title: this.title,
@@ -71,9 +86,15 @@
         }));
         this.$el.find(".btn-primary").click(this.okWrap);
         this.$el.on("hidden", this.remove);
-        return this.$el.on("shown", function() {
-          return $($(".modal-footer button").first()).focus();
-        });
+        if (options.highlightPrimary | this.highlightPrimary) {
+          return this.$el.on("shown", function() {
+            return $($(".modal-footer .btn-primary").first()).focus();
+          });
+        } else {
+          return this.$el.on("shown", function() {
+            return $($(".modal-footer .btn-close").first()).focus();
+          });
+        }
       };
 
       Dialog.prototype.remove = function() {

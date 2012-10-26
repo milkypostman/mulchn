@@ -10,7 +10,7 @@ define ['jquery', 'lodash', 'backbone', 'bootstrap'], ($, _, Backbone) ->
         <%= content %>
       </div>
       <div class="modal-footer">
-        <button class="btn" data-dismiss="modal" aria-hidden="true"><%= closeButtonText %></button>
+        <button class="btn btn-close" data-dismiss="modal" aria-hidden="true"><%= closeButtonText %></button>
           <% if (primaryButtonText) { %>
           <button class="btn btn-primary"><%= primaryButtonText %></button>
           <% } %>
@@ -33,12 +33,14 @@ define ['jquery', 'lodash', 'backbone', 'bootstrap'], ($, _, Backbone) ->
     prefix: ""
 
     initialize: (options) =>
-      @ok = options.ok or @ok
-      @title = options.title or @title
-      @content = options.content or @content
-      @closeButtonText = options.closeButtonText or @closeButtonText
-      @primaryButtonText = options.primaryButtonText or @primaryButtonText
-      @prefix = options.prefix or @prefix
+      options = {} if !options
+
+      @ok = options.ok if options.ok
+      @title = options.title if options.title
+      @content = options.content if options.content
+      @closeButtonText = options.closeButtonText if options.closeButtonText
+      @primaryButtonText = options.primaryButtonText if options.primaryButtonText
+      @prefix = options.prefix if options.prefix
       @setElement(_.template(@elTemplate, {
         prefix: @prefix,
         title: @title,
@@ -48,9 +50,10 @@ define ['jquery', 'lodash', 'backbone', 'bootstrap'], ($, _, Backbone) ->
         }))
       @$el.find(".btn-primary").click(@okWrap)
       @$el.on("hidden", @remove)
-      @$el.on("shown", ->
-        $($(".modal-footer button").first()).focus()
-        )
+      if options.highlightPrimary | @highlightPrimary
+        @$el.on("shown", -> $($(".modal-footer .btn-primary").first()).focus())
+      else
+        @$el.on("shown", -> $($(".modal-footer .btn-close").first()).focus())
         
 
     remove: =>
