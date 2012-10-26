@@ -69,7 +69,6 @@ define ['jquery', 'lodash', 'backbone', 'user', 'location', 'dialog', 'logindial
         url: "/v1/question/vote/"
         error: (model, response) =>
           if response.status == 401
-            console.log(model)
             model.unset("vote")
             $("##{answer}").removeClass("working")
             new LoginDialog().render()
