@@ -5,6 +5,8 @@ MONGODB_URL = "mongodb://localhost/mulchn"
 
 SECRET_KEY='\xfd\x0f;\x17\xf3\xaf\xa7:,3\x87j\xab\x0f\xa2\x0f\xba\x0c\xf1b\x9d\xe1\x1b\xd0'
 
+CSRF_ENABLED = True
+
 TWITTER_REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 TWITTER_AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
 TWITTER_AUTHENTICATE_URL = 'https://api.twitter.com/oauth/authenticate'
