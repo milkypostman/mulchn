@@ -34,12 +34,8 @@ app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
 
 
-
-"""
-db.questions.remove({added : {$gt: ISODate("2012-10-15T20:18:20.138Z")}})
-"""
-
 class TagListField(wtf.Field):
+    """ parse a tag list field """
     widget = wtf.TextInput()
 
     def _value(self):
@@ -53,12 +49,22 @@ class TagListField(wtf.Field):
 
 
 class AddForm(wtf.Form):
+    """Add Question Form"""
     tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.InputRequired()])
     question = wtf.StringField("Question", validators=[wtf.DataRequired()])
     answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
 
 
 def json_handler(obj):
+    """
+    special JSON handler
+
+    special handling of `obj` for the following types:
+    - datetime
+    - Objectid
+
+    """
+
     if isinstance(obj, datetime):
         return obj.isoformat()
     if isinstance(obj, ObjectId):
@@ -67,24 +73,33 @@ def json_handler(obj):
         'Object of type {0} with value {0} is not JSON serializable'.format(
             type(obj), repr(objc))
 
+
 def jsonify(data):
+    """
+    jsonfiy `data`
+    """
     return app.response_class(json.dumps(data,
                                          default=json_handler,
                                          indent=None if request.is_xhr else 2),
                               mimetype="application/json")
 
-def tags():
-    return sorted(c['name'] for c in g.db.tags.find())
-
 
 def render(template, **kwargs):
-    # kwargs['tags'] = tags()
+    """
+    Customizable render function.
+    """
     return render_template(template, **kwargs)
 
 
 
 @app.before_request
 def init_mongodb():
+    """
+    Initialize MongoDB instance into global application context.
+
+    Uses either `MONGOHQ_URL` variable from environment or configuration file.
+    """
+
     mongo_url = os.environ.get('MONGOHQ_URL', app.config['MONGODB_URL'])
     mongo_db = urlsplit(mongo_url).path[1:]
 
@@ -95,11 +110,20 @@ def init_mongodb():
 
 @app.teardown_request
 def close_mongodb(exception):
-    del g.db
+    """
+    Close up MongoDB instance.
+    """
+    pass
+    # del g.db
+
 
 @app.before_request
 def find_user():
-    if 'user_id' in session and not 'user' in session:
+    """
+    Load user information into the global app context if exists in the database.
+    """
+
+    if 'user_id' in session:
         user =  g.db.users.find_one({'_id':session['user_id']})
         if user is None:
             session.pop('user_id')
@@ -107,15 +131,16 @@ def find_user():
             g.user = user
 
 
-@app.context_processor
-def inject_user():
-    try:
-        return dict(user = g.user)
-    except AttributeError:
-        return dict()
-
-
 def errors_dict(fields):
+    """
+    Generate dictionary of errors for a set of form fields.
+    Supports FieldList subforms.
+
+    Dictionary format is (field.id, field.errors).
+
+    CSRFTokenField type fields are ignored.
+    """
+
     errors = {}
     for field in fields:
         if field.type == "CSRFTokenField": continue
@@ -129,12 +154,28 @@ def errors_dict(fields):
 
 
 @app.errorhandler(401)
-def access_denied():
-    return jsonify({'errors': [{'message':"Access denied."}]}), 401
+def access_denied(errors = []):
+    """
+    Generate a 401 JSON response for key 'errors' from kwargs.
+
+    Defaults to [{"message": "Access Denied."}]
+    """
+
+    if not errors:
+        errors = [{'message': "Access Denied."}]
+
+    return jsonify({'errors': errors}), 401
 
 
-@app.route("/question/<question>/", methods=['GET'])
-def question(question):
+@app.route("/question/<_id>/", methods=['GET'])
+def question(_id):
+    """
+    Fetch question with specified `_id`.
+
+    Arguments:
+    - `_id`: QuestionId to return data on.
+    """
+
     try:
         obj = g.db.questions.find_one({"_id":ObjectId(question)})
     except InvalidId:
@@ -148,6 +189,15 @@ def question(question):
 
 @app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
 def question_add():
+    """
+    Add a question to the database.
+
+    GET - Display the Add form.
+    POST - Verify form data and insert question into the database or
+           render form with errors.
+    PUT - Alias for POST
+    """
+
     if not hasattr(g, 'user'):
         session['after_login'] = 'question_add'
         return redirect(url_for('login_twitter'))
@@ -186,7 +236,14 @@ def question_add():
     return render("add.html", form=form)
 
 
+
 def clean_old_votes(questionId):
+    """
+    Clean up extra votes on the question `questionId` for the current user.
+
+    Arguments:
+    - `questionId`: QuestionId to clean up.
+    """
     uid = ObjectId(g.user['_id'])
     q = g.db.questions.find_one({'_id':questionId}, {'answers':1})
     if q is None:
@@ -195,8 +252,16 @@ def clean_old_votes(questionId):
         g.db.questions.update({'_id':questionId, 'answers._id':ans['_id']},
                               {"$pull" : {"answers.$.votes": {"user":uid}}})
 
-@app.route("/v1/question/vote/", methods=['GET', 'POST','PUT'])
+@app.route("/v1/question/vote/", methods=['POST','PUT'])
 def v1_vote():
+    """
+    Vote on a question.
+
+    Requires a POST or PUT with JSON dictionary containing:
+    - `_id`: ObjectId of the question to vote on.
+    - `vote`: ObjectId of answer to vote for.
+    """
+
     if not hasattr(g, 'user'):
         return access_denied()
 
@@ -221,6 +286,12 @@ def v1_vote():
 
 @app.route("/v1/question/<question>", methods=['DELETE'])
 def v1_question(question):
+    """
+    CRUD method for single question.
+
+    **Currently only supports the DELETE option.**
+    """
+
     if not hasattr(g, 'user'):
         return access_denied()
 
