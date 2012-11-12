@@ -226,6 +226,7 @@ def question_add():
             question = dict(question=form['question'].data, owner=g.user['_id'])
             question['answers'] = [{'_id': ObjectId(), 'answer':ans} for ans in form['answers'].data]
             question['added'] = datetime.utcnow()
+            question['tags'] = form['tags'].data
 
             g.db.questions.insert(question)
 
