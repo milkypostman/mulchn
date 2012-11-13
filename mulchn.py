@@ -427,13 +427,14 @@ def login_twitter_authenticated():
                                    "POST")
 
     if resp['status'] != '200':
-        return redirect(url_for("login_twitter"))
+        flash("Failed to login!")
+        return redirect(url_for("questions"))
 
-    data = dict(urlparse.parse_qsl(content))
-
-    try:
 
     # data contains our final token and secret for the user
+    try:
+
+    # either create or update user information
         user = g.db.users.find_one({'twitter.user_id': data['user_id']})
         session['user_id'] = user["_id"]
     except TypeError:
