@@ -480,22 +480,26 @@ def logout():
 
 
 
-@app.route("/register/twitter/")
-def register_twitter():
-    if not 'twitter_access_token' in session:
-        return redirect(url_for("login_twitter"))
+@app.route("/test/twitter/")
+def test_twitter():
+    if not hasattr(g, 'user'):
+        session['after_login'] = 'register_twitter'
+        return redirect(url_for('login_twitter'))
 
-    access_token = session['twitter_access_token']
+    access_token = g.user['twitter']
 
     api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
                       consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
                       access_token_key = access_token['oauth_token'],
                       access_token_secret = access_token['oauth_token_secret'])
     try:
-        return str(api.VerifyCredentials())
+        return render(u"raw.html",
+                      title=u"Twitter Data",
+                      content=u"<ul>" + "".join(
+                          u"<li>{0}</li>".format(u.name) for u in api.GetFriends()
+                          ) + u"</ul>")
     except twitter.TwitterError:
-        session.pop('twitter_access_token')
-        return redirect(url_for("login_twitter"))
+        return str("TwitterError")
 
 
 
