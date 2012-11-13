@@ -92,6 +92,24 @@ class MulchnUserTestCase(MulchnTestCase):
         assert '_id' in answers[0]
         assert '_id' in answers[1]
 
+    def test_no_user(self):
+        resp = self.app.get("/")
+        assert "login" in resp.data
+        assert ">login<" in resp.data
+        assert "/login/twitter/" in resp.data
+
+
+    def test_user_logged_in(self):
+        with self.app.session_transaction() as sess:
+            sess['user_id'] = self._id
+
+        resp = self.app.get("/")
+
+        assert "milkypostman" in resp.data
+        assert ">logout<" in resp.data
+        assert "/logout/" in resp.data
+
+
     def test_vote(self):
         pass
 
