@@ -381,33 +381,44 @@ def login():
 
 @app.route("/login/twitter/")
 def login_twitter():
+    # initialize untokenized client
     consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
                               app.config['TWITTER_CONSUMER_SECRET'])
     client = oauth.Client(consumer)
 
+    # build callback URL
     callback = '{0}{1}'.format(app.config['SITE_URL'], url_for('login_twitter_authenticated'))
+
+    # request a temporary request token
     resp, content = client.request(app.config['TWITTER_REQUEST_TOKEN_URL'],
                                    "POST",
                                    body=urllib.urlencode({'oauth_callback':callback}))
     if resp['status'] != '200':
         abort(404)
 
+
+    # get temporary oauth secret token
     request_token = dict(urlparse.parse_qsl(content))
     session['twitter_request_token_secret'] = request_token['oauth_token_secret']
 
 
 
+    # redirect to Twitter login page
     return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHENTICATE_URL"],
                                         request_token['oauth_token']))
 
 @app.route("/login/twitter/authenticated/")
 def login_twitter_authenticated():
+
+    # build token from oauth token redirected to us
+    # goes with the secret token we recieved in `login_twitter()`
     token = oauth.Token(request.args['oauth_token'],
                         session['twitter_request_token_secret'])
 
     token.set_verifier(request.args['oauth_verifier'])
 
 
+    # request an access token
     consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
                               app.config['TWITTER_CONSUMER_SECRET'])
     client = oauth.Client(consumer, token)
@@ -421,10 +432,13 @@ def login_twitter_authenticated():
     data = dict(urlparse.parse_qsl(content))
 
     try:
+
+    # data contains our final token and secret for the user
         user = g.db.users.find_one({'twitter.user_id': data['user_id']})
         session['user_id'] = user["_id"]
     except TypeError:
         user = {'username': data['screen_name'], 'twitter': data}
+    # either create or update user information
         session['user_id'] = g.db.users.insert(user)
 
 
