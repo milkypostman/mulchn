@@ -448,6 +448,21 @@ def login_twitter_authenticated():
         session['user_id'] = g.db.users.insert(user)
 
 
+    # try to add friends
+    if 'friends' not in user['twitter']:
+        print "getting friends"
+        api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
+                          consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
+                          access_token_key = user['twitter']['oauth_token'],
+                          access_token_secret = user['twitter']['oauth_token_secret'])
+
+        try:
+            user['twitter']['friends'] = [f.AsDict() for f in api.GetFriends()]
+            g.db.users.save(user)
+        except twitter.TwitterError:
+            pass
+
+
     flash("Logged in as {0}.".format(user['username']))
 
     if 'after_login' in session:
