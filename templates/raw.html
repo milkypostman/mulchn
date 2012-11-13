@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ title|default('raw') }}{% endblock %}
+{% block content %}
+{{ content|safe }}
+{% endblock %}
