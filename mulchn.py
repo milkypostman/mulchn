@@ -55,6 +55,14 @@ class AddForm(wtf.Form):
     answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
 
 
+@app.context_processor
+def inject_user():
+    try:
+        return dict(user = g.user)
+    except AttributeError:
+        return dict()
+
+
 def json_handler(obj):
     """
     special JSON handler
