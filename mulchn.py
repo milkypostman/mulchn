@@ -130,13 +130,15 @@ def find_user():
     """
     Load user information into the global app context if exists in the database.
     """
+    if 'user_id' not in session: return
 
-    if 'user_id' in session:
-        user =  g.db.users.find_one({'_id':session['user_id']})
-        if user is None:
-            session.pop('user_id')
-        else:
-            g.user = user
+    user = g.db.users.find_one({'_id':session['user_id']})
+    if user is None:
+        session.pop('user_id')
+        return
+
+    g.user = user
+
 
 
 def errors_dict(fields):
