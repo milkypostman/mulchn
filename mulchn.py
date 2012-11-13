@@ -434,14 +434,17 @@ def login_twitter_authenticated():
 
 
     # data contains our final token and secret for the user
-    try:
+    data = dict(urlparse.parse_qsl(content))
 
     # either create or update user information
+    try:
         user = g.db.users.find_one({'twitter.user_id': data['user_id']})
         session['user_id'] = user["_id"]
+        user['twitter'] ['oauth_token']= data['oauth_token']
+        user['twitter'] ['oauth_token_secret']= data['oauth_token_secret']
+        g.db.users.save(user)
     except TypeError:
         user = {'username': data['screen_name'], 'twitter': data}
-    # either create or update user information
         session['user_id'] = g.db.users.insert(user)
 
 
