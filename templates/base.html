@@ -55,9 +55,11 @@
       </div>
       {% endblock container %}
     </div>
-    {% block js %}{% endblock js %}
+    {% block js %}
+      <script type="text/javascript" src="/static/js/lib/require-min.js"></script>
+    {% endblock js %}
     {% if user %}
-    <script id="userid" type="application/json">{{ user._id }}</script>
+      <script data-main="/static/js/main" src="/static/js/lib/require-min.js"></script>
     {% endif %}
   </body>
 </html>

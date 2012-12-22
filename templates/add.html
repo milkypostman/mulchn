@@ -28,8 +28,6 @@
 {% endblock %}
 
 {% block js %}
-{{ super }}
-<script src="/static/js/lib/jquery.min.js"></script>
-<script src="/static/js/add.js"></script>
+  <script data-main="/static/js/add" src="/static/js/lib/require-min.js"></script>
 {% endblock %}
 
