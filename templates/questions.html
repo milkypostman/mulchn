@@ -1,5 +1,36 @@
 {% extends "base.html" %}
 {% block title %}feed{% endblock %}
+{% block content %}
+  {{ super() }}
+  <script type="text/html" id="question-template">
+    <div class="question-header">
+      <span class="question-text"><%= question.get("question") %></span>
+      <% if (question.get("vote")) { %>
+      <div class="vote-count pull-right"><%= question.votes() %></div>
+      <div class="vote-count-prefix pull-right">results:</div>
+      <% } else { %>
+      <div class="vote-info pull-right">no choice selected</div>
+      <% } %>
+    </div>
+    <div class="question-rest" <% if (active) { %>style="display: block;"<% } %>>
+      <ul class="answers slicklist" >
+        <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
+           <li class="answer <% if (answer._id == question.get("vote")) { %>vote<% } %>" id="<%= answer._id %>">
+             <i class="icon-ok"></i> <%= answer.answer %>
+             <% if (question.get("vote")) { %>
+             <div class="vote-count pull-right"><%= answer.votes | 0 %></div>
+             <div class="vote-count-prefix pull-right">.</div>
+             <div class="vote-percent pull-right"><%= Math.round(answer.votes / question.votes() * 100) %>%</div>
+             <% } %>
+           </li>
+           <% } %>
+      </ul>
+
+      <div class="answers-footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
+    </div>
+  </script>
+
+{% endblock content %}
 {% block js %}
 {{ super() }}
 <script data-main="/static/js/main" src="/static/js/lib/require-min.js"></script>

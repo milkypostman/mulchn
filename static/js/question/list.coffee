@@ -2,33 +2,7 @@ define ['jquery', 'lodash', 'backbone', 'user', 'location', 'dialog', 'logindial
 ($, _, Backbone, User, Location, Dialog, LoginDialog, QuestionCollection, QuestionModel) ->
 
   class QuestionItem extends Backbone.View
-    questionTmpl: _.template('
-      <div class="question-header">
-        <span class="question-text"><%= question.get("question") %></span>
-          <% if (question.get("vote")) { %>
-          <div class="vote-count pull-right"><%= question.votes() %></div>
-          <div class="vote-count-prefix pull-right">results:</div>
-          <% } else { %>
-          <div class="vote-info pull-right">no choice selected</div>
-          <% } %>
-      </div>
-      <div class="question-rest" <% if (active) { %>style="display: block;"<% } %>>
-      <ul class="answers slicklist" >
-      <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
-        <li class="answer <% if (answer._id == question.get("vote")) { %>vote<% } %>" id="<%= answer._id %>">
-          <i class="icon-ok"></i> <%= answer.answer %>
-          <% if (question.get("vote")) { %>
-          <div class="vote-count pull-right"><%= answer.votes | 0 %></div>
-          <div class="vote-count-prefix pull-right">.</div>
-          <div class="vote-percent pull-right"><%= Math.round(answer.votes / question.votes() * 100) %>%</div>
-          <% } %>
-        </li>
-      <% } %>
-      </ul>
-
-      <div class="answers-footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
-      </div>
-        ')
+    questionTmpl: _.template($("#question-template").html())
 
     tagName: "li"
 
@@ -68,10 +42,13 @@ define ['jquery', 'lodash', 'backbone', 'user', 'location', 'dialog', 'logindial
         wait: true
         url: "/v1/question/vote/"
         error: (model, response) =>
+
           if response.status == 401
             model.unset("vote")
             $("##{answer}").removeClass("working")
+
             new LoginDialog().render()
+
           else if response.status == 404
             new Dialog({
               closeButtonText: "Close"
@@ -79,6 +56,7 @@ define ['jquery', 'lodash', 'backbone', 'user', 'location', 'dialog', 'logindial
               content: "<p>Selected question no longer exists.</p>"
             }).render()
             @remove(model)
+
           else
             new Dialog({
               closeButtonText: "Close"
