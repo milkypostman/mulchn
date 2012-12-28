@@ -34,6 +34,7 @@ app.config.from_object('config')
 app.config.from_envvar('MULCHN_SETTINGS', silent=True)
 
 
+### Forms
 
 class TagListField(wtf.Field):
     """ parse a tag list field """
@@ -59,6 +60,7 @@ class AddForm(wtf.Form):
 
 
 
+### Request Setup
 
 @app.context_processor
 def inject_user():
@@ -105,6 +107,7 @@ def find_user():
         return
 
     g.user = user
+
 
 
 ### Response Functions
@@ -231,6 +234,7 @@ def question_dict(question, votes):
         ret['vote'] = votes[question["_id"]]
 
     return ret
+
 
 
 ### Decorators
