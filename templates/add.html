@@ -28,6 +28,7 @@
 {% endblock %}
 
 {% block js %}
-  <script src="/static/js/lib/.js"></script>
+  {{ super() }}
+  <script src="{{ static_url }}js/add.js"></script>
 {% endblock %}
 

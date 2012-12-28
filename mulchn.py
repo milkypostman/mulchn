@@ -63,6 +63,15 @@ class AddForm(wtf.Form):
 ### Request Setup
 
 @app.context_processor
+def inject_static_url():
+    static_url = app.static_url_path
+    print static_url
+    if not static_url.endswith('/'):
+        static_url += '/'
+    return dict(static_url=static_url)
+
+
+@app.context_processor
 def inject_user():
     try:
         return dict(user = g.user)

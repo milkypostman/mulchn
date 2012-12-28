@@ -32,6 +32,7 @@
 
 {% endblock content %}
 {% block js %}
-  <script src="/static/js/lib/questions.js"></script>
+  {{ super() }}
+  <script src="{{ static_url }}js/questions.js"></script>
 {% endblock js %}
 
