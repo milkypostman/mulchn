@@ -3,6 +3,7 @@
 from bson.objectid import ObjectId, InvalidId
 from datetime import datetime
 from flask import Flask
+from flask import Config
 from flask import Response
 from flask import abort
 from flask import flash
@@ -13,6 +14,7 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
+from flask.helpers import get_root_path
 from flask.ext import wtf
 from functools import wraps
 from itertools import izip_longest
@@ -28,11 +30,15 @@ import urllib
 import urlparse
 import twitter
 import warnings
+import flask
 
-app = Flask(__name__)
-app.config.from_object('config')
-app.config.from_envvar('MULCHN_SETTINGS', silent=True)
+config = Config(get_root_path(__name__))
+config.from_object('config')
+config.from_envvar('MULCHN_SETTINGS', silent=True)
 
+app = Flask(__name__, static_folder=config.get("STATIC_FOLDER"),
+            static_url_path=config.get("STATIC_URL_PATH"))
+app.config.update(config)
 
 ### Forms
 
@@ -55,7 +61,6 @@ class AddForm(wtf.Form):
     tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.InputRequired()])
     question = wtf.StringField("Question", validators=[wtf.DataRequired()])
     answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
-
 
 
 
@@ -556,16 +561,17 @@ def test_twitter():
 ### Server Stuff
 
 def coffeescript_paths():
-    static_dir = app.root_path + app.static_url_path
+    static_dir = app.static_folder
     return [os.path.join(path, fn)
             for path, _, filenames in os.walk(static_dir)
             for fn in filenames
-            if os.path.splitext(fn)[1] == '.coffee']
+            if os.path.splitext(fn)[1] == '.coffee' and not
+            os.path.splitext(fn)[0].startswith('.') ]
 
 
 def compile_coffeescript():
     static_url_path = app.static_url_path
-    static_dir = app.root_path + app.static_url_path
+    static_dir = app.root_path + app.static_folder
 
     cs_paths = coffeescript_paths()
 
