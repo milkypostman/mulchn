@@ -1,4 +1,5 @@
 *.pyc
 *.DS_Store
 /app8369946
-*.js
+/static/js/*.js
+/static/js/question/*.js
