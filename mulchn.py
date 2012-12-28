@@ -14,6 +14,7 @@ from flask import request
 from flask import session
 from flask import url_for
 from flask.ext import wtf
+from functools import wraps
 from itertools import izip_longest
 from pymongo import Connection
 from urlparse import urlsplit
@@ -55,50 +56,16 @@ class AddForm(wtf.Form):
     answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
 
 
+
+
+
+
 @app.context_processor
 def inject_user():
     try:
         return dict(user = g.user)
     except AttributeError:
         return dict()
-
-
-def json_handler(obj):
-    """
-    special JSON handler
-
-    special handling of `obj` for the following types:
-    - datetime
-    - Objectid
-
-    """
-
-    if isinstance(obj, datetime):
-        return obj.isoformat()
-    if isinstance(obj, ObjectId):
-        return unicode(obj)
-    raise TypeError, \
-        'Object of type {0} with value {0} is not JSON serializable'.format(
-            type(obj), repr(objc))
-
-
-def jsonify(data):
-    """
-    jsonfiy `data`
-    """
-    return app.response_class(json.dumps(data,
-                                         default=json_handler,
-                                         indent=None if request.is_xhr else 2),
-                              mimetype="application/json")
-
-
-def render(template, **kwargs):
-    """
-    Customizable render function.
-    """
-    return render_template(template, **kwargs)
-
-
 
 @app.before_request
 def init_mongodb():
@@ -140,6 +107,62 @@ def find_user():
     g.user = user
 
 
+### Response Functions
+
+def json_handler(obj):
+    """
+    special JSON handler
+
+    special handling of `obj` for the following types:
+    - datetime
+    - Objectid
+
+    """
+
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    if isinstance(obj, ObjectId):
+        return unicode(obj)
+    raise TypeError, \
+        'Object of type {0} with value {0} is not JSON serializable'.format(
+            type(obj), repr(objc))
+
+
+def jsonify(data):
+    """
+    jsonfiy `data`
+    """
+    return app.response_class(
+        json.dumps(data, default=json_handler,
+                   indent=None if request.is_xhr else 2),
+        mimetype="application/json")
+
+def render(template, **kwargs):
+    """
+    Customizable render function.
+    """
+    return render_template(template, **kwargs)
+
+
+
+#### Error Handlers
+
+@app.errorhandler(401)
+def access_denied(errors = []):
+    """
+    Generate a 401 JSON response for key 'errors' from kwargs.
+
+    Defaults to [{"message": "Access Denied."}]
+    """
+
+    if not errors:
+        errors = [{'message': "Access Denied."}]
+
+    return jsonify({'errors': errors}), 401
+
+
+
+### Helper Functions
 
 def errors_dict(fields):
     """
@@ -162,42 +185,177 @@ def errors_dict(fields):
 
     return errors
 
-
-@app.errorhandler(401)
-def access_denied(errors = []):
+def clean_old_votes(questionId):
     """
-    Generate a 401 JSON response for key 'errors' from kwargs.
-
-    Defaults to [{"message": "Access Denied."}]
-    """
-
-    if not errors:
-        errors = [{'message': "Access Denied."}]
-
-    return jsonify({'errors': errors}), 401
-
-
-@app.route("/question/<_id>/", methods=['GET'])
-def question(_id):
-    """
-    Fetch question with specified `_id`.
+    Clean up extra votes on the question `questionId` for the current user.
 
     Arguments:
-    - `_id`: QuestionId to return data on.
+    - `questionId`: QuestionId to clean up.
+    """
+    uid = ObjectId(g.user['_id'])
+    q = g.db.questions.find_one({'_id':questionId}, {'answers':1})
+    if q is None:
+        abort(404)
+    for ans in q['answers']:
+        g.db.questions.update({'_id':questionId, 'answers._id':ans['_id']},
+                              {"$pull" : {"answers.$.votes": {"user":uid}}})
+
+
+def user_answer(answers):
+    if len(answers) > 1:
+        app.logger.error("Answers ({0}) has multiple votes for {1}!".format(
+            ', '.join(a['_id'] for a in answers), uid))
+
+    return answers[0]['_id']
+
+def user_answers():
+    return {q['_id']:user_answer(q['answers']) for q in
+            g.db.questions.find({"answers.votes.user": g.user['_id']},
+                                {"answers.$._id": "1"})}
+
+ANSWER_KEYS = ['answer', '_id']
+def answer_dict(answer):
+    ret = {key:answer[key] for key in ANSWER_KEYS if key in answer}
+    if hasattr(g, 'user'):
+        ret['votes'] = len(answer.get('votes', []))
+
+    return ret
+
+
+QUESTION_KEYS = ['question', '_id', 'added', 'owner']
+def question_dict(question, votes):
+    ret = {key:question[key] for key in QUESTION_KEYS}
+    ret['answers'] = [answer_dict(ans) for ans in question['answers']]
+
+    if question["_id"] in votes:
+        ret['vote'] = votes[question["_id"]]
+
+    return ret
+
+
+### Decorators
+
+def login_required(f):
+    """
+    decorator to check for valid login
+
+    automatically redirects back to the current function after login
     """
 
-    try:
-        obj = g.db.questions.find_one({"_id":ObjectId(question)})
-    except InvalidId:
-        obj = None
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not hasattr(g, 'user'):
+            if request.is_xhr:
+                return access_denied()
+            session['url_after_login'] = f.__name__
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
 
-    if obj is None:
+    return wrapper
+
+
+
+
+### API Functions
+
+@app.route("/v1/question/vote/", methods=['POST','PUT'])
+@login_required
+def v1_vote():
+    """
+    Vote on a question.
+
+    Requires a POST or PUT with JSON dictionary containing:
+    - `_id`: ObjectId of the question to vote on.
+    - `vote`: ObjectId of answer to vote for.
+    """
+
+    data = request.json
+    votedata = {'user': g.user['_id']}
+    if data.get('position'):
+        votedata['position'] = data['position']
+
+    qid = ObjectId(data['_id'])
+    clean_old_votes(qid)
+    vote = ObjectId(data['vote'])
+
+    g.db.questions.update({'_id':qid, 'answers._id':vote},
+                          {'$addToSet': {'answers.$.votes': votedata}})
+
+    ret = question_dict(g.db.questions.find_one({"_id": qid}),
+                        {qid:vote})
+    ret['vote'] = vote
+
+    return jsonify(ret)
+
+
+@app.route("/v1/question/<question>", methods=['DELETE'])
+@login_required
+def v1_question(question):
+    """
+    CRUD method for single question.
+
+    **Currently only supports the DELETE option.**
+    """
+
+    if request.method == 'DELETE':
+        try:
+            obj = g.db.questions.find_one({"_id":ObjectId(question)})
+        except InvalidId:
+            abort(404)
+
+        if obj['owner'] == g.user['_id']:
+            g.db.questions.remove({"_id": obj['_id']})
+        else:
+            access_denied()
+    else:
         abort(404)
 
-    return str(obj)
+    return jsonify({'response': 'OK'})
 
+@app.route("/v1/questions/")
+def v1_questions():
+
+    # logged in user gets their votes
+    votes = {}
+    if hasattr(g, 'user'):
+        votes = user_answers()
+
+    questions = [question_dict(q, votes) for q in g.db.questions.find().sort('added', -1)]
+
+    return jsonify(questions)
+
+
+
+### Login / Logout
+
+@app.route("/login/")
+def login():
+    return render("login.html")
+
+@app.route("/logout/")
+def logout():
+    if session.pop('user_id', None) is not None and hasattr(g, 'user'):
+        flash("{0} has been logged out.".format(g.user['username']))
+    return redirect(url_for("questions"))
+
+
+
+### Pages
+
+@app.route("/")
+def questions():
+    return render("questions.html")
+
+@app.route("/<tag>/")
+def tag(tag):
+    questions = g.db.questions.find({'tags':tag})
+    questions = list(questions)
+    return render("questions.html",
+                           questions=questions,
+                           tag=tag)
 
 @app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
+@login_required
 def question_add():
     """
     Add a question to the database.
@@ -207,10 +365,6 @@ def question_add():
            render form with errors.
     PUT - Alias for POST
     """
-
-    if not hasattr(g, 'user'):
-        session['after_login'] = 'question_add'
-        return redirect(url_for('login_twitter'))
 
     if request.method in ["PUT", "POST"]:
         formdata = request.form.copy()
@@ -247,139 +401,28 @@ def question_add():
     return render("add.html", form=form)
 
 
-
-def clean_old_votes(questionId):
+@app.route("/question/<_id>/", methods=['GET'])
+def question(_id):
     """
-    Clean up extra votes on the question `questionId` for the current user.
+    Fetch question with specified `_id`.
 
     Arguments:
-    - `questionId`: QuestionId to clean up.
-    """
-    uid = ObjectId(g.user['_id'])
-    q = g.db.questions.find_one({'_id':questionId}, {'answers':1})
-    if q is None:
-        abort(404)
-    for ans in q['answers']:
-        g.db.questions.update({'_id':questionId, 'answers._id':ans['_id']},
-                              {"$pull" : {"answers.$.votes": {"user":uid}}})
-
-@app.route("/v1/question/vote/", methods=['POST','PUT'])
-def v1_vote():
-    """
-    Vote on a question.
-
-    Requires a POST or PUT with JSON dictionary containing:
-    - `_id`: ObjectId of the question to vote on.
-    - `vote`: ObjectId of answer to vote for.
+    - `_id`: QuestionId to return data on.
     """
 
-    if not hasattr(g, 'user'):
-        return access_denied()
+    try:
+        obj = g.db.questions.find_one({"_id":ObjectId(question)})
+    except InvalidId:
+        obj = None
 
-    data = request.json
-    votedata = {'user': g.user['_id']}
-    if data.get('position'):
-        votedata['position'] = data['position']
-
-    qid = ObjectId(data['_id'])
-    clean_old_votes(qid)
-    vote = ObjectId(data['vote'])
-
-    g.db.questions.update({'_id':qid, 'answers._id':vote},
-                          {'$addToSet': {'answers.$.votes': votedata}})
-
-    ret = question_dict(g.db.questions.find_one({"_id": qid}),
-                        {qid:vote})
-    ret['vote'] = vote
-
-    return jsonify(ret)
-
-
-@app.route("/v1/question/<question>", methods=['DELETE'])
-def v1_question(question):
-    """
-    CRUD method for single question.
-
-    **Currently only supports the DELETE option.**
-    """
-
-    if not hasattr(g, 'user'):
-        return access_denied()
-
-    if request.method == 'DELETE':
-        try:
-            obj = g.db.questions.find_one({"_id":ObjectId(question)})
-        except InvalidId:
-            abort(404)
-
-        if obj['owner'] == g.user['_id']:
-            g.db.questions.remove({"_id": obj['_id']})
-        else:
-            access_denied()
-    else:
+    if obj is None:
         abort(404)
 
-    return jsonify({'response': 'OK'})
-
-
-def user_answers():
-    return {q['_id']:user_answer(q['answers']) for q in
-            g.db.questions.find({"answers.votes.user": g.user['_id']},
-                                {"answers.$._id": "1"})}
-
-def user_answer(answers):
-    if len(answers) > 1:
-        app.logger.error("Answers ({0}) has multiple votes for {1}!".format(
-            ', '.join(a['_id'] for a in answers), uid))
-
-    return answers[0]['_id']
-
-
-ANSWER_KEYS = ['answer', '_id']
-
-def answer_dict(answer):
-    ret = {key:answer[key] for key in ANSWER_KEYS if key in answer}
-    if hasattr(g, 'user'):
-        ret['votes'] = len(answer.get('votes', []))
-
-    return ret
+    return str(obj)
 
 
 
-QUESTION_KEYS = ['question', '_id', 'added', 'owner']
-
-def question_dict(question, votes):
-    ret = {key:question[key] for key in QUESTION_KEYS}
-    ret['answers'] = [answer_dict(ans) for ans in question['answers']]
-
-    if question["_id"] in votes:
-        ret['vote'] = votes[question["_id"]]
-
-    return ret
-
-
-@app.route("/v1/questions/")
-def v1_questions():
-    votes = {}
-    if hasattr(g, 'user'):
-        votes = user_answers()
-
-    questions = [question_dict(q, votes) for q in g.db.questions.find().sort('added', -1)]
-
-    return jsonify(questions)
-
-
-@app.route("/<tag>/")
-def tag(tag):
-    questions = g.db.questions.find({'tags':tag})
-    questions = list(questions)
-    return render("questions.html",
-                           questions=questions,
-                           tag=tag)
-
-@app.route("/login/")
-def login():
-    return redirect(url_for('login_twitter'))
+### Twitter MumboJumbo
 
 @app.route("/login/twitter/")
 def login_twitter():
@@ -408,6 +451,7 @@ def login_twitter():
     # redirect to Twitter login page
     return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHENTICATE_URL"],
                                         request_token['oauth_token']))
+
 
 @app.route("/login/twitter/authenticated/")
 def login_twitter_authenticated():
@@ -465,27 +509,17 @@ def login_twitter_authenticated():
 
     flash("Logged in as {0}.".format(user['username']))
 
-    if 'after_login' in session:
-        return redirect(url_for(session.pop('after_login')))
+    if 'url_after_login' in session:
+        return redirect(url_for(session.pop('url_after_login')))
 
     return redirect(url_for("questions"))
 
-
-
-@app.route("/logout/")
-def logout():
-    if session.pop('user_id', None) is not None and hasattr(g, 'user'):
-        flash("{0} has been logged out.".format(g.user['username']))
-    return redirect(url_for("questions"))
 
 
 
 @app.route("/test/twitter/")
+@login_required
 def test_twitter():
-    if not hasattr(g, 'user'):
-        session['after_login'] = 'register_twitter'
-        return redirect(url_for('login_twitter'))
-
     access_token = g.user['twitter']
 
     api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
@@ -504,11 +538,9 @@ def test_twitter():
 
 
 
-@app.route("/")
-def questions():
-    return render("questions.html")
 
 
+### Server Stuff
 
 def coffeescript_paths():
     static_dir = app.root_path + app.static_url_path
