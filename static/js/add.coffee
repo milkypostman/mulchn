@@ -9,8 +9,11 @@
 #        }
 #    });
 #    
-require ['jquery'], ($) ->
-  clone_answer = (selector, maxId) ->
+String::endsWith = (suffix) ->
+  @indexOf(suffix, @length - suffix.length) isnt -1
+
+class QuestionAdd extends Backbone.View
+  clone_answer: (selector, maxId) =>
     elem = $(selector)
     
     # clone the input field
@@ -37,11 +40,9 @@ require ['jquery'], ($) ->
     # return the id we created
     newId
 
-  maxFieldId = 4
+  initialize: =>
 
-  String::endsWith = (suffix) ->
-    @indexOf(suffix, @length - suffix.length) isnt -1
-
-  newId = clone_answer(".answers-input:last", maxFieldId)
-  newId = clone_answer(".answers-input:last", maxFieldId) while newId < maxFieldId
+    maxFieldId = 4
+    newId = @clone_answer(".answers-input:last", maxFieldId)
+    newId = @clone_answer(".answers-input:last", maxFieldId) while newId < maxFieldId
 

@@ -3,7 +3,6 @@
 from bson.objectid import ObjectId, InvalidId
 from datetime import datetime
 from flask import Flask
-from flask import Config
 from flask import Response
 from flask import abort
 from flask import flash
@@ -14,8 +13,8 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
-from flask.helpers import get_root_path
 from flask.ext import wtf
+from flask.ext.assets import Environment, Bundle
 from functools import wraps
 from itertools import izip_longest
 from pymongo import Connection
@@ -32,13 +31,39 @@ import twitter
 import warnings
 import flask
 
-config = Config(get_root_path(__name__))
-config.from_object('config')
-config.from_envvar('MULCHN_SETTINGS', silent=True)
 
-app = Flask(__name__, static_folder=config.get("STATIC_FOLDER"),
-            static_url_path=config.get("STATIC_URL_PATH"))
-app.config.update(config)
+app = Flask(__name__)
+app.config.from_object('config')
+app.config.from_envvar('MULCHN_SETTINGS', silent=True)
+app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
+
+assets = Environment(app)
+
+js_app = Bundle('js/add.coffee',
+                'js/dialog.coffee',
+                'js/location.coffee',
+                'js/logindialog.coffee',
+                'js/router.coffee',
+                'js/user.coffee',
+                'js/question/model.coffee',
+                'js/question/collection.coffee',
+                'js/question/list.coffee',
+                'js/main.coffee',
+                filters='coffeescript,uglifyjs',
+                output='m.js')
+assets.register('js_app', js_app)
+
+js_frameworks = Bundle(
+    'js/lib/jquery.js',
+    'js/lib/lodash.js',
+    'js/lib/backbone.js',
+    'js/lib/bootstrap.js',
+    'js/lib/geolocation.js',
+    filters='rjsmin',
+    output='frameworks.js')
+assets.register('js_frameworks', js_frameworks)
+
+
 
 ### Forms
 
@@ -61,6 +86,7 @@ class AddForm(wtf.Form):
     tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.InputRequired()])
     question = wtf.StringField("Question", validators=[wtf.DataRequired()])
     answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
+
 
 
 
@@ -105,7 +131,7 @@ def close_mongodb(exception):
     Close up MongoDB instance.
     """
     pass
-    # del g.db
+# del g.db
 
 
 @app.before_request
@@ -142,7 +168,7 @@ def json_handler(obj):
         return unicode(obj)
     raise TypeError, \
         'Object of type {0} with value {0} is not JSON serializable'.format(
-            type(obj), repr(objc))
+        type(obj), repr(objc))
 
 
 def jsonify(data):
@@ -221,7 +247,7 @@ def clean_old_votes(questionId):
 def user_answer(answers):
     if len(answers) > 1:
         app.logger.error("Answers ({0}) has multiple votes for {1}!".format(
-            ', '.join(a['_id'] for a in answers), uid))
+                ', '.join(a['_id'] for a in answers), uid))
 
     return answers[0]['_id']
 
@@ -369,8 +395,8 @@ def tag(tag):
     questions = g.db.questions.find({'tags':tag})
     questions = list(questions)
     return render("questions.html",
-                           questions=questions,
-                           tag=tag)
+                  questions=questions,
+                  tag=tag)
 
 @app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
 @login_required
@@ -380,7 +406,7 @@ def question_add():
 
     GET - Display the Add form.
     POST - Verify form data and insert question into the database or
-           render form with errors.
+    render form with errors.
     PUT - Alias for POST
     """
 
@@ -468,7 +494,7 @@ def login_twitter():
 
     # redirect to Twitter login page
     return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHENTICATE_URL"],
-                                        request_token['oauth_token']))
+                                                 request_token['oauth_token']))
 
 
 @app.route("/login/twitter/authenticated/")
@@ -548,8 +574,8 @@ def test_twitter():
         return render(u"raw.html",
                       title=u"Twitter Data",
                       content=u"<ul>" + "".join(
-                          u"<li>{0}</li>".format(u.name) for u in api.GetFriends()
-                          ) + u"</ul>")
+                u"<li>{0}</li>".format(u.name) for u in api.GetFriends()
+                ) + u"</ul>")
     except twitter.TwitterError:
         return str("TwitterError")
 
@@ -560,36 +586,36 @@ def test_twitter():
 
 ### Server Stuff
 
-def coffeescript_paths():
-    static_dir = app.static_folder
-    return [os.path.join(path, fn)
-            for path, _, filenames in os.walk(static_dir)
-            for fn in filenames
-            if os.path.splitext(fn)[1] == '.coffee' and not
-            os.path.splitext(fn)[0].startswith('.') ]
+# def coffeescript_paths():
+#     static_dir = app.static_folder
+#     return [os.path.join(path, fn)
+#             for path, _, filenames in os.walk(static_dir)
+#             for fn in filenames
+#             if os.path.splitext(fn)[1] == '.coffee' and not
+#             os.path.splitext(fn)[0].startswith('.') ]
 
 
-def compile_coffeescript():
-    static_url_path = app.static_url_path
-    static_dir = app.root_path + app.static_folder
+# def compile_coffeescript():
+#     static_url_path = app.static_url_path
+#     static_dir = app.root_path + app.static_folder
 
-    cs_paths = coffeescript_paths()
+#     cs_paths = coffeescript_paths()
 
-    for cs_path in cs_paths:
-        js_path = os.path.splitext(cs_path)[0] + '.js'
-        js_mtime = os.path.getmtime(js_path) if os.path.isfile(js_path) else -1
+#     for cs_path in cs_paths:
+#         js_path = os.path.splitext(cs_path)[0] + '.js'
+#         js_mtime = os.path.getmtime(js_path) if os.path.isfile(js_path) else -1
 
-        cs_mtime = os.path.getmtime(cs_path)
-        if cs_mtime > js_mtime:
-            print("Compiling {0}".format(cs_path))
-            subprocess.call(['coffee', '-c', cs_path], shell=False)
+#         cs_mtime = os.path.getmtime(cs_path)
+#         if cs_mtime > js_mtime:
+#             print("Compiling {0}".format(cs_path))
+#             subprocess.call(['coffee', '-c', cs_path], shell=False)
 
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    if app.debug:
-        compile_coffeescript()
-    app.run(host="0.0.0.0", port=port, extra_files=coffeescript_paths())
+    # if app.debug:
+    #     compile_coffeescript()
+    app.run(host="0.0.0.0", port=port)
 
 
 
