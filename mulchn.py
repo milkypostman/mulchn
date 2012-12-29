@@ -50,7 +50,7 @@ js_app = Bundle('js/add.coffee',
                 'js/question/list.coffee',
                 'js/main.coffee',
                 filters='coffeescript,uglifyjs',
-                output='m.js')
+                output='js/m.js')
 assets.register('js_app', js_app)
 
 js_frameworks = Bundle(
@@ -60,7 +60,7 @@ js_frameworks = Bundle(
     'js/lib/bootstrap.js',
     'js/lib/geolocation.js',
     filters='rjsmin',
-    output='frameworks.js')
+    output='js/frameworks.js')
 assets.register('js_frameworks', js_frameworks)
 
 
