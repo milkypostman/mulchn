@@ -96,7 +96,6 @@ class AddForm(wtf.Form):
 @app.context_processor
 def inject_static_url():
     static_url = app.static_url_path
-    print static_url
     if not static_url.endswith('/'):
         static_url += '/'
     return dict(static_url=static_url)
@@ -524,31 +523,48 @@ def login_twitter_authenticated():
     # data contains our final token and secret for the user
     data = dict(urlparse.parse_qsl(content))
 
+    oauth_token = data['oauth_token']
+    oauth_token_secret = data['oauth_token_secret']
+
+    api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
+                      consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
+                      access_token_key=oauth_token,
+                      access_token_secret =oauth_token_secret)
+
+    user_twitter_data = api.VerifyCredentials().AsDict()
+
+
     # either create or update user information
     try:
-        user = g.db.users.find_one({'twitter.user_id': data['user_id']})
+        user = g.db.users.find_one({'twitter.id': user_twitter_data['id']})
         session['user_id'] = user["_id"]
-        user['twitter'] ['oauth_token']= data['oauth_token']
-        user['twitter'] ['oauth_token_secret']= data['oauth_token_secret']
+        user['twitter']['oauth_token']=oauth_token
+        user['twitter']['oauth_token_secret']=oauth_token_secret
         g.db.users.save(user)
     except TypeError:
-        user = {'username': data['screen_name'], 'twitter': data}
+        user = {'username': user_twitter_data['screen_name'], 'twitter': user_twitter_data}
         session['user_id'] = g.db.users.insert(user)
 
 
     # try to add friends
-    if 'friends' not in user['twitter']:
-        print "getting friends"
-        api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
-                          consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
-                          access_token_key = user['twitter']['oauth_token'],
-                          access_token_secret = user['twitter']['oauth_token_secret'])
+    try:
+        friendIDs = []
+        cursor = -1
+        while True:
+            data = api.GetFriendIDs(cursor=cursor)
+            friendIDs += data['ids']
+            if 'next_cursor' not in data or \
+                    data['next_cursor'] == 0 or \
+                    data['next_cursor'] == data['previous_cursor']:
+                break
+            cursor = data['next_cursor']
+        user['twitter']['friends'] = friendIDs
+        g.db.users.save(user)
+        # g.db.users.update({'_id':user['_id']}, {'$set' : {'twitter.friends': friendIDs}})
+    except twitter.TwitterError:
+        pass
 
-        try:
-            user['twitter']['friends'] = [f.AsDict() for f in api.GetFriends()]
-            g.db.users.save(user)
-        except twitter.TwitterError:
-            pass
+
 
 
     flash("Logged in as {0}.".format(user['username']))
