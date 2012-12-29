@@ -49,7 +49,7 @@ js_app = Bundle('js/add.coffee',
                 'js/question/collection.coffee',
                 'js/question/list.coffee',
                 'js/main.coffee',
-                filters='coffeescript,uglifyjs',
+                filters='coffeescript,rjsmin',
                 output='js/m.js')
 assets.register('js_app', js_app)
 
