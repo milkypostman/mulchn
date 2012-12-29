@@ -20,10 +20,10 @@
 }
 
 
-
-.slicklist > li > .slicklist > li {
+.slicklist > li .slicklist > li {
     border: none;
-    padding: 10px;
+    margin: 15px 0;
+    padding: 0px;
 }
 
 

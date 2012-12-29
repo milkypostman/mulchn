@@ -4,13 +4,16 @@
   {{ super() }}
   <script type="text/html" id="question-template">
     <div class="question-header">
-      <span class="question-text"><%= question.get("question") %></span>
-      <% if (question.get("vote")) { %>
-      <div class="vote-count pull-right"><%= question.votes() %></div>
-      <div class="vote-count-prefix pull-right">results:</div>
-      <% } else { %>
-      <div class="vote-info pull-right">no choice selected</div>
-      <% } %>
+      
+      <div class="question-text pull-left"><%= question.get("question") %></div>
+      <div class="pull-right question-vote-info">
+        <% if (question.get("vote")) { %>
+        <span class="vote-count-prefix">results:</span>
+        <span class="vote-count"><%= question.votes() %></span>
+        <% } else { %>
+        <span class="vote-info">no choice selected</span>
+        <% } %>
+      </div>
     </div>
     <div class="question-rest" <% if (active) { %>style="display: block;"<% } %>>
       <ul class="answers slicklist" >
@@ -18,14 +21,34 @@
            <li class="answer <% if (answer._id == question.get("vote")) { %>vote<% } %>" id="<%= answer._id %>">
              <i class="icon-ok"></i> <%= answer.answer %>
              <% if (question.get("vote")) { %>
-             <div class="vote-count pull-right"><%= answer.votes | 0 %></div>
-             <div class="vote-count-prefix pull-right">.</div>
-             <div class="vote-percent pull-right"><%= Math.round(answer.votes / question.votes() * 100) %>%</div>
+             <div class="pull-right">
+               <span class="vote-percent"><%= Math.round(answer.votes / question.votes() * 100) %>%</span>
+               <span class="vote-count-prefix">.</span>
+               <span class="vote-count"><%= answer.votes | 0 %></span>
+             </div>
              <% } %>
            </li>
            <% } %>
       </ul>
-
+      <% if (question.get("vote")) { %>
+      <div class="friend-votes">
+        <div class="friend-votes-header">Friend Votes</div>
+        <ul class="answers" >
+          <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
+             <li class="friend-answer" id="friend_<%= answer._id %>">
+               <%= answer.answer %>
+               <% if (question.get("vote")) { %>
+               <div class="pull-right">
+                 <span class="vote-percent"><%= Math.round(answer.friend_votes / question.friend_votes() * 100) %>%</span>
+                 <span class="vote-count-prefix">.</span>
+                 <span class="vote-count"><%= answer.friend_votes | 0 %></span>
+               </div>
+               <% } %>
+             </li>
+             <% } %>
+        </ul>
+      </div>
+      <% } %>
       <div class="answers-footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
     </div>
   </script>

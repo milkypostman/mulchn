@@ -255,11 +255,15 @@ def user_answers():
             g.db.questions.find({"answers.votes.user": g.user['_id']},
                                 {"answers.$._id": "1"})}
 
+
 ANSWER_KEYS = ['answer', '_id']
 def answer_dict(answer):
     ret = {key:answer[key] for key in ANSWER_KEYS if key in answer}
     if hasattr(g, 'user'):
-        ret['votes'] = len(answer.get('votes', []))
+        votes = answer.get('votes', [])
+        ret['votes'] = len(votes)
+        ret['friend_votes'] = len(set(g.user.get('friends')).intersection(
+                    [v['user'] for v in votes]))
 
     return ret
 
@@ -531,7 +535,11 @@ def login_twitter_authenticated():
                       access_token_key=oauth_token,
                       access_token_secret =oauth_token_secret)
 
-    user_twitter_data = api.VerifyCredentials().AsDict()
+    try:
+        user_twitter_data = api.VerifyCredentials().AsDict()
+    except twitter.TwitterError:
+        flash("Cannot validate Twitter credentials.")
+        return redirect(url_for("questions"))
 
 
     # either create or update user information
@@ -560,10 +568,12 @@ def login_twitter_authenticated():
             cursor = data['next_cursor']
         user['twitter']['friends'] = friendIDs
         g.db.users.save(user)
+
+        user['friends'] = [u['_id'] for u in g.db.users.find({'twitter.id': {"$in": friendIDs}})]
+        g.db.users.save(user)
         # g.db.users.update({'_id':user['_id']}, {'$set' : {'twitter.friends': friendIDs}})
     except twitter.TwitterError:
         pass
-
 
 
 

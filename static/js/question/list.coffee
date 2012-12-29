@@ -7,6 +7,7 @@ class QuestionItem extends Backbone.View
   events: {
     "click .answer": "vote"
     "click .delete": "delete"
+    "click .question-rest": "nothing"
   }
 
   active: false
@@ -32,6 +33,8 @@ class QuestionItem extends Backbone.View
     }).render()
     false
 
+
+  nothing: => false
 
   vote: (event) =>
     answer = event.currentTarget.id

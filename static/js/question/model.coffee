@@ -8,3 +8,8 @@ class QuestionModel extends Backbone.Model
     _.reduce(@get('answers')
         (t, a) -> t + (a.votes | 0)
         0)
+
+  friend_votes: ->
+    _.reduce(@get('answers')
+        (t, a) -> t + (a.friend_votes | 0)
+        0) | 1
