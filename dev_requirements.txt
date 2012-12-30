@@ -1,15 +1,7 @@
 Flask
+Flask-Assets
 Flask-WTF
-Jinja2
-WTForms
-Werkzeug
-distribute
 gunicorn
-httplib2
-oauth2
 pymongo
 python-dateutil
 python-twitter
-simplejson
-six
-wsgiref
