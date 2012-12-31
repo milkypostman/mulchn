@@ -3,10 +3,9 @@
 {% block content %}
   {{ super() }}
   <script type="text/html" id="question-template">
-    <div class="question-header relativerow">
-      <div class="question-text"><%= question.get("question") %></div>
+    <div class="header">
       <% if (question.get("vote")) { %>
-      <div class="question-vote-info pull-right">
+      <div class="vote-info pull-right">
         <div class="fill">
           <div class="label" style="width: 100%">
             <span class="vote-count-prefix">results:</span>
@@ -15,56 +14,57 @@
         </div>
       </div>
       <% } else { %>
-      <div class="question-vote-null pull-right">
+      <div class="vote-null pull-right">
         <div class="fill">
-          <div class="label label-blue" style="width: 100%">
+          <div class="label" style="width: 100%">
             <span class="vote-count-null">no choice selected</span>
           </div>
         </div>
       </div>
       <% } %>
+      <div class="text"><%= question.get("question") %></div>
     </div>
-    <div class="question-rest" <% if (active) { %>style="display: block;"<% } %>>
+    <div class="rest" <% if (active) { %>style="display: block;"<% } %>>
       <ul class="answers slicklist" >
         <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
            <li class="answer <% if (answer._id == question.get("vote")) { %>vote<% } %>" id="<%= answer._id %>">
-             <div class="relativerow">
-               <div class="answer-text"><i class="icon-ok"></i> <%= answer.answer %></div>
-               <% if (question.get("vote")) { %>
-               <div class="pull-right">
-                 {# <span class="vote-percent"><%= Math.round(answer.votes / question.votes() * 100) %>%</span> #}
-                 {# <span class="vote-count-prefix">.</span> #}
-                 <div class="fill">
-                   <div class="label" style="width: <%= Math.round(answer.votes / question.votes() * 100) %>%">
-                     <span class="vote-count"><%= answer.votes | 0 %></span>
-                   </div>
+             <div class="icon pull-left"><i class="icon-ok"></i></div>
+             <% if (question.get("vote")) { %>
+             <div class="pull-right">
+               <div class="fill">
+                 <div class="label" style="width: <%= Math.round(answer.votes / question.votes() * 100) %>%">
+                   <span class="vote-count"><%= answer.votes | 0 %></span>
                  </div>
                </div>
-               <% } %>
              </div>
+             <% } %>
+             <div class="text"><%= answer.answer %></div>
            </li>
            <% } %>
       </ul>
       <% if (question.get("vote")) { %>
       <div class="friend-votes">
         <div class="friend-votes-header">Friend Votes</div>
-        <ul class="answers" >
+        <ul class="answers slicklist" >
           <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
              <li class="friend-answer" id="friend_<%= answer._id %>">
-               <%= answer.answer %>
                <% if (question.get("vote")) { %>
                <div class="pull-right">
-                 <span class="vote-percent"><%= Math.round(answer.friend_votes / question.friend_votes() * 100) %>%</span>
-                 <span class="vote-count-prefix">.</span>
-                 <span class="vote-count"><%= answer.friend_votes | 0 %></span>
+                 <div class="fill">
+                   <div class="label"
+                        style="width: <%= Math.round(answer.friend_votes / question.friend_votes() * 100) %>%">
+                        <span class="vote-count"><%= answer.friend_votes | 0 %></span>
+                   </div>
+                 </div>
                </div>
                <% } %>
+               <div class="text"><%= answer.answer %></div>
              </li>
              <% } %>
         </ul>
       </div>
       <% } %>
-      <div class="answers-footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
+      <div class="footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
     </div>
   </script>
 

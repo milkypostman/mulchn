@@ -7,7 +7,7 @@ class QuestionItem extends Backbone.View
   events: {
     "click .answer": "vote"
     "click .delete": "delete"
-    "click .question-rest": "nothing"
+    "click .question .rest": "nothing"
   }
 
   active: false
@@ -79,12 +79,12 @@ class QuestionItem extends Backbone.View
   collapse: =>
     @active = false
     @$el.removeClass("active")
-    @$el.children(".question-rest").slideUp()
+    @$el.children(".question .rest").slideUp()
 
   expand: =>
     @active = true
     @$el.addClass("active")
-    @$el.children(".question-rest").slideDown()
+    @$el.children(".question .rest").slideDown()
 
   render: =>
     @$el.html(@questionTmpl({

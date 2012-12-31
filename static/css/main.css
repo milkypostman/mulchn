@@ -1,0 +1,228 @@
+body {
+  background: #fff;
+  padding-top: 60px;
+}
+.container {
+  max-width: 600px;
+}
+.fill {
+  margin-bottom: 0;
+  width: 100px;
+  height: 20px;
+  text-align: right;
+  overflow: visible;
+  direction: rtl;
+}
+.fill .label {
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  padding-left: 0;
+  padding-right: 0;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.fill .label,
+.fill .label-disabled {
+  background-color: #d2d2d2;
+  background-image: -moz-linear-gradient(top, #dfdfdf, #bebebe);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#dfdfdf), to(#bebebe));
+  background-image: -webkit-linear-gradient(top, #dfdfdf, #bebebe);
+  background-image: -o-linear-gradient(top, #dfdfdf, #bebebe);
+  background-image: linear-gradient(to bottom, #dfdfdf, #bebebe);
+  background-repeat: repeat-x;
+}
+.fill .label-warning {
+  background-color: #faa732;
+  background-image: -moz-linear-gradient(top, #fbb450, #f89406);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fbb450), to(#f89406));
+  background-image: -webkit-linear-gradient(top, #fbb450, #f89406);
+  background-image: -o-linear-gradient(top, #fbb450, #f89406);
+  background-image: linear-gradient(to bottom, #fbb450, #f89406);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffbb450', endColorstr='#fff89406', GradientType=0);
+}
+.fill .label-info {
+  background-color: #0e90d2;
+  background-image: -moz-linear-gradient(top, #149bdf, #0480be);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#149bdf), to(#0480be));
+  background-image: -webkit-linear-gradient(top, #149bdf, #0480be);
+  background-image: -o-linear-gradient(top, #149bdf, #0480be);
+  background-image: linear-gradient(to bottom, #149bdf, #0480be);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de', endColorstr='#ff339bb9', GradientType=0);
+}
+.fill .label-success {
+  background-color: #5eb95e;
+  background-image: -moz-linear-gradient(top, #62c462, #57a957);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#62c462), to(#57a957));
+  background-image: -webkit-linear-gradient(top, #62c462, #57a957);
+  background-image: -o-linear-gradient(top, #62c462, #57a957);
+  background-image: linear-gradient(to bottom, #62c462, #57a957);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462', endColorstr='#ff57a957', GradientType=0);
+}
+.question {
+  border-top: none;
+  background: #eee;
+  background: #fff;
+}
+.question:hover {
+  background: #e0e0e0;
+  cursor: pointer;
+}
+.question .vote-count-prefix {
+  color: gray;
+}
+.question .vote-count {
+  color: black;
+}
+.question .vote-null .fill {
+  text-align: center;
+}
+.question .fill {
+  height: 100%;
+}
+.question .vote-null .fill .label {
+  background-color: #0e90d2;
+  background-image: -moz-linear-gradient(top, #149bdf, #0480be);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#149bdf), to(#0480be));
+  background-image: -webkit-linear-gradient(top, #149bdf, #0480be);
+  background-image: -o-linear-gradient(top, #149bdf, #0480be);
+  background-image: linear-gradient(to bottom, #149bdf, #0480be);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de', endColorstr='#ff339bb9', GradientType=0);
+}
+.question .text {
+  margin-right: 110px;
+}
+.question .header .text {
+  font-size: 105%;
+  font-weight: bold;
+}
+.question .rest {
+  display: none;
+}
+.question .vote-info,
+.question .vote-null {
+  text-align: right;
+  whitespace: nowrap;
+}
+.question.active {
+  background: #ededed;
+  cursor: default;
+}
+.question.active .fill .label {
+  background-color: #faa732;
+  background-image: -moz-linear-gradient(top, #fbb450, #f89406);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fbb450), to(#f89406));
+  background-image: -webkit-linear-gradient(top, #fbb450, #f89406);
+  background-image: -o-linear-gradient(top, #fbb450, #f89406);
+  background-image: linear-gradient(to bottom, #fbb450, #f89406);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#fffbb450', endColorstr='#fff89406', GradientType=0);
+}
+.question.active .vote-count {
+  color: black;
+}
+.question.active .vote-count-prefix {
+  color: navy;
+}
+.answer {
+  position: relative;
+  padding-right: 0 !important;
+}
+.answer i {
+  opacity: 0;
+}
+.answer .text {
+  margin-left: 20px;
+}
+.answer:hover {
+  cursor: pointer;
+}
+.answer:hover i {
+  opacity: .5;
+}
+.answer.working i {
+  background: url("/static/img/working.gif");
+  background-size: 14px 14px;
+  opacity: 1.0;
+}
+.answer.vote i {
+  opacity: 1.0;
+}
+.answers .footer {
+  text-align: right;
+}
+.answers .icon-trash {
+  opacity: .5;
+  text-size: 90%;
+}
+.question.active .friend-answer .fill .label {
+  background-color: #5eb95e;
+  background-image: -moz-linear-gradient(top, #62c462, #57a957);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#62c462), to(#57a957));
+  background-image: -webkit-linear-gradient(top, #62c462, #57a957);
+  background-image: -o-linear-gradient(top, #62c462, #57a957);
+  background-image: linear-gradient(to bottom, #62c462, #57a957);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462', endColorstr='#ff57a957', GradientType=0);
+}
+.relativerow {
+  position: relative;
+}
+.relativerow .pull-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.relativerow .pull-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.vote-count {
+  margin-right: 5px;
+}
+.vote-count-null {
+  font-size: 80%;
+  color: white;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+.vote-count,
+.vote-count-prefix {
+  margin-left: 5px;
+}
+.friend-votes {
+  border-top: 1px dashed black;
+  margin-top: 20px;
+}
+.friend-votes-header {
+  font-weight: bold;
+  margin-top: 10px;
+}
+@media (max-width: 980px) {
+  .navbar-fixed-top .navbar-inner {
+    padding: 0px;
+  }
+  .navbar-fixed-top {
+    margin-left: 0px;
+    margin-right: 0px;
+    position: fixed;
+  }
+}
+@media (max-width: 768px) {
+  body {
+    padding: 0px;
+  }
+  .container {
+    max-width: none;
+    width: auto;
+    /* margin: 0; */
+  
+  }
+  .navbar-fixed-top {
+    position: static;
+    margin-bottom: 0;
+  }
+}

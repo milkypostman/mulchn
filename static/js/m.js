@@ -373,7 +373,7 @@ QuestionItem = (function(_super) {
   QuestionItem.prototype.events = {
     "click .answer": "vote",
     "click .delete": "delete",
-    "click .question-rest": "nothing"
+    "click .question .rest": "nothing"
   };
 
   QuestionItem.prototype.active = false;
@@ -468,13 +468,13 @@ QuestionItem = (function(_super) {
   QuestionItem.prototype.collapse = function() {
     this.active = false;
     this.$el.removeClass("active");
-    return this.$el.children(".question-rest").slideUp();
+    return this.$el.children(".question .rest").slideUp();
   };
 
   QuestionItem.prototype.expand = function() {
     this.active = true;
     this.$el.addClass("active");
-    return this.$el.children(".question-rest").slideDown();
+    return this.$el.children(".question .rest").slideDown();
   };
 
   QuestionItem.prototype.render = function() {

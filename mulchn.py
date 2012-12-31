@@ -39,6 +39,11 @@ app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
 
 assets = Environment(app)
 
+css_main = Bundle('css/main.less',
+                  filters="less",
+                  output="css/main.css")
+assets.register('css_main', css_main)
+
 js_app = Bundle('js/add.coffee',
                 'js/dialog.coffee',
                 'js/location.coffee',

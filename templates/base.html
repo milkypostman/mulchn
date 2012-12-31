@@ -2,65 +2,67 @@
 <html lang="en">
   <head>
     {% block head %}
-    <title>{% block title %}{% endblock %} : Mulchn</title>
-    {% block css %}
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{ static_url }}css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ static_url }}css/slicklist.css" rel="stylesheet">
-    <link href="{{ static_url }}css/site.css" rel="stylesheet">
-    {% endblock css %}
+      <title>{% block title %}{% endblock %} : Mulchn</title>
+      {% block css %}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link href="{{ static_url }}css/bootstrap.css" rel="stylesheet" />
+        <link href="{{ static_url }}css/slicklist.css" rel="stylesheet" />
+        {% assets "css_main" %}
+          <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}" />
+        {% endassets %}
+      {% endblock css %}
     {% endblock head %}
   </head>
   <body>
     <div id="container" class="container">
       {% block container %}
-      {% block navbar %}
-      <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="navbar-inner">
-          <div class="container">
-            <a class="brand" href="/">Mulchn</a>
-            <ul class="nav">
-              <li><a class="" href="{{ url_for('question_add') }}">+</a></li>
-            </ul>
-            <ul class="nav pull-right">
-            {% if user %}
-            <li><a href="">{{ user['username'] }}</a></li>
-            <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
-            {% else %}
-            <li><a class="" href="{{ url_for('login_twitter') }}">login</a></li>
-            {% endif %}
-            </ul>
+        {% block navbar %}
+          <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+              <div class="container">
+                <a class="brand" href="/">Mulchn</a>
+                <ul class="nav">
+                  <li><a class="" href="{{ url_for('question_add') }}">+</a></li>
+                </ul>
+                <ul class="nav pull-right">
+                  {% if user %}
+                    <li><a href="">{{ user['username'] }}</a></li>
+                    <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
+                  {% else %}
+                    <li><a class="" href="{{ url_for('login_twitter') }}">login</a></li>
+                  {% endif %}
+                </ul>
+              </div>
+            </div>
+          </div>
+        {% endblock navbar %}
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-info">
+                <button type="button" class="close" data-dismiss="alert">x</button>
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <div class="row-fluid">
+          <div class="span12">
+            <div id="content">
+              {% block content %}
+                <center><img src="{{ static_url }}img/working.gif"></img></center>
+              {% endblock %}
+            </div>
           </div>
         </div>
-      </div>
-      {% endblock navbar %}
-      {% with messages = get_flashed_messages() %}
-      {% if messages %}
-      {% for message in messages %}
-      <div class="alert alert-info">
-        <button type="button" class="close" data-dismiss="alert">x</button>
-        {{ message }}
-      </div>
-      {% endfor %}
-      {% endif %}
-      {% endwith %}
-      <div class="row-fluid">
-        <div class="span12">
-          <div id="content">
-          {% block content %}
-          <center><img src="{{ static_url }}img/working.gif"></img></center>
-          {% endblock %}
-          </div>
-        </div>
-      </div>
       {% endblock container %}
     </div>
     {% block js %}
       {% assets "js_frameworks" %}
-      <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+        <script type="text/javascript" src="{{ ASSET_URL }}"></script>
       {% endassets %}
       {% assets "js_app" %}
-      <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+        <script type="text/javascript" src="{{ ASSET_URL }}"></script>
       {% endassets %}
     {% endblock js %}
     {% if user %}
