@@ -22,7 +22,7 @@ body {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .fill .label,
-.fill .label-disabled {
+.fill .label-muted {
   background-color: #d2d2d2;
   background-image: -moz-linear-gradient(top, #dfdfdf, #bebebe);
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#dfdfdf), to(#bebebe));
@@ -92,12 +92,9 @@ body {
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de', endColorstr='#ff339bb9', GradientType=0);
 }
-.question .text {
+.question .header h4 {
+  margin: 0;
   margin-right: 110px;
-}
-.question .header .text {
-  font-size: 105%;
-  font-weight: bold;
 }
 .question .rest {
   display: none;
@@ -127,34 +124,38 @@ body {
 .question.active .vote-count-prefix {
   color: navy;
 }
-.answer {
-  position: relative;
-  padding-right: 0 !important;
-}
-.answer i {
+.rest > .answers .answer i {
   opacity: 0;
 }
-.answer .text {
-  margin-left: 20px;
-}
-.answer:hover {
+.rest > .answers .answer:hover {
   cursor: pointer;
+  color: #953b39;
+  color: #b94a48;
+  color: #3a87ad;
+  color: #2d6987;
 }
-.answer:hover i {
+.rest > .answers .answer:hover i {
   opacity: .5;
 }
-.answer.working i {
+.rest > .answers .answer.working i {
   background: url("/static/img/working.gif");
   background-size: 14px 14px;
   opacity: 1.0;
 }
-.answer.vote i {
+.rest > .answers .answer.vote i {
   opacity: 1.0;
 }
-.answers .footer {
+.rest > .answers .answer {
+  position: relative;
+  padding-right: 0 !important;
+}
+.rest > .answers .answer p {
+  margin-left: 20px;
+}
+.rest > .answers .answers .footer {
   text-align: right;
 }
-.answers .icon-trash {
+.rest > .answers .answers .icon-trash {
   opacity: .5;
   text-size: 90%;
 }
@@ -186,15 +187,18 @@ body {
 .friends {
   border-top: 1px dashed black;
   margin-top: 30px;
-  padding-top: 10px;
-  padding-left: 20px;
+  padding-left: 10px;
 }
-.friends .answer .text {
-  margin-left: 0px;
+.friends .answer p {
+  margin-left: 10px;
 }
 .friends .header {
   font-weight: bold;
   margin-top: 10px;
+}
+.friends .header h5 {
+  color: #356635;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .question.active .friends .answer .fill .label {
   background-color: #5eb95e;

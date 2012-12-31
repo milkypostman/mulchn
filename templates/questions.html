@@ -22,7 +22,7 @@
         </div>
       </div>
       <% } %>
-      <div class="text"><%= question.get("question") %></div>
+      <h4><%= question.get("question") %></h4>
     </div>
     <div class="rest" <% if (active) { %>style="display: block;"<% } %>>
       <ul class="answers slicklist" >
@@ -38,16 +38,16 @@
                </div>
              </div>
              <% } %>
-             <div class="text"><%= answer.answer %></div>
+             <p><%= answer.answer %></p>
            </li>
            <% } %>
       </ul>
       <% if (question.get("vote")) { %>
-      <div class="friend-votes">
-        <div class="friend-votes-header">Friend Votes</div>
+      <div class="friends">
+        <div class="header"><h5>Votes among your friends</h5></div>
         <ul class="answers slicklist" >
           <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
-             <li class="friend-answer" id="friend_<%= answer._id %>">
+             <li class="answer" id="friend_<%= answer._id %>">
                <% if (question.get("vote")) { %>
                <div class="pull-right">
                  <div class="fill">
@@ -58,7 +58,7 @@
                  </div>
                </div>
                <% } %>
-               <div class="text"><%= answer.answer %></div>
+               <p><%= answer.answer %></p>
              </li>
              <% } %>
         </ul>

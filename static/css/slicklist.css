@@ -13,7 +13,6 @@
 }
 
 .slicklist > li.active {
-    /* padding-bottom: 0; */
 }
 
 .slicklist > li.active:hover {
@@ -27,10 +26,12 @@
 }
 
 
-.slicklist > li > .slicklist > li:first-child {
+.slicklist > li .slicklist {
     margin-top: 20px;
 }
 
+.slicklist > li .slicklist > li:last-child {
+}
 
 .slicklist > li > .slicklist > li:hover {
 }

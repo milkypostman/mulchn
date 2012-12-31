@@ -32,7 +32,7 @@ body {
 
 
     .label,
-    .label-disabled {
+    .label-muted {
         background-color: #d2d2d2;
         background-image: -moz-linear-gradient(top, #dfdfdf, #bebebe);
         background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#dfdfdf), to(#bebebe));
@@ -105,15 +105,10 @@ body {
         .fill .label-info;
     }
 
-    .text {
+    .header h4 {
+        margin: 0;
         margin-right: 110px;
     }
-
-    .header .text {
-        font-size: 105%;
-        font-weight: bold;
-    }
-
 
     .rest {
         display: none;
@@ -146,48 +141,58 @@ body {
 }
 
 
-.answer {
-    position: relative;
-    padding-right: 0 !important;
 
-    i {
-        opacity: 0;
+.rest > .answers {
+
+    .answer {
+        i {
+            opacity: 0;
+        }
+
+        &:hover {
+            cursor: pointer;
+            color: #953b39;
+            color: #b94a48;
+            color: #3a87ad;
+            color: #2d6987;
+        }
+
+        &:hover i {
+            opacity: .5;
+        }
+        
+
+        &.working i {
+            background: url("/static/img/working.gif");
+            background-size: 14px 14px;
+            opacity: 1.0;
+        }
+
+        &.vote i {
+            opacity: 1.0;
+        }
     }
 
-    .text {
-        margin-left: 20px;
+    .answer {
+        position: relative;
+        padding-right: 0 !important;
+
+        p {
+            margin-left: 20px;
+        }
+
     }
 
-    &:hover {
-        cursor: pointer;
-    }
+    .answers {
+        .footer {
+            text-align: right;
+        }
+        .icon-trash {
+            opacity: .5;
+            text-size: 90%;
+        }
 
-    &:hover i {
-        opacity: .5;
     }
-    
-
-    &.working i {
-        background: url("/static/img/working.gif");
-        background-size: 14px 14px;
-        opacity: 1.0;
-    }
-
-    &.vote i {
-        opacity: 1.0;
-    }
-
-}
-
-.answers {
-    .footer {
-        text-align: right;
-    }
-    .icon-trash {
-        opacity: .5;
-        text-size: 90%;
-    }
-
 }
 
 
@@ -228,18 +233,24 @@ body {
 
 .friends {
     border-top: 1px dashed black;
-    margin-top: 20px;
-    padding-top: 10px;
-    padding-left: 20px;
+    margin-top: 30px;
+    padding-left: 10px;
 
-    .answer .text {
-        margin-left: 0px;
+
+    .answer p {
+        margin-left: 10px;
     }
 
     .header {
         font-weight: bold;
         margin-top: 10px;
+        h5 {
+            color: #356635;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
     }
+
+    
 }
 
 .question.active .friends .answer .fill .label {

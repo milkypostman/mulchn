@@ -5,9 +5,9 @@ class QuestionItem extends Backbone.View
 
 
   events: {
-    "click .answer": "vote"
-    "click .delete": "delete"
-    "click .question .rest": "nothing"
+    "click .rest>.answers>.answer": "vote"
+    "click .answers .delete": "delete"
+    "click .rest": "nothing"
   }
 
   active: false
