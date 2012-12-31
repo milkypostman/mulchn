@@ -190,10 +190,6 @@ body {
 
 }
 
-.question.active .friend-answer .fill .label {
-    .fill .label-success;
-}
-
 
 .relativerow {
     position: relative;
@@ -230,25 +226,26 @@ body {
     margin-left: 5px;
 }
 
-.friend-votes {
+.friends {
     border-top: 1px dashed black;
     margin-top: 20px;
-    // padding-left: 10px;
+    padding-top: 10px;
+    padding-left: 20px;
 
-    // .answer-text {
-    //     margin-left: 0px;
-    // }
+    .answer .text {
+        margin-left: 0px;
+    }
 
-    // ul {
-    //     list-style-type: none;
-    //     margin-left: 0px;
-    // }
+    .header {
+        font-weight: bold;
+        margin-top: 10px;
+    }
 }
 
-.friend-votes-header {
-    font-weight: bold;
-    margin-top: 10px;
+.question.active .friends .answer .fill .label {
+    .fill .label-success;
 }
+
 
 
 
