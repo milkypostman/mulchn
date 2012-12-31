@@ -327,9 +327,12 @@ def v1_vote():
         votedata['position'] = data['position']
 
     qid = ObjectId(data['_id'])
-    clean_old_votes(qid)
     vote = ObjectId(data['vote'])
 
+    if not g.db.questions.find({'_id':qid, 'answers._id':vote}):
+        abort(404)
+
+    clean_old_votes(qid)
     g.db.questions.update({'_id':qid, 'answers._id':vote},
                           {'$addToSet': {'answers.$.votes': votedata}})
 
