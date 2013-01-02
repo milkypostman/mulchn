@@ -19,5 +19,4 @@ class Location
 
     instance
 
-Location.getInstance()
-  
+Location = Location.getInstance()
