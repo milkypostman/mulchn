@@ -114,7 +114,7 @@ class QuestionItem extends Backbone.View
       .append("g")
       .attr("id", "states");
 
-    radius = 3
+    radius = 4
     strokewidth = 1.5
     centered = null
     r = radius

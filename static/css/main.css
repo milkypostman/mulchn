@@ -215,6 +215,7 @@ path.state {
 }
 path.state.active {
   fill: #d1d1dd;
+  fill: #d0d0d8;
 }
 path.state:hover {
   fill: #8e8ecc;
