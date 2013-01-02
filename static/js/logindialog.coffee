@@ -2,9 +2,9 @@ class LoginDialog extends Dialog
 
   title: "Login Required"
   content: "A valid login is required."
-  primaryButtonText: "Login"
+  primaryButtonText: "Login via Twitter"
 
   ok: =>
-    window.location.href = "/login/"
+    window.location.href = "/login/twitter/"
       
       
