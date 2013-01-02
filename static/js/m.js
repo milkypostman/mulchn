@@ -486,18 +486,21 @@ QuestionItem = (function(_super) {
   };
 
   QuestionItem.prototype.expand = function(callback) {
-    var rest,
+    var div, divp, rest,
       _this = this;
     this.active = true;
     this.$el.addClass("active");
     rest = this.$el.children(".rest");
     rest.slideDown(callback);
-    if (this.model.get("vote")) {
+    if (this.model.get("vote") && this.model.get("geo").length > 0) {
+      div = rest.children(".map");
+      divp = div.children("p");
+      divp.html('loading map data...');
       return d3.json("/static/us.json", function(us) {
-        var centered, click, div, g, geo, height, path, projection, radius, svg, width;
-        div = rest.children(".map");
+        var centered, click, g, geo, height, path, projection, radius, strokewidth, svg, width;
+        divp.html("");
         width = rest.innerWidth() * .8;
-        height = width * 2 / 3;
+        height = width * 1 / 2;
         projection = d3.geo.albersUsa().scale(width).translate([0, 0]);
         path = d3.geo.path().projection(projection);
         svg = d3.select(div.get()[0]).append("svg").attr("width", width).style("display", "none").attr("height", height);
@@ -505,13 +508,15 @@ QuestionItem = (function(_super) {
         _this.map = svg[0];
         geo = _this.model.get("geo");
         centered = null;
-        radius = 2;
+        radius = 3;
+        strokewidth = 1.5;
         click = function(d) {
-          var bounds, centroid, hh, k, r, ww, x, xk, y, yk;
+          var bounds, centroid, hh, k, r, spd, trans, ww, x, xk, y, yk;
           x = 0;
           y = 0;
           k = 1;
           r = radius;
+          spd = 1200;
           if (d && centered !== d) {
             centroid = path.centroid(d);
             x = -centroid[0];
@@ -523,6 +528,7 @@ QuestionItem = (function(_super) {
             yk = height / (hh * 1.1);
             k = Math.min(xk, yk);
             r = radius / k;
+            spd = 600;
             centered = d;
           } else {
             centered = null;
@@ -530,14 +536,15 @@ QuestionItem = (function(_super) {
           g.selectAll("path").classed("active", centered && function(d) {
             return d === centered;
           });
-          return g.transition().duration(1000).attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")").selectAll("path").style("stroke-width", "" + (1.5 / k) + "px").selectAll("circle.dot").attr("r", r);
+          trans = g.transition().duration(1000).attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")").selectAll("path.state").style("stroke-width", "" + (strokewidth / k) + "px");
+          return g.selectAll("circle.dot").transition().duration(spd).attr("r", r);
         };
-        g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "1.5px").attr("class", "state").attr("d", path).on("click", click);
+        g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "" + strokewidth + "px").attr("class", "state").attr("d", path).on("click", click);
         g.selectAll("circle").data(geo).enter().append("circle").attr("class", "dot").attr("cx", function(d) {
           return path.centroid(d)[0];
         }).attr("cy", function(d) {
           return path.centroid(d)[1];
-        }).attr("r", 2);
+        }).attr("r", radius);
         return $("svg").slideDown('slow');
       });
     }

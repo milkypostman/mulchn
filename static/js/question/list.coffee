@@ -90,14 +90,18 @@ class QuestionItem extends Backbone.View
     rest = @$el.children(".rest")
     rest.slideDown(callback)
 
-    if @model.get("vote")
+    if @model.get("vote") and @model.get("geo").length > 0
       
+      div = rest.children(".map")
+      divp = div.children("p")
+      divp.html('loading map data...')
+
       d3.json("/static/us.json", (us) =>
 
-        div = rest.children(".map")
-
+        divp.html("")
+        
         width=rest.innerWidth()*.8
-        height=width*2/3
+        height=width*1/2
 
         projection = d3.geo.albersUsa()
           .scale(width)
@@ -117,18 +121,18 @@ class QuestionItem extends Backbone.View
           .attr("id", "states");
 
         @map = svg[0]
-
         geo = @model.get("geo")
-
         centered = null
 
-        radius = 2
+        radius = 3
+        strokewidth = 1.5
 
         click = (d) ->
           x = 0
           y = 0
           k = 1
           r = radius
+          spd = 1200
 
           if (d && centered != d) 
             centroid = path.centroid(d)
@@ -151,6 +155,7 @@ class QuestionItem extends Backbone.View
 
             k = Math.min(xk, yk)
             r = radius / k
+            spd = 600
             
             centered = d;
           else
@@ -158,31 +163,36 @@ class QuestionItem extends Backbone.View
           
 
           g.selectAll("path")
-              .classed("active", centered && (d) -> d == centered )
+            .classed("active", centered && (d) -> d == centered )
+  
+          trans = g.transition()
+            .duration(1000)
+            .attr("transform", "scale(#{k})translate(#{x},#{y})")
+            .selectAll("path.state")
+            .style("stroke-width", "#{strokewidth / k}px")
 
-          g.transition()
-              .duration(1000)
-              .attr("transform", "scale(#{k})translate(#{x},#{y})")
-              .selectAll("path")
-              .style("stroke-width", "#{1.5 / k}px")
-              .selectAll("circle.dot")
-              .attr("r", r)
+          g.selectAll("circle.dot")
+            .transition()
+            .duration(spd)
+            .attr("r", r)
+            
 
 
         g.selectAll("path")
           .data(topojson.object(us, us.objects.states).geometries)
           .enter().append("path")
-          .style("stroke-width", "1.5px")
+          .style("stroke-width", "#{strokewidth}px")
           .attr("class", "state")
           .attr("d", path)
           .on("click", click)
+
         g.selectAll("circle")
           .data(geo)
           .enter().append("circle")
           .attr("class", "dot")
           .attr("cx", (d) -> path.centroid(d)[0])
           .attr("cy", (d) -> path.centroid(d)[1])
-          .attr("r", 2)
+          .attr("r", radius)
 
         $("svg").slideDown('slow')
               

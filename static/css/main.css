@@ -213,10 +213,13 @@ body {
 path.state {
   fill: #ccc;
   stroke: #fff;
-  stroke-width: .5px;
+}
+path.state.active {
+  fill: #999;
 }
 path.state:hover {
-  fill: red;
+  fill: #8e8ecc;
+  z-index: 100;
 }
 path.bounds {
   fill: none;
@@ -228,11 +231,16 @@ rect.boxer {
 }
 circle.dot {
   radius: 20;
-  fill: #000;
+  fill: #f00;
   opacity: .5;
 }
 .map {
   text-align: center;
+}
+.map p {
+  color: gray;
+  margin-top: 20px;
+  font-style: italic;
 }
 @media (max-width: 980px) {
   .navbar-fixed-top .navbar-inner {

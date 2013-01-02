@@ -262,9 +262,12 @@ path {
     &.state {
         fill: #ccc;
         stroke: #fff;
-        stroke-width: .5px;
+        &.active {
+            fill: #999;
+        }
         &:hover {
-            fill: red;
+            fill: #8e8ecc;
+            z-index: 100;
         }
     }
     &.bounds {
@@ -280,12 +283,17 @@ rect.boxer {
 
 circle.dot {
     radius: 20;
-    fill: #000;
+    fill: #f00;
     opacity: .5;
 }
 
 .map {
     text-align: center;
+    p {
+        color: gray;
+        margin-top: 20px;
+        font-style: italic;
+    }
 }
 
 @media (max-width: 980px) {
@@ -307,7 +315,7 @@ circle.dot {
     .container {
         max-width: none;
         width: auto;
-    /* margin: 0; */
+        /* margin: 0; */
     }
     .navbar-fixed-top {
         position: static;
