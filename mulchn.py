@@ -296,13 +296,14 @@ def question_vote_locations(question):
     identifier = 0
     for answer in question.get('answers',[]):
         for v in answer.get('votes', []):
-            if 'latitude' not in v and 'longitude' not in v:
+            if 'position' not in v or 'coords' not in v['position']:
                 continue
+            coords = v['position']['coords']
             locations.append(
                 dict(type="Feature",
                      id=identifier,
                      geometry=dict(type="Point",
-                                   coordinates=[v['longitude'], v['latitude']],
+                                   coordinates=[coords['longitude'], coords['latitude']],
                                    properties=dict(answer=answer['_id']))))
 
     return locations
