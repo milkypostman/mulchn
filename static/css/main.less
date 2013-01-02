@@ -4,12 +4,24 @@ body {
 }
 
 .navbar-inner {
+    li.login a {
+        padding-bottom: 0;
+    }
+    i.twitter-login {
+        height: 22px;
+        width: 150px;
+        display: inline-block;
+        background-image: url("/static/img/twitter_signin.png");
+        // background-position: 0 -24px;
+    }
 }
 
 
 .container {
     max-width: 600px;
 }
+
+
 
 .fill {
     margin-bottom: 0;
@@ -125,15 +137,18 @@ body {
         cursor: default;
 
         .fill .label {
-            .fill .label-warning;
+            .background_gradient(#777);
+            color: #333;
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
         }
 
         .vote-count {
-            color: black;
+            color: white;
         }
 
         .vote-count-prefix {
-            color: navy;
+            color: lightgray;
         }
 
     }
@@ -142,58 +157,109 @@ body {
 
 
 
-.rest > .answers {
+.rest {
+    .answers {
 
-    .answer {
-        i {
-            opacity: 0;
+        .answer {
+            i {
+                opacity: 0;
+            }
+
+            position: relative;
+            padding-right: 0 !important;
+
+            p {
+                margin-left: 20px;
+            }
+
+            .icon {
+                height: 14px;
+                width: 14px;
+                line-height: 14px;
+                text-align: center;
+                margin-top: 3px;
+                vertical-align: text-top;
+                // border-radius: 20px;
+
+                i {
+                    margin-top: 0;
+                    vertical-align: top;
+                }
+
+            }
+
+            &:hover {
+                cursor: pointer;
+                color: #953b39;
+                color: #b94a48;
+                color: #3a87ad;
+                color: #2d6987;
+            }
+
+            &:hover i {
+                opacity: .7;
+            }
+            
+
+            &.working i {
+                background: url("/static/img/working.gif");
+                background-size: 14px 14px;
+                opacity: 1.0;
+            }
+
+            &.vote i {
+                opacity: 1.0;
+            }
         }
 
-        &:hover {
-            cursor: pointer;
-            color: #953b39;
-            color: #b94a48;
-            color: #3a87ad;
-            color: #2d6987;
-        }
-
-        &:hover i {
-            opacity: .5;
-        }
-        
-
-        &.working i {
-            background: url("/static/img/working.gif");
-            background-size: 14px 14px;
-            opacity: 1.0;
-        }
-
-        &.vote i {
-            opacity: 1.0;
-        }
     }
 
-    .answer {
-        position: relative;
-        padding-right: 0 !important;
+    .friends {
+        border-top: 1px dashed lightgray;
+        margin-top: 20px;
 
-        p {
+        .answer p {
             margin-left: 20px;
         }
 
+        .header {
+            font-weight: bold;
+            margin-top: 10px;
+            h5 {
+
+                text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+            }
+
+            
+        }
+
+        
     }
 
-    .answers {
-        .footer {
-            text-align: right;
+    .map {
+        border-top: 1px dashed lightgray;
+        margin-top: 20px;
+
+        .header {
+            .friends .header;
+            h5 {
+                text-align: left;
+            }
         }
+    }
+
+    .footer {
+        text-align: right;
+
         .icon-trash {
             opacity: .5;
             text-size: 90%;
+            vertical-align: bottom;
         }
-
     }
 }
+
+
 
 
 .relativerow {
@@ -231,48 +297,6 @@ body {
     margin-left: 5px;
 }
 
-.friends {
-    border-top: 1px dashed black;
-    margin-top: 30px;
-
-
-    .answer p {
-        margin-left: 20px;
-    }
-
-    .header {
-        font-weight: bold;
-        margin-top: 10px;
-        h5 {
-            color: #356635;
-            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-        }
-    }
-
-    
-}
-
-.map {
-    border-top: 1px dashed black;
-    margin-top: 20px;
-
-    .header {
-        .friends .header;
-        h5 {
-            color: #000;
-            text-align: left;
-        }
-    }
-}
-
-
-
-
-
-.question.active .friends .answer .fill .label {
-    .fill .label-success;
-}
-
 
 path {
     &.state {
@@ -303,14 +327,6 @@ circle.dot {
     opacity: .5;
 }
 
-.block {
-    width: 14px;
-    height: 14px;
-    line-height: 14px;
-    margin-top: 2px;
-    vertical-align: text-top;
-}
-
 .map {
     text-align: center;
     p {
@@ -319,6 +335,61 @@ circle.dot {
         font-style: italic;
     }
 }
+
+.background_gradient(@base) {
+    background-color: @base;
+    background-image: -moz-linear-gradient(top, lighten(@base, 5%), darken(@base, 5%));
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(lighten(@base, 5%)), to(darken(@base, 5%)));
+    background-image: -webkit-linear-gradient(top, lighten(@base, 5%), darken(@base, 5%));
+    background-image: -o-linear-gradient(top, lighten(@base, 5%), darken(@base, 5%));
+    background-image: linear-gradient(to bottom, lighten(@base, 5%), darken(@base, 5%));
+    background-repeat: repeat-x;
+}   
+
+@color_0: #1f77b4;
+@color_1: #ff7f0e;
+@color_2: #2ca02c;
+@color_3: #d62728;
+@color_4: #9467bd;
+@color_5: #8c564b;
+@color_6: #e377c2;
+@color_7: #7f7f7f;
+@color_8: #bcbd22;
+@color_9: #17becf;
+
+.block {
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    margin-top: 2px;
+    vertical-align: text-bottom;
+}
+
+.color-loop (@index) when (@index < 10) {
+    (~".answer .icon.color_@{index}") {
+        @cur: "color_@{index}";
+        background-color: @@cur;
+    }
+    (~".answer .fill .label.color_@{index}") {
+        @cur: "color_@{index}";
+        .background_gradient(@@cur);
+    }
+    (~"circle.dot.color_@{index}") {
+        @cur: "color_@{index}";
+        fill: @@cur;
+    }
+
+    (~".progress .bar.color_@{index}") {
+        @cur: "color_@{index}";
+        .background_gradient(@@cur);
+    }
+
+    .color-loop(@index + 1);
+    
+}
+.color-loop (11) {}
+.color-loop (0);
+
 
 @media (max-width: 980px) {
     .navbar-fixed-top .navbar-inner {

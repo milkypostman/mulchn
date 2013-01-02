@@ -5,7 +5,7 @@ class QuestionItem extends Backbone.View
 
   events: {
     "click .rest>.answers>.answer": "vote"
-    "click .answers .delete": "delete"
+    "click .footer .delete": "delete"
     "click .rest": "nothing"
   }
 
@@ -13,9 +13,9 @@ class QuestionItem extends Backbone.View
 
   initialize: =>
     @model.on("change", @render)
-    @answerScale = d3.scale.category10()
 
   delete: (event) =>
+    console.log("delete")
     question = $(event.currentTarget).closest(".question")
     new Dialog({
       closeButtonText: "Cancel"
@@ -82,7 +82,7 @@ class QuestionItem extends Backbone.View
     @$el.removeClass("active")
     @$el.children(".question .rest").slideUp(callback)
 
-    @removeMap()
+    @removeMap() if @removeMap
 
 
   createMap: (us) =>
@@ -185,16 +185,16 @@ class QuestionItem extends Backbone.View
 
       g.selectAll("circle")
         .data(=> @model.get("geo"))
-        .style("fill", (d) => @answerScale(d.id))
+        .attr("class", (d) => "dot color_#{d.id}")
         .attr("cx", (d) -> path.centroid(d)[0])
         .attr("cy", (d) -> path.centroid(d)[1])
         .attr("r", r)
         .enter().append("circle")
-        .attr("class", "dot")
-        .style("fill", (d) => @answerScale(d.id))
+        .attr("class", (d) => "dot color_#{d.id}")
         .attr("cx", (d) -> path.centroid(d)[0])
         .attr("cy", (d) -> path.centroid(d)[1])
         .attr("r", r)
+
 
     @removeMap = =>
       console.log("removeMap")
@@ -223,8 +223,8 @@ class QuestionItem extends Backbone.View
       pDiv = mapDiv.children("p")
       pDiv.html('loading map data...')
   
-      d3.json("/static/us.json", (us) =>
-        @map = (svg = @createMap(us))
+      d3.json("/static/us.json", (map) =>
+        @map = (svg = @createMap(map))
         $(svg).slideDown('slow')
   
         mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>")
@@ -242,9 +242,11 @@ class QuestionItem extends Backbone.View
     @$el.html(@questionTmpl({
       user: window.user.id
       question: @model
-      answerScale: @answerScale
       active: @active
       }))
+
+    $(".answer .fill .label").tooltip()
+    $(".friends .progress .bar").tooltip()
 
     if @active
       @addMap()

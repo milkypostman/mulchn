@@ -6,10 +6,10 @@ class QuestionModel extends Backbone.Model
 
   votes: ->
     _.reduce(@get('answers')
-        (t, a) -> t + (a.votes | 0)
+        (t, a) -> t + (a.votes or 0)
         0)
 
   friend_votes: ->
     _.reduce(@get('answers')
-        (t, a) -> t + (a.friend_votes | 0)
-        0) | 1
+        (t, a) -> t + (a.friend_votes or 0)
+        0) or 1

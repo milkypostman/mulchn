@@ -28,12 +28,17 @@
       <ul class="answers slicklist" >
         <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
            <li class="answer <% if (answer._id == question.get("vote")) { %>vote<% } %>" id="<%= answer._id %>">
-             <div class="icon pull-left"><i class="icon-ok"></i></div>
+             <div class="icon pull-left color_<%= _i %>">
+               <i class="icon-remove icon icon-white"></i>
+             </div>
              <% if (question.get("vote")) { %>
              <div class="pull-right">
                <div class="fill">
-                 <div class="label" style="width: <%= Math.round(answer.votes / question.votes() * 100) %>%">
-                   <span class="vote-count"><%= answer.votes | 0 %></span>
+                 <div class="label color_<%= _i %>"
+                      data-placement="right"
+                      data-original-title="<%= Math.round(answer.votes / question.votes() * 100) %>%"
+                      style="width: <%= (answer.votes / question.votes() * 100) %>%">
+                      <span class="vote-count"><%= answer.votes || 0 %></span>
                  </div>
                </div>
              </div>
@@ -44,29 +49,21 @@
       </ul>
       <% if (question.get("vote")) { %>
       <div class="friends">
-        <div class="header"><h5>Votes among your friends</h5></div>
-        <ul class="answers slicklist" >
+        <div class="header"><h5>You and the People You Follow</h5></div>
+        <div class="progress">
           <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
-             <li class="answer" id="friend_<%= answer._id %>">
-               <div class="pull-left block" style="background-color: <%=  answerScale(_i) %>}}">
-                 &nbsp
-               </div>
-               <div class="pull-right">
-                 <div class="fill">
-                   <div class="label"
-                        style="width: <%= Math.round(answer.friend_votes / question.friend_votes() * 100) %>%">
-                        <span class="vote-count"><%= answer.friend_votes | 0 %></span>
-                   </div>
-                 </div>
-               </div>
-               <p><%= answer.answer %></p>
-             </li>
+             <div class="bar color_<%= _i %>"
+                  data-placement="bottom"
+                  data-original-title="<%= Math.round(answer.friend_votes / question.friend_votes() * 100) %>%"
+                  style="width: <%= (answer.friend_votes / question.friend_votes() * 100) %>%">
+                  <%= answer.friend_votes %>
+             </div>
              <% } %>
-        </ul>
+        </div>
       </div>
       <div class="map"><p>map data unavailable</p></div>
       <% } %>
-      <div class="footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
+      <div class="footer"><% if (user && question.get("owner") == user) { %><i title="delete question" class="icon-trash delete"></i><% } %></div>
     </div>
   </script>
 

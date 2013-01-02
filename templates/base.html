@@ -29,7 +29,7 @@
                     <li><a href="">{{ user['username'] }}</a></li>
                     <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
                   {% else %}
-                    <li><a class="" href="{{ url_for('login_twitter') }}">login</a></li>
+                    <li class="login"><a class="" href="{{ url_for('login_twitter') }}"><i class="twitter-login"></i></a></li>
                   {% endif %}
                 </ul>
               </div>
