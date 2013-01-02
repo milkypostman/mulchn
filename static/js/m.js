@@ -1,4 +1,4 @@
-var Dialog, Location, LoginDialog, QuestionAdd, QuestionCollection, QuestionItem, QuestionList, QuestionModel, Router, User, instance,
+var Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionItem, QuestionList, QuestionModel, Router, User, geoLocation, instance,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -162,23 +162,24 @@ Dialog = (function(_super) {
 
 })(Backbone.View);
 
-instance = null;
+GeoLocation = (function() {
+  var instance,
+    _this = this;
 
-Location = (function() {
-  var _this = this;
+  instance = null;
 
-  function Location() {
+  function GeoLocation() {
     if (instance !== null) {
       throw new Error("Cannot instantiate more than one " + name + ", use " + name + ".getInstance()");
     }
     this.initialize();
   }
 
-  Location.prototype.updatePosition = function(position) {
+  GeoLocation.prototype.updatePosition = function(position) {
     return this.position = position;
   };
 
-  Location.prototype.initialize = function() {
+  GeoLocation.prototype.initialize = function() {
     var _this = this;
     if (navigator.geolocation) {
       return navigator.geolocation.getCurrentPosition(function(position) {
@@ -187,18 +188,16 @@ Location = (function() {
     }
   };
 
-  Location.getInstance = function() {
+  GeoLocation.getInstance = function() {
     if (instance === null) {
-      instance = new Location();
+      instance = new GeoLocation();
     }
     return instance;
   };
 
-  return Location;
+  return GeoLocation;
 
 }).call(this);
-
-Location.getInstance();
 
 LoginDialog = (function(_super) {
 
@@ -362,6 +361,12 @@ QuestionItem = (function(_super) {
 
     this.expand = __bind(this.expand, this);
 
+    this.updateMap = __bind(this.updateMap, this);
+
+    this.createMap = __bind(this.createMap, this);
+
+    this.resetZoomData = __bind(this.resetZoomData, this);
+
     this.collapse = __bind(this.collapse, this);
 
     this.vote = __bind(this.vote, this);
@@ -387,7 +392,9 @@ QuestionItem = (function(_super) {
   QuestionItem.prototype.active = false;
 
   QuestionItem.prototype.initialize = function() {
-    return this.model.on("change", this.render);
+    this.model.on("change", this.render);
+    this.answerScale = d3.scale.category10();
+    return this.resetZoomData();
   };
 
   QuestionItem.prototype["delete"] = function(event) {
@@ -424,14 +431,16 @@ QuestionItem = (function(_super) {
     answer = event.currentTarget.id;
     this.model.save({
       vote: answer,
-      position: Location.position
+      position: geoLocation.position
     }, {
       wait: true,
       url: "/v1/question/vote/",
+      complete: function() {
+        return $("#" + answer).removeClass("working");
+      },
       error: function(model, response) {
         if (response.status === 401) {
           model.unset("vote");
-          $("#" + answer).removeClass("working");
           return new LoginDialog().render();
         } else if (response.status === 404) {
           new Dialog({
@@ -481,81 +490,123 @@ QuestionItem = (function(_super) {
       $(this.map).slideUp(function() {
         return $(this).remove();
       });
+      this.resetZoomData();
       return this.map = void 0;
     }
   };
 
-  QuestionItem.prototype.expand = function(callback) {
-    var div, divp, rest,
+  QuestionItem.prototype.resetZoomData = function() {
+    console.log("resetZoomData");
+    return this.zoomData = {
+      x: 0,
+      y: 0,
+      k: 1,
+      r: 3,
+      defaultRadius: 3,
+      centered: null
+    };
+  };
+
+  QuestionItem.prototype.createMap = function(us) {
+    var click, g, geo, height, mapDiv, path, projection, strokewidth, svg, width,
       _this = this;
+    mapDiv = this.$el.find(".map");
+    mapDiv.empty();
+    width = mapDiv.innerWidth() * .8;
+    height = width * 1 / 2;
+    projection = d3.geo.albersUsa().scale(width).translate([0, 0]);
+    path = d3.geo.path().projection(projection);
+    svg = d3.select(mapDiv.get()[0]).append("svg").attr("width", width).style("display", "none").attr("height", height);
+    g = svg.append("g").attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")").append("g").attr("id", "states");
+    geo = this.model.get("geo");
+    strokewidth = 1.5;
+    click = function(d) {
+      var bounds, centroid, hh, spd, trans, ww, xk, yk;
+      _this.zoomData.x = 0;
+      _this.zoomData.y = 0;
+      _this.zoomData.k = 1;
+      _this.zoomData.r = _this.zoomData.defaultRadius;
+      spd = 1200;
+      if (d && _this.zoomData.centered !== d.id) {
+        centroid = path.centroid(d);
+        _this.zoomData.x = -centroid[0];
+        _this.zoomData.y = -centroid[1];
+        bounds = path.bounds(d);
+        ww = 2 * Math.max(centroid[0] - bounds[0][0], bounds[1][0] - centroid[0]);
+        hh = 2 * Math.max(centroid[1] - bounds[0][1], bounds[1][1] - centroid[1]);
+        xk = width / (ww * 1.2);
+        yk = height / (hh * 1.1);
+        _this.zoomData.k = Math.min(xk, yk);
+        _this.zoomData.r = _this.zoomData.defaultRadius / _this.zoomData.k;
+        spd = 600;
+        _this.zoomData.centered = d.id;
+      } else {
+        _this.zoomData.centered = null;
+      }
+      g.selectAll("path").classed("active", _this.zoomData.centered && function(d) {
+        return d.id === _this.zoomData.centered;
+      });
+      trans = g.transition().duration(1000).attr("transform", "scale(" + _this.zoomData.k + ")translate(" + _this.zoomData.x + "," + _this.zoomData.y + ")").selectAll("path.state").style("stroke-width", "" + (strokewidth / _this.zoomData.k) + "px");
+      g.selectAll("circle.dot").transition().duration(spd).attr("r", _this.zoomData.r);
+      return console.log(_this.zoomData.centered);
+    };
+    console.log(this.zoomData.centered);
+    g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "" + strokewidth + "px").classed("active", this.zoomData.centered && function(d) {
+      return d.id === _this.zoomData.centered;
+    }).classed("state", true).attr("d", path).on("click", click);
+    g.selectAll("circle").data(geo).enter().append("circle").attr("class", "dot").style("fill", function(d) {
+      console.log(_this.answerScale(d.id));
+      return _this.answerScale(d.id);
+    }).attr("cx", function(d) {
+      return path.centroid(d)[0];
+    }).attr("cy", function(d) {
+      return path.centroid(d)[1];
+    }).attr("r", this.zoomData.r);
+    g.attr("transform", "scale(" + this.zoomData.k + ")translate(" + this.zoomData.x + "," + this.zoomData.y + ")").selectAll("path.state").style("stroke-width", "" + (strokewidth / this.zoomData.k) + "px");
+    return svg[0];
+  };
+
+  QuestionItem.prototype.updateMap = function() {
+    var mapDiv, pDiv, restDiv,
+      _this = this;
+    console.log("updateMap");
+    if (!this.model.get("vote") || !this.model.get("geo").length > 0) {
+      return;
+    }
+    restDiv = this.$el.children(".rest");
+    mapDiv = restDiv.children(".map");
+    if (!this.map) {
+      pDiv = mapDiv.children("p");
+      pDiv.html('loading map data...');
+    }
+    return d3.json("/static/us.json", function(us) {
+      var svg;
+      _this.map = (svg = _this.createMap(us));
+      if (!_this.map) {
+        return $(svg).slideDown('slow');
+      } else {
+        return $(svg).show();
+      }
+    });
+  };
+
+  QuestionItem.prototype.expand = function(callback) {
     this.active = true;
     this.$el.addClass("active");
-    rest = this.$el.children(".rest");
-    rest.slideDown(callback);
-    if (this.model.get("vote") && this.model.get("geo").length > 0) {
-      div = rest.children(".map");
-      divp = div.children("p");
-      divp.html('loading map data...');
-      return d3.json("/static/us.json", function(us) {
-        var centered, click, g, geo, height, path, projection, radius, strokewidth, svg, width;
-        divp.html("");
-        width = rest.innerWidth() * .8;
-        height = width * 1 / 2;
-        projection = d3.geo.albersUsa().scale(width).translate([0, 0]);
-        path = d3.geo.path().projection(projection);
-        svg = d3.select(div.get()[0]).append("svg").attr("width", width).style("display", "none").attr("height", height);
-        g = svg.append("g").attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")").append("g").attr("id", "states");
-        _this.map = svg[0];
-        geo = _this.model.get("geo");
-        centered = null;
-        radius = 3;
-        strokewidth = 1.5;
-        click = function(d) {
-          var bounds, centroid, hh, k, r, spd, trans, ww, x, xk, y, yk;
-          x = 0;
-          y = 0;
-          k = 1;
-          r = radius;
-          spd = 1200;
-          if (d && centered !== d) {
-            centroid = path.centroid(d);
-            x = -centroid[0];
-            y = -centroid[1];
-            bounds = path.bounds(d);
-            ww = 2 * Math.max(centroid[0] - bounds[0][0], bounds[1][0] - centroid[0]);
-            hh = 2 * Math.max(centroid[1] - bounds[0][1], bounds[1][1] - centroid[1]);
-            xk = width / (ww * 1.2);
-            yk = height / (hh * 1.1);
-            k = Math.min(xk, yk);
-            r = radius / k;
-            spd = 600;
-            centered = d;
-          } else {
-            centered = null;
-          }
-          g.selectAll("path").classed("active", centered && function(d) {
-            return d === centered;
-          });
-          trans = g.transition().duration(1000).attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")").selectAll("path.state").style("stroke-width", "" + (strokewidth / k) + "px");
-          return g.selectAll("circle.dot").transition().duration(spd).attr("r", r);
-        };
-        g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "" + strokewidth + "px").attr("class", "state").attr("d", path).on("click", click);
-        g.selectAll("circle").data(geo).enter().append("circle").attr("class", "dot").attr("cx", function(d) {
-          return path.centroid(d)[0];
-        }).attr("cy", function(d) {
-          return path.centroid(d)[1];
-        }).attr("r", radius);
-        return $("svg").slideDown('slow');
-      });
-    }
+    this.$el.children(".rest").slideDown(callback);
+    return this.updateMap();
   };
 
   QuestionItem.prototype.render = function() {
     this.$el.html(this.questionTmpl({
       user: User.id,
       question: this.model,
+      answerScale: this.answerScale,
       active: this.active
     }));
+    if (this.active) {
+      this.updateMap();
+    }
     return this;
   };
 
@@ -694,6 +745,8 @@ QuestionList = (function(_super) {
 
 })(Backbone.View);
 
+geoLocation = void 0;
+
 $(window).ready(function() {
   var app;
   console.log("main");
@@ -702,6 +755,7 @@ $(window).ready(function() {
       return $(this).remove();
     });
   }, 3000);
+  geoLocation = GeoLocation.getInstance();
   app = new Router();
   return Backbone.history.start({
     pushState: true,

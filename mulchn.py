@@ -46,7 +46,7 @@ assets.register('css_main', css_main)
 
 js_app = Bundle('js/add.coffee',
                 'js/dialog.coffee',
-                'js/location.coffee',
+                'js/geolocation.coffee',
                 'js/logindialog.coffee',
                 'js/router.coffee',
                 'js/user.coffee',
@@ -305,6 +305,7 @@ def question_vote_locations(question):
                      geometry=dict(type="Point",
                                    coordinates=[coords['longitude'], coords['latitude']],
                                    properties=dict(answer=answer['_id']))))
+        identifier += 1
 
     return locations
 

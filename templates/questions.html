@@ -48,7 +48,9 @@
         <ul class="answers slicklist" >
           <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
              <li class="answer" id="friend_<%= answer._id %>">
-               <% if (question.get("vote")) { %>
+               <div class="pull-left block" style="background-color: <%=  answerScale(_i) %>}}">
+                 &nbsp
+               </div>
                <div class="pull-right">
                  <div class="fill">
                    <div class="label"
@@ -57,7 +59,6 @@
                    </div>
                  </div>
                </div>
-               <% } %>
                <p><%= answer.answer %></p>
              </li>
              <% } %>

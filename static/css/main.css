@@ -187,10 +187,9 @@ body {
 .friends {
   border-top: 1px dashed black;
   margin-top: 30px;
-  padding-left: 10px;
 }
 .friends .answer p {
-  margin-left: 10px;
+  margin-left: 20px;
 }
 .friends .header {
   font-weight: bold;
@@ -231,8 +230,14 @@ rect.boxer {
 }
 circle.dot {
   radius: 20;
-  fill: #f00;
   opacity: .5;
+}
+.block {
+  width: 14px;
+  height: 14px;
+  line-height: 14px;
+  margin-top: 2px;
+  vertical-align: text-top;
 }
 .map {
   text-align: center;
