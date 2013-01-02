@@ -63,6 +63,7 @@
              <% } %>
         </ul>
       </div>
+      <div class="map"></div>
       <% } %>
       <div class="footer"><% if (user && question.get("owner") == user) { %><i class="icon-trash delete"></i><% } %></div>
     </div>
@@ -70,3 +71,9 @@
 
 {% endblock content %}
 
+{% block js %}
+  {{ super() }}
+  {% assets "js_d3" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+  {% endassets %}
+{% endblock js %}

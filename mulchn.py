@@ -69,6 +69,14 @@ js_frameworks = Bundle(
 assets.register('js_frameworks', js_frameworks)
 
 
+js_d3 = Bundle(
+    'js/lib/topojson.js',
+    'js/lib/d3.js',
+    filters='rjsmin',
+    output='js/d3.topojson.js')
+assets.register('js_d3', js_d3)
+
+
 
 ### Forms
 
@@ -273,14 +281,50 @@ def answer_dict(answer):
     return ret
 
 
+# {"type":"Feature","id":"08","geometry":{"type":"Point","coordinates":[-105.203628,39.500656]},"properties":{"name":"Colorado","population":4301261}},
+def question_vote_locations(question):
+    """
+    Creates the geojson necessary for rendering.
+
+    Arguments:
+    - `question`: question to generate this data for.
+    """
+
+    locations = []
+
+    # just make up a counter
+    identifier = 0
+    for answer in question.get('answers',[]):
+        for v in answer.get('votes', []):
+            if 'latitude' not in v and 'longitude' not in v:
+                continue
+            locations.append(
+                dict(type="Feature",
+                     id=identifier,
+                     geometry=dict(type="Point",
+                                   coordinates=[v['longitude'], v['latitude']],
+                                   properties=dict(answer=answer['_id']))))
+
+    return locations
+
+
+
 QUESTION_KEYS = ['question', '_id', 'added', 'owner']
 def question_dict(question, votes):
+    """
+    Arguments:
+    - `question`: question data
+    - `votes`: dictionary mapping question._id to answer._id for all
+    questions the user has made.
+    """
+
     ret = {key:question[key] for key in QUESTION_KEYS}
     ret['answers'] = [answer_dict(ans) for ans in question['answers']]
 
+
     if question["_id"] in votes:
         ret['vote'] = votes[question["_id"]]
-
+        ret['geo'] = question_vote_locations(question)
     return ret
 
 

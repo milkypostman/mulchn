@@ -210,6 +210,30 @@ body {
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff62c462', endColorstr='#ff57a957', GradientType=0);
 }
+path.state {
+  fill: #ccc;
+  stroke: #fff;
+  stroke-width: .5px;
+}
+path.state:hover {
+  fill: red;
+}
+path.bounds {
+  fill: none;
+}
+rect.boxer {
+  fill: none;
+  stroke: #f00;
+  stroke-width: 1.5px;
+}
+circle.dot {
+  radius: 20;
+  fill: #000;
+  opacity: .5;
+}
+.map {
+  text-align: center;
+}
 @media (max-width: 980px) {
   .navbar-fixed-top .navbar-inner {
     padding: 0px;

@@ -76,15 +76,163 @@ class QuestionItem extends Backbone.View
     {id: @model.id, class: (c for c in classes).join(" ")}
     
 
-  collapse: =>
+  collapse: (callback) =>
     @active = false
     @$el.removeClass("active")
-    @$el.children(".question .rest").slideUp()
+    @$el.children(".question .rest").slideUp(callback)
+    if @map
+      $(@map).slideUp(-> $(@).remove())
+      @map = undefined
 
-  expand: =>
+  expand: (callback) =>
     @active = true
     @$el.addClass("active")
-    @$el.children(".question .rest").slideDown()
+    rest = @$el.children(".rest")
+    rest.slideDown(callback)
+
+    if @model.get("vote")
+      
+      d3.json("/static/us.json", (us) =>
+
+        div = rest.children(".map")
+
+        width=rest.innerWidth()*.8
+        height=width*2/3
+
+        projection = d3.geo.albersUsa()
+          .scale(width)
+          .translate([0,0])
+          # .translate([width/2, height/2]);
+
+        path = d3.geo.path()
+          .projection(projection);
+
+        svg = d3.select(div.get()[0]).append("svg")
+          .attr("width", width)
+          .attr("height", height);
+
+        g = svg.append("g")
+          .attr("transform", "translate(#{width / 2},#{height / 2})")
+          .append("g")
+          .attr("id", "states");
+
+        @map = svg[0]
+
+        geo = @model.get("geo")
+
+        centered = null
+
+        radius = 2
+
+        console.log(projection.scale())
+        click = (d) ->
+          x = 0
+          y = 0
+          k = 1
+          r = radius
+
+          # if (d && centered == d)
+          #   projection.scale(width)
+          #   projection.translate([width/2, height/2])
+          # else
+
+          #   scale = projection.scale()
+          #   projection.scale(width*4)
+
+          #   centroid = path.centroid(d)
+          #   translate = projection.translate()
+          #   projection.translate([
+          #     translate[0] - centroid[0] + width / 2,
+          #     translate[1] - centroid[1] + height / 2
+          #   ])
+          #   centered = d;
+
+          # g.selectAll("path")
+          #   .transition()
+          #   .duration(1000)
+          #   .attr("d", path)
+          
+
+          if (d && centered != d) 
+            centroid = path.centroid(d)
+            console.log(centroid)
+
+            x = -centroid[0]
+            y = -centroid[1]
+
+            bounds = path.bounds(d)
+            console.log(bounds)
+
+            # upperleft.x = bounds[0][0]
+            # upperleft.y = bounds[0][1]
+            # bottomright.x = bounds[1][0]
+            # bottomright.y = bounds[1][1]
+
+            ww = 2*Math.max(centroid[0] - bounds[0][0], bounds[1][0] - centroid[0])
+            hh = 2*Math.max(centroid[1] - bounds[0][1], bounds[1][1] - centroid[1])
+
+            xk = width/(ww * 1.2)
+            yk = height/(hh * 1.1)
+
+            k = Math.min(xk, yk)
+            r = radius / k
+            
+            centered = d;
+          else
+            centered = null;
+          
+
+          g.selectAll("path")
+              .classed("active", centered && (d) -> d == centered )
+
+          g.transition()
+              .duration(1000)
+              .attr("transform", "scale(#{k})translate(#{x},#{y})")
+              .selectAll("path")
+              .style("stroke-width", "#{1.5 / k}px")
+              .selectAll("circle.dot")
+              .attr("r", r)
+              
+
+        g.selectAll("path")
+          .data(topojson.object(us, us.objects.states).geometries)
+          .enter().append("path")
+          .style("stroke-width", "1.5px")
+          .attr("class", "state")
+          .attr("d", path)
+          .on("click", click)
+        g.selectAll("rect.boxer")
+          .data(topojson.object(us, us.objects.states).geometries)
+          .enter().append("rect")
+          .attr("class", "boxer")
+          .attr("r", 5)
+          .attr("x", (d) ->
+            bounds = path.bounds(d)
+            bounds[0][0]
+            )
+          .attr("y", (d) ->
+            bounds = path.bounds(d)
+            bounds[0][1]
+            )
+            
+          .attr("width", (d) ->
+            bounds = path.bounds(d)
+            bounds[1][0] - bounds[0][0]
+            )
+          .attr("height", (d) ->
+            bounds = path.bounds(d)
+            bounds[1][1] - bounds[0][1]
+            )
+
+        g.selectAll("circle")
+          .data(geo)
+          .enter().append("circle")
+          .attr("class", "dot")
+          .attr("cx", (d) -> path.centroid(d)[0])
+          .attr("cy", (d) -> path.centroid(d)[1])
+          .attr("r", 2)
+        )
+
 
   render: =>
     @$el.html(@questionTmpl({
@@ -118,15 +266,20 @@ class QuestionList extends Backbone.View
     setInterval(@collection.update, 10000);
 
   toggleQuestion: (event) =>
-    targetId = event.currentTarget.id
+    @toggleView(event.currentTarget.id)
 
+  toggleView: (targetId) =>
     if @selectedQuestion
+      # @childViews[@selectedQuestion].collapse(=> $('html, body').animate({scrollTop: @originalPosition}, 400))
       @childViews[@selectedQuestion].collapse()
 
     if targetId == @selectedQuestion
       @selectedQuestion = undefined
     else
-      @childViews[targetId].expand()
+      view = @childViews[targetId]
+      # @originalPosition = $('html, body').scrollTop()
+      # view.expand(=> $('html, body').animate({scrollTop: view.$el.offset().top - 50}, 100))
+      view.expand()
       @selectedQuestion = targetId
 
 
@@ -160,6 +313,10 @@ class QuestionList extends Backbone.View
   addAll: =>
     @$el.empty()
     @collection.each(@append)
+
+    if location.hash
+      @toggleView(location.hash.substring(1))
+
 
   render: =>
     $("#content").html(@el)

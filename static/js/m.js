@@ -233,11 +233,19 @@ Router = (function(_super) {
 
   Router.prototype.routes = {
     "question/add/": "add",
+    ":question/": "root",
+    ":hash": "root",
     "": "root"
   };
 
-  Router.prototype.root = function() {
+  Router.prototype.root = function(hash) {
     var questionList;
+    if (hash && !this._alreadyTriggered) {
+      Backbone.history.navigate("", false);
+      location.hash = hash;
+      this._alreadyTriggered = true;
+      return;
+    }
     console.log("root");
     questionList = new QuestionList();
     questionList.reset();
@@ -465,16 +473,73 @@ QuestionItem = (function(_super) {
     };
   };
 
-  QuestionItem.prototype.collapse = function() {
+  QuestionItem.prototype.collapse = function(callback) {
     this.active = false;
     this.$el.removeClass("active");
-    return this.$el.children(".question .rest").slideUp();
+    this.$el.children(".question .rest").slideUp(callback);
+    if (this.map) {
+      $(this.map).slideUp(function() {
+        return $(this).remove();
+      });
+      return this.map = void 0;
+    }
   };
 
-  QuestionItem.prototype.expand = function() {
+  QuestionItem.prototype.expand = function(callback) {
+    var rest,
+      _this = this;
     this.active = true;
     this.$el.addClass("active");
-    return this.$el.children(".question .rest").slideDown();
+    rest = this.$el.children(".rest");
+    rest.slideDown(callback);
+    if (this.model.get("vote")) {
+      return d3.json("/static/us.json", function(us) {
+        var centered, click, div, g, geo, height, path, projection, radius, svg, width;
+        div = rest.children(".map");
+        width = rest.innerWidth() * .8;
+        height = width * 2 / 3;
+        projection = d3.geo.albersUsa().scale(width).translate([0, 0]);
+        path = d3.geo.path().projection(projection);
+        svg = d3.select(div.get()[0]).append("svg").attr("width", width).attr("height", height);
+        g = svg.append("g").attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")").append("g").attr("id", "states");
+        _this.map = svg[0];
+        geo = _this.model.get("geo");
+        centered = null;
+        radius = 2;
+        click = function(d) {
+          var bounds, centroid, hh, k, r, ww, x, xk, y, yk;
+          x = 0;
+          y = 0;
+          k = 1;
+          r = radius;
+          if (d && centered !== d) {
+            centroid = path.centroid(d);
+            x = -centroid[0];
+            y = -centroid[1];
+            bounds = path.bounds(d);
+            ww = 2 * Math.max(centroid[0] - bounds[0][0], bounds[1][0] - centroid[0]);
+            hh = 2 * Math.max(centroid[1] - bounds[0][1], bounds[1][1] - centroid[1]);
+            xk = width / (ww * 1.2);
+            yk = height / (hh * 1.1);
+            k = Math.min(xk, yk);
+            r = radius / k;
+            centered = d;
+          } else {
+            centered = null;
+          }
+          g.selectAll("path").classed("active", centered && function(d) {
+            return d === centered;
+          });
+          return g.transition().duration(1000).attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")").selectAll("path").style("stroke-width", "" + (1.5 / k) + "px").selectAll("circle.dot").attr("r", r);
+        };
+        g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "1.5px").attr("class", "state").attr("d", path).on("click", click);
+        return g.selectAll("circle").data(geo).enter().append("circle").attr("class", "dot").attr("cx", function(d) {
+          return path.centroid(d)[0];
+        }).attr("cy", function(d) {
+          return path.centroid(d)[1];
+        }).attr("r", 2);
+      });
+    }
   };
 
   QuestionItem.prototype.render = function() {
@@ -509,6 +574,8 @@ QuestionList = (function(_super) {
 
     this.add = __bind(this.add, this);
 
+    this.toggleView = __bind(this.toggleView, this);
+
     this.toggleQuestion = __bind(this.toggleQuestion, this);
 
     this.initialize = __bind(this.initialize, this);
@@ -537,15 +604,19 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.toggleQuestion = function(event) {
-    var targetId;
-    targetId = event.currentTarget.id;
+    return this.toggleView(event.currentTarget.id);
+  };
+
+  QuestionList.prototype.toggleView = function(targetId) {
+    var view;
     if (this.selectedQuestion) {
       this.childViews[this.selectedQuestion].collapse();
     }
     if (targetId === this.selectedQuestion) {
       return this.selectedQuestion = void 0;
     } else {
-      this.childViews[targetId].expand();
+      view = this.childViews[targetId];
+      view.expand();
       return this.selectedQuestion = targetId;
     }
   };
@@ -596,7 +667,10 @@ QuestionList = (function(_super) {
 
   QuestionList.prototype.addAll = function() {
     this.$el.empty();
-    return this.collection.each(this.append);
+    this.collection.each(this.append);
+    if (location.hash) {
+      return this.toggleView(location.hash.substring(1));
+    }
   };
 
   QuestionList.prototype.render = function() {
@@ -622,6 +696,7 @@ $(window).ready(function() {
   }, 3000);
   app = new Router();
   return Backbone.history.start({
-    pushState: true
+    pushState: true,
+    hashChange: true
   });
 });
