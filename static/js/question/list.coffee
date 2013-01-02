@@ -102,13 +102,13 @@ class QuestionItem extends Backbone.View
         projection = d3.geo.albersUsa()
           .scale(width)
           .translate([0,0])
-          # .translate([width/2, height/2]);
 
         path = d3.geo.path()
           .projection(projection);
 
         svg = d3.select(div.get()[0]).append("svg")
           .attr("width", width)
+          .style("display", "none")
           .attr("height", height);
 
         g = svg.append("g")
@@ -167,7 +167,7 @@ class QuestionItem extends Backbone.View
               .style("stroke-width", "#{1.5 / k}px")
               .selectAll("circle.dot")
               .attr("r", r)
-              
+
 
         g.selectAll("path")
           .data(topojson.object(us, us.objects.states).geometries)
@@ -183,6 +183,9 @@ class QuestionItem extends Backbone.View
           .attr("cx", (d) -> path.centroid(d)[0])
           .attr("cy", (d) -> path.centroid(d)[1])
           .attr("r", 2)
+
+        $("svg").slideDown('slow')
+              
         )
 
 

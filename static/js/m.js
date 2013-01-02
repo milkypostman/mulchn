@@ -500,7 +500,7 @@ QuestionItem = (function(_super) {
         height = width * 2 / 3;
         projection = d3.geo.albersUsa().scale(width).translate([0, 0]);
         path = d3.geo.path().projection(projection);
-        svg = d3.select(div.get()[0]).append("svg").attr("width", width).attr("height", height);
+        svg = d3.select(div.get()[0]).append("svg").attr("width", width).style("display", "none").attr("height", height);
         g = svg.append("g").attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")").append("g").attr("id", "states");
         _this.map = svg[0];
         geo = _this.model.get("geo");
@@ -533,11 +533,12 @@ QuestionItem = (function(_super) {
           return g.transition().duration(1000).attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")").selectAll("path").style("stroke-width", "" + (1.5 / k) + "px").selectAll("circle.dot").attr("r", r);
         };
         g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "1.5px").attr("class", "state").attr("d", path).on("click", click);
-        return g.selectAll("circle").data(geo).enter().append("circle").attr("class", "dot").attr("cx", function(d) {
+        g.selectAll("circle").data(geo).enter().append("circle").attr("class", "dot").attr("cx", function(d) {
           return path.centroid(d)[0];
         }).attr("cy", function(d) {
           return path.centroid(d)[1];
         }).attr("r", 2);
+        return $("svg").slideDown('slow');
       });
     }
   };
