@@ -270,13 +270,15 @@ def user_answers():
 
 
 ANSWER_KEYS = ['answer', '_id']
-def answer_dict(answer):
+def answer_dict(answer, vote):
     ret = {key:answer[key] for key in ANSWER_KEYS if key in answer}
     if hasattr(g, 'user'):
         votes = answer.get('votes', [])
         ret['votes'] = len(votes)
         ret['friend_votes'] = len(set(g.user.get('friends')).intersection(
                     [v['user'] for v in votes]))
+        if vote is not None and vote == answer['_id']:
+            ret['friend_votes'] += 1
 
     return ret
 
@@ -321,12 +323,14 @@ def question_dict(question, votes):
     """
 
     ret = {key:question[key] for key in QUESTION_KEYS}
-    ret['answers'] = [answer_dict(ans) for ans in question['answers']]
-
 
     if question["_id"] in votes:
         ret['vote'] = votes[question["_id"]]
         ret['geo'] = question_vote_locations(question)
+
+    ret['answers'] = [answer_dict(ans, ret.get('vote')) for ans in question['answers']]
+
+
     return ret
 
 
