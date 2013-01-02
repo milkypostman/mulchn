@@ -124,44 +124,19 @@ class QuestionItem extends Backbone.View
 
         radius = 2
 
-        console.log(projection.scale())
         click = (d) ->
           x = 0
           y = 0
           k = 1
           r = radius
 
-          # if (d && centered == d)
-          #   projection.scale(width)
-          #   projection.translate([width/2, height/2])
-          # else
-
-          #   scale = projection.scale()
-          #   projection.scale(width*4)
-
-          #   centroid = path.centroid(d)
-          #   translate = projection.translate()
-          #   projection.translate([
-          #     translate[0] - centroid[0] + width / 2,
-          #     translate[1] - centroid[1] + height / 2
-          #   ])
-          #   centered = d;
-
-          # g.selectAll("path")
-          #   .transition()
-          #   .duration(1000)
-          #   .attr("d", path)
-          
-
           if (d && centered != d) 
             centroid = path.centroid(d)
-            console.log(centroid)
 
             x = -centroid[0]
             y = -centroid[1]
 
             bounds = path.bounds(d)
-            console.log(bounds)
 
             # upperleft.x = bounds[0][0]
             # upperleft.y = bounds[0][1]
@@ -201,29 +176,6 @@ class QuestionItem extends Backbone.View
           .attr("class", "state")
           .attr("d", path)
           .on("click", click)
-        g.selectAll("rect.boxer")
-          .data(topojson.object(us, us.objects.states).geometries)
-          .enter().append("rect")
-          .attr("class", "boxer")
-          .attr("r", 5)
-          .attr("x", (d) ->
-            bounds = path.bounds(d)
-            bounds[0][0]
-            )
-          .attr("y", (d) ->
-            bounds = path.bounds(d)
-            bounds[0][1]
-            )
-            
-          .attr("width", (d) ->
-            bounds = path.bounds(d)
-            bounds[1][0] - bounds[0][0]
-            )
-          .attr("height", (d) ->
-            bounds = path.bounds(d)
-            bounds[1][1] - bounds[0][1]
-            )
-
         g.selectAll("circle")
           .data(geo)
           .enter().append("circle")
