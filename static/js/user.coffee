@@ -1,6 +1,6 @@
-instance = null
-
 class User
+  instance = null
+
   constructor: () ->
     if instance != null
       throw new Error("Cannot instantiate more than one #{name}, use #{name}.getInstance()")
@@ -16,5 +16,3 @@ class User
 
     instance
 
-User.getInstance()
-  

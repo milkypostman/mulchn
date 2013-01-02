@@ -38,7 +38,7 @@ class QuestionItem extends Backbone.View
   vote: (event) =>
     answer = event.currentTarget.id
 
-    @model.save({vote: answer, position:geoLocation.position}, {
+    @model.save({vote: answer, position:window.geoLocation.position}, {
       wait: true
       url: "/v1/question/vote/"
       complete: =>
@@ -240,7 +240,7 @@ class QuestionItem extends Backbone.View
 
   render: =>
     @$el.html(@questionTmpl({
-      user: User.id
+      user: window.user.id
       question: @model
       answerScale: @answerScale
       active: @active

@@ -1,4 +1,4 @@
-var Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionItem, QuestionList, QuestionModel, Router, User, geoLocation, instance,
+var Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionItem, QuestionList, QuestionModel, Router, User,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -212,10 +212,10 @@ LoginDialog = (function(_super) {
 
   LoginDialog.prototype.content = "A valid login is required.";
 
-  LoginDialog.prototype.primaryButtonText = "Login";
+  LoginDialog.prototype.primaryButtonText = "Login via Twitter";
 
   LoginDialog.prototype.ok = function() {
-    return window.location.href = "/login/";
+    return window.location.href = "/login/twitter/";
   };
 
   return LoginDialog;
@@ -261,10 +261,11 @@ Router = (function(_super) {
 
 })(Backbone.Router);
 
-instance = null;
-
 User = (function() {
-  var _this = this;
+  var instance,
+    _this = this;
+
+  instance = null;
 
   function User() {
     if (instance !== null) {
@@ -288,8 +289,6 @@ User = (function() {
 
 }).call(this);
 
-User.getInstance();
-
 QuestionModel = (function(_super) {
 
   __extends(QuestionModel, _super);
@@ -306,14 +305,14 @@ QuestionModel = (function(_super) {
 
   QuestionModel.prototype.votes = function() {
     return _.reduce(this.get('answers'), function(t, a) {
-      return t + (a.votes | 0);
+      return t + (a.votes || 0);
     }, 0);
   };
 
   QuestionModel.prototype.friend_votes = function() {
     return _.reduce(this.get('answers'), function(t, a) {
-      return t + (a.friend_votes | 0);
-    }, 0) | 1;
+      return t + (a.friend_votes || 0);
+    }, 0) || 1;
   };
 
   return QuestionModel;
@@ -383,20 +382,20 @@ QuestionItem = (function(_super) {
 
   QuestionItem.prototype.events = {
     "click .rest>.answers>.answer": "vote",
-    "click .answers .delete": "delete",
+    "click .footer .delete": "delete",
     "click .rest": "nothing"
   };
 
   QuestionItem.prototype.active = false;
 
   QuestionItem.prototype.initialize = function() {
-    this.model.on("change", this.render);
-    return this.answerScale = d3.scale.category10();
+    return this.model.on("change", this.render);
   };
 
   QuestionItem.prototype["delete"] = function(event) {
     var question,
       _this = this;
+    console.log("delete");
     question = $(event.currentTarget).closest(".question");
     new Dialog({
       closeButtonText: "Cancel",
@@ -428,7 +427,7 @@ QuestionItem = (function(_super) {
     answer = event.currentTarget.id;
     this.model.save({
       vote: answer,
-      position: geoLocation.position
+      position: window.geoLocation.position
     }, {
       wait: true,
       url: "/v1/question/vote/",
@@ -483,7 +482,9 @@ QuestionItem = (function(_super) {
     this.active = false;
     this.$el.removeClass("active");
     this.$el.children(".question .rest").slideUp(callback);
-    return this.removeMap();
+    if (this.removeMap) {
+      return this.removeMap();
+    }
   };
 
   QuestionItem.prototype.createMap = function(us) {
@@ -540,14 +541,14 @@ QuestionItem = (function(_super) {
       console.log("updateMap");
       return g.selectAll("circle").data(function() {
         return _this.model.get("geo");
-      }).style("fill", function(d) {
-        return _this.answerScale(d.id);
+      }).attr("class", function(d) {
+        return "dot color_" + d.id;
       }).attr("cx", function(d) {
         return path.centroid(d)[0];
       }).attr("cy", function(d) {
         return path.centroid(d)[1];
-      }).attr("r", r).enter().append("circle").attr("class", "dot").style("fill", function(d) {
-        return _this.answerScale(d.id);
+      }).attr("r", r).enter().append("circle").attr("class", function(d) {
+        return "dot color_" + d.id;
       }).attr("cx", function(d) {
         return path.centroid(d)[0];
       }).attr("cy", function(d) {
@@ -582,9 +583,9 @@ QuestionItem = (function(_super) {
     } else {
       pDiv = mapDiv.children("p");
       pDiv.html('loading map data...');
-      return d3.json("/static/us.json", function(us) {
+      return d3.json("/static/us.json", function(map) {
         var svg;
-        _this.map = (svg = _this.createMap(us));
+        _this.map = (svg = _this.createMap(map));
         $(svg).slideDown('slow');
         return mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>");
       });
@@ -600,11 +601,12 @@ QuestionItem = (function(_super) {
 
   QuestionItem.prototype.render = function() {
     this.$el.html(this.questionTmpl({
-      user: User.id,
+      user: window.user.id,
       question: this.model,
-      answerScale: this.answerScale,
       active: this.active
     }));
+    $(".answer .fill .label").tooltip();
+    $(".friends .progress .bar").tooltip();
     if (this.active) {
       this.addMap();
     }
@@ -746,18 +748,16 @@ QuestionList = (function(_super) {
 
 })(Backbone.View);
 
-geoLocation = void 0;
-
 $(window).ready(function() {
-  var app;
   console.log("main");
   window.setTimeout(function() {
     return $('.alert').fadeOut('fast', function() {
       return $(this).remove();
     });
   }, 3000);
-  geoLocation = GeoLocation.getInstance();
-  app = new Router();
+  window.geoLocation = GeoLocation.getInstance();
+  window.user = User.getInstance();
+  window.app = new Router();
   return Backbone.history.start({
     pushState: true,
     hashChange: true

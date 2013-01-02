@@ -1,14 +1,13 @@
-geoLocation = undefined
-
 $(window).ready( ->
   console.log("main")
   window.setTimeout(
     -> $('.alert').fadeOut('fast', -> $(this).remove())
     3000)
   
-  geoLocation = GeoLocation.getInstance()
+  window.geoLocation = GeoLocation.getInstance()
+  window.user = User.getInstance()
   
-  app = new Router()
+  window.app = new Router()
   # console.log(Backbone.History);
   Backbone.history.start({pushState: true, hashChange: true})
   
