@@ -72,7 +72,7 @@ assets.register('js_frameworks', js_frameworks)
 js_d3 = Bundle(
     'js/lib/topojson.js',
     'js/lib/d3.js',
-    filters='rjsmin',
+    # filters='rjsmin',
     output='js/d3.topojson.js')
 assets.register('js_d3', js_d3)
 
