@@ -199,6 +199,22 @@ body {
   color: #356635;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
+.map {
+  border-top: 1px dashed black;
+  margin-top: 20px;
+}
+.map .header {
+  font-weight: bold;
+  margin-top: 10px;
+}
+.map .header h5 {
+  color: #356635;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.map .header h5 {
+  color: #000;
+  text-align: left;
+}
 .question.active .friends .answer .fill .label {
   background-color: #5eb95e;
   background-image: -moz-linear-gradient(top, #62c462, #57a957);

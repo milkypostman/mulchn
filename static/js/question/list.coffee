@@ -180,8 +180,8 @@ class QuestionItem extends Backbone.View
       .attr("d", path)
       .on("click", click)
 
-    @updateMapData = =>
-      console.log("updateMapData")
+    @updateMap = =>
+      console.log("updateMap")
 
       g.selectAll("circle")
         .data(=> @model.get("geo"))
@@ -200,41 +200,42 @@ class QuestionItem extends Backbone.View
       console.log("removeMap")
       $(svg[0]).slideUp(-> $(@).remove())
       @map = undefined
-      @updateMapData = undefined
+      @updateMap = undefined
 
-    @updateMapData()
+    @updateMap()
 
     svg[0]
 
-  updateMap: =>
-    console.log("updateMap")
+  addMap: =>
+    console.log("addMap")
     # don't add the map unless we have voted and have data
     if not @model.get("vote") or not @model.get("geo").length > 0
       return
       
     restDiv = @$el.children(".rest")
-    mapDiv = restDiv.children(".map")
+    mapDiv = restDiv.find(".map")
 
     if @map
       mapDiv.html(@map)
-
-      @updateMapData()
-      return
-
-    pDiv = mapDiv.children("p")
-    pDiv.html('loading map data...')
-
-    d3.json("/static/us.json", (us) =>
-      @map = (svg = @createMap(us))
-      $(svg).slideDown('slow'))
+      @updateMap()
+      mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>")
+    else
+      pDiv = mapDiv.children("p")
+      pDiv.html('loading map data...')
   
+      d3.json("/static/us.json", (us) =>
+        @map = (svg = @createMap(us))
+        $(svg).slideDown('slow')
+  
+        mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>")
+        )
 
   expand: (callback) =>
     @active = true
     @$el.addClass("active")
     @$el.children(".rest").slideDown(callback)
 
-    @updateMap()
+    @addMap()
 
 
   render: =>
@@ -246,7 +247,7 @@ class QuestionItem extends Backbone.View
       }))
 
     if @active
-      @updateMap()
+      @addMap()
 
     @
 

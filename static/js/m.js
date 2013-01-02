@@ -361,7 +361,7 @@ QuestionItem = (function(_super) {
 
     this.expand = __bind(this.expand, this);
 
-    this.updateMap = __bind(this.updateMap, this);
+    this.addMap = __bind(this.addMap, this);
 
     this.createMap = __bind(this.createMap, this);
 
@@ -498,7 +498,7 @@ QuestionItem = (function(_super) {
     path = d3.geo.path().projection(projection);
     svg = d3.select(mapDiv.get()[0]).append("svg").attr("width", width).style("display", "none").attr("height", height);
     g = svg.append("g").attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")").append("g").attr("id", "states");
-    radius = 3;
+    radius = 4;
     strokewidth = 1.5;
     centered = null;
     r = radius;
@@ -536,8 +536,8 @@ QuestionItem = (function(_super) {
     g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "" + strokewidth + "px").classed("active", centered && function(d) {
       return d.id === centered;
     }).classed("state", true).attr("d", path).on("click", click);
-    this.updateMapData = function() {
-      console.log("updateMapData");
+    this.updateMap = function() {
+      console.log("updateMap");
       return g.selectAll("circle").data(function() {
         return _this.model.get("geo");
       }).style("fill", function(d) {
@@ -560,40 +560,42 @@ QuestionItem = (function(_super) {
         return $(this).remove();
       });
       _this.map = void 0;
-      return _this.updateMapData = void 0;
+      return _this.updateMap = void 0;
     };
-    this.updateMapData();
+    this.updateMap();
     return svg[0];
   };
 
-  QuestionItem.prototype.updateMap = function() {
+  QuestionItem.prototype.addMap = function() {
     var mapDiv, pDiv, restDiv,
       _this = this;
-    console.log("updateMap");
+    console.log("addMap");
     if (!this.model.get("vote") || !this.model.get("geo").length > 0) {
       return;
     }
     restDiv = this.$el.children(".rest");
-    mapDiv = restDiv.children(".map");
+    mapDiv = restDiv.find(".map");
     if (this.map) {
       mapDiv.html(this.map);
-      this.updateMapData();
-      return;
+      this.updateMap();
+      return mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>");
+    } else {
+      pDiv = mapDiv.children("p");
+      pDiv.html('loading map data...');
+      return d3.json("/static/us.json", function(us) {
+        var svg;
+        _this.map = (svg = _this.createMap(us));
+        $(svg).slideDown('slow');
+        return mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>");
+      });
     }
-    pDiv = mapDiv.children("p");
-    pDiv.html('loading map data...');
-    return d3.json("/static/us.json", function(us) {
-      var svg;
-      _this.map = (svg = _this.createMap(us));
-      return $(svg).slideDown('slow');
-    });
   };
 
   QuestionItem.prototype.expand = function(callback) {
     this.active = true;
     this.$el.addClass("active");
     this.$el.children(".rest").slideDown(callback);
-    return this.updateMap();
+    return this.addMap();
   };
 
   QuestionItem.prototype.render = function() {
@@ -604,7 +606,7 @@ QuestionItem = (function(_super) {
       active: this.active
     }));
     if (this.active) {
-      this.updateMap();
+      this.addMap();
     }
     return this;
   };
