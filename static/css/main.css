@@ -214,11 +214,11 @@ path.state {
   stroke: #fff;
 }
 path.state.active {
-  fill: #999;
+  fill: #d1d1dd;
 }
 path.state:hover {
   fill: #8e8ecc;
-  z-index: 100;
+  fill: #b4b4cc;
 }
 path.bounds {
   fill: none;
