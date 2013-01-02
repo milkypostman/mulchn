@@ -14,7 +14,6 @@ class QuestionItem extends Backbone.View
   initialize: =>
     @model.on("change", @render)
     @answerScale = d3.scale.category10()
-    @resetZoomData()
 
   delete: (event) =>
     question = $(event.currentTarget).closest(".question")
@@ -83,26 +82,14 @@ class QuestionItem extends Backbone.View
     @$el.removeClass("active")
     @$el.children(".question .rest").slideUp(callback)
 
-    if @map
-      $(@map).slideUp(-> $(@).remove())
-      @resetZoomData()
-      @map = undefined
+    @removeMap()
 
 
-  resetZoomData: =>
-    console.log("resetZoomData")
-    @zoomData = {
-      x:0
-      y:0
-      k:1
-      r:3
-      defaultRadius: 3
-      centered: null
-      }
-    
   createMap: (us) =>
     # creates a new map element and returns it
     # element is created as a child of div.map
+    console.log("createMap")
+    
     mapDiv = @$el.find(".map")
     mapDiv.empty()
     
@@ -127,22 +114,22 @@ class QuestionItem extends Backbone.View
       .append("g")
       .attr("id", "states");
 
-    geo = @model.get("geo")
-
+    radius = 3
     strokewidth = 1.5
+    centered = null
+    r = radius
 
     click = (d) =>
-      @zoomData.x = 0
-      @zoomData.y = 0
-      @zoomData.k = 1
-      @zoomData.r = @zoomData.defaultRadius
+      x = 0
+      y = 0
+      k = 1
       spd = 1200
 
-      if (d && @zoomData.centered != d.id) 
+      if (d && centered != d.id) 
         centroid = path.centroid(d)
 
-        @zoomData.x = -centroid[0]
-        @zoomData.y = -centroid[1]
+        x = -centroid[0]
+        y = -centroid[1]
 
         bounds = path.bounds(d)
 
@@ -157,55 +144,65 @@ class QuestionItem extends Backbone.View
         xk = width/(ww * 1.2)
         yk = height/(hh * 1.1)
 
-        @zoomData.k = Math.min(xk, yk)
-        @zoomData.r = @zoomData.defaultRadius / @zoomData.k
+        k = Math.min(xk, yk)
+        r = radius / k
         spd = 600
         
-        @zoomData.centered = d.id;
+        centered = d.id;
       else
-        @zoomData.centered = null;
+        r = radius;
+        centered = null;
       
       g.selectAll("path")
-        .classed("active", @zoomData.centered && (d) => d.id == @zoomData.centered )
+        .classed("active", centered && (d) => d.id == centered )
 
       trans = g.transition()
         .duration(1000)
-        .attr("transform", "scale(#{@zoomData.k})translate(#{@zoomData.x},#{@zoomData.y})")
+        .attr("transform", "scale(#{k})translate(#{x},#{y})")
         .selectAll("path.state")
-        .style("stroke-width", "#{strokewidth / @zoomData.k}px")
+        .style("stroke-width", "#{strokewidth / k}px")
 
       g.selectAll("circle.dot")
         .transition()
         .duration(spd)
-        .attr("r", @zoomData.r)
+        .attr("r", r)
         
-      console.log(@zoomData.centered)
+      console.log(centered)
 
-    console.log(@zoomData.centered)
-  
+    console.log(centered)
+
     g.selectAll("path")
       .data(topojson.object(us, us.objects.states).geometries)
       .enter().append("path")
       .style("stroke-width", "#{strokewidth}px")
-      .classed("active", @zoomData.centered && (d) => d.id == @zoomData.centered )
+      .classed("active", centered && (d) => d.id == centered )
       .classed("state", true)
       .attr("d", path)
       .on("click", click)
 
-    g.selectAll("circle")
-      .data(geo)
-      .enter().append("circle")
-      .attr("class", "dot")
-      .style("fill", (d) =>
-        console.log(@answerScale(d.id))
-        @answerScale(d.id))
-      .attr("cx", (d) -> path.centroid(d)[0])
-      .attr("cy", (d) -> path.centroid(d)[1])
-      .attr("r", @zoomData.r)
+    @updateMapData = =>
+      console.log("updateMapData")
 
-    g.attr("transform", "scale(#{@zoomData.k})translate(#{@zoomData.x},#{@zoomData.y})")
-      .selectAll("path.state")
-      .style("stroke-width", "#{strokewidth / @zoomData.k}px")
+      g.selectAll("circle")
+        .data(=> @model.get("geo"))
+        .style("fill", (d) => @answerScale(d.id))
+        .attr("cx", (d) -> path.centroid(d)[0])
+        .attr("cy", (d) -> path.centroid(d)[1])
+        .attr("r", r)
+        .enter().append("circle")
+        .attr("class", "dot")
+        .style("fill", (d) => @answerScale(d.id))
+        .attr("cx", (d) -> path.centroid(d)[0])
+        .attr("cy", (d) -> path.centroid(d)[1])
+        .attr("r", r)
+
+    @removeMap = =>
+      console.log("removeMap")
+      $(svg[0]).slideUp(-> $(@).remove())
+      @map = undefined
+      @updateMapData = undefined
+
+    @updateMapData()
 
     svg[0]
 
@@ -218,17 +215,18 @@ class QuestionItem extends Backbone.View
     restDiv = @$el.children(".rest")
     mapDiv = restDiv.children(".map")
 
-    if not @map
-      pDiv = mapDiv.children("p")
-      pDiv.html('loading map data...')
+    if @map
+      mapDiv.html(@map)
+
+      @updateMapData()
+      return
+
+    pDiv = mapDiv.children("p")
+    pDiv.html('loading map data...')
 
     d3.json("/static/us.json", (us) =>
       @map = (svg = @createMap(us))
-      if not @map
-        $(svg).slideDown('slow')
-      else
-        $(svg).show()
-      )
+      $(svg).slideDown('slow'))
   
 
   expand: (callback) =>
