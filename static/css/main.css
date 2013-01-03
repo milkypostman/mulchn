@@ -79,10 +79,10 @@ body {
   background: #e0e0e0;
   cursor: pointer;
 }
-.question .vote-count-prefix {
+.question .header .vote-count-prefix {
   color: gray;
 }
-.question .vote-count {
+.question .header .vote-count {
   color: black;
 }
 .question .vote-null .fill {
@@ -117,7 +117,7 @@ body {
   background: #ededed;
   cursor: default;
 }
-.question.active .fill .label {
+.question.active .header .fill .label {
   background-color: #777777;
   background-image: -moz-linear-gradient(top, #848484, #6a6a6a);
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#848484), to(#6a6a6a));
@@ -129,10 +129,10 @@ body {
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
-.question.active .vote-count {
+.question.active .header .vote-count {
   color: white;
 }
-.question.active .vote-count-prefix {
+.question.active .header .vote-count-prefix {
   color: lightgray;
 }
 .rest .answers .answer {
