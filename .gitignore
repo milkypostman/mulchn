@@ -1,4 +1,4 @@
 *.pyc
 *.DS_Store
-/app8369946
 /static/.webassets-cache
+/dumps
