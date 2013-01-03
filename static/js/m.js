@@ -479,9 +479,14 @@ QuestionItem = (function(_super) {
   };
 
   QuestionItem.prototype.collapse = function(callback) {
-    this.active = false;
-    this.$el.removeClass("active");
-    this.$el.children(".question .rest").slideUp(callback);
+    var _this = this;
+    this.$el.children(".question .rest").slideUp(function(event) {
+      _this.active = false;
+      _this.$el.removeClass("active");
+      if (callback) {
+        return callback(event);
+      }
+    });
     if (this.removeMap) {
       return this.removeMap();
     }

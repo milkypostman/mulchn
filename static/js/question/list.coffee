@@ -78,9 +78,11 @@ class QuestionItem extends Backbone.View
     
 
   collapse: (callback) =>
-    @active = false
-    @$el.removeClass("active")
-    @$el.children(".question .rest").slideUp(callback)
+    @$el.children(".question .rest").slideUp( (event) =>
+      @active = false
+      @$el.removeClass("active")
+      callback(event) if callback
+      )
 
     @removeMap() if @removeMap
 
