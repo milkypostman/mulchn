@@ -1,4 +1,4 @@
-class User
+class Account
   instance = null
 
   constructor: () ->
@@ -7,12 +7,15 @@ class User
     @initialize()
 
   initialize: ->
-    @id = $("#userid").html()
+    data = $.parseJSON($("#account_id").html())
+    if data
+      @id = data.id
+      @admin = data.admin
 
 
   @getInstance = =>
     if instance == null
-      instance = new User()
+      instance = new Account()
 
     instance
 

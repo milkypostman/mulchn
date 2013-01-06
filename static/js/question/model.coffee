@@ -1,5 +1,5 @@
 class QuestionModel extends Backbone.Model
-  idAttribute: "_id"
+  # idAttribute: "_id"
 
   url: ->
     "/v1/question/#{@id}"
@@ -9,7 +9,7 @@ class QuestionModel extends Backbone.Model
         (t, a) -> t + (a.votes or 0)
         0)
 
-  friend_votes: ->
+  followee_votes: ->
     _.reduce(@get('answers')
-        (t, a) -> t + (a.friend_votes or 0)
+        (t, a) -> t + (a.followee_votes or 0)
         0) or 1

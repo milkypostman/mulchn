@@ -21,7 +21,7 @@ class QuestionItem extends Backbone.View
       closeButtonText: "Cancel"
       primaryButtonText: "Delete"
       title: "Delete Question?"
-      content: "<p>Are you sure you want to delete the question: <blockquote>#{@model.get("question")}</blockquote></p>"
+      content: "<p>Are you sure you want to delete the question: <blockquote>#{@model.get("text")}</blockquote></p>"
       ok: (dialog) =>
         @model.destroy({
           wait: true
@@ -240,15 +240,19 @@ class QuestionItem extends Backbone.View
     @addMap()
 
 
+  addTooltips: =>
+    $(".answer .fill .label").tooltip()
+    $(".followees .progress .bar").tooltip()
+
   render: =>
     @$el.html(@questionTmpl({
-      user: window.user.id
+      account: window.account
       question: @model
       active: @active
       }))
 
-    $(".answer .fill .label").tooltip()
-    $(".friends .progress .bar").tooltip()
+
+    @addTooltips()
 
     if @active
       @addMap()
@@ -306,8 +310,9 @@ class QuestionList extends Backbone.View
     @$el.append(view.render().el)
 
   remove: (model) =>
-    if @selectedQuestion == model.id
+    if @selectedQuestion == model.id.toString()
       @selectedQuestion = undefined
+    console.log(@selectedQuestion)
     view = @childViews[model.id]
     view.$el.remove()
     delete @childViews[model.id]

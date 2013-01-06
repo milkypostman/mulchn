@@ -5,7 +5,7 @@ $(window).ready( ->
     3000)
   
   window.geoLocation = GeoLocation.getInstance()
-  window.user = User.getInstance()
+  window.account = Account.getInstance()
   
   window.app = new Router()
   # console.log(Backbone.History);

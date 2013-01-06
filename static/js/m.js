@@ -1,4 +1,4 @@
-var Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionItem, QuestionList, QuestionModel, Router, User,
+var Account, Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionItem, QuestionList, QuestionModel, Router,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -261,31 +261,36 @@ Router = (function(_super) {
 
 })(Backbone.Router);
 
-User = (function() {
+Account = (function() {
   var instance,
     _this = this;
 
   instance = null;
 
-  function User() {
+  function Account() {
     if (instance !== null) {
       throw new Error("Cannot instantiate more than one " + name + ", use " + name + ".getInstance()");
     }
     this.initialize();
   }
 
-  User.prototype.initialize = function() {
-    return this.id = $("#userid").html();
+  Account.prototype.initialize = function() {
+    var data;
+    data = $.parseJSON($("#account_id").html());
+    if (data) {
+      this.id = data.id;
+      return this.admin = data.admin;
+    }
   };
 
-  User.getInstance = function() {
+  Account.getInstance = function() {
     if (instance === null) {
-      instance = new User();
+      instance = new Account();
     }
     return instance;
   };
 
-  return User;
+  return Account;
 
 }).call(this);
 
@@ -297,8 +302,6 @@ QuestionModel = (function(_super) {
     return QuestionModel.__super__.constructor.apply(this, arguments);
   }
 
-  QuestionModel.prototype.idAttribute = "_id";
-
   QuestionModel.prototype.url = function() {
     return "/v1/question/" + this.id;
   };
@@ -309,9 +312,9 @@ QuestionModel = (function(_super) {
     }, 0);
   };
 
-  QuestionModel.prototype.friend_votes = function() {
+  QuestionModel.prototype.followee_votes = function() {
     return _.reduce(this.get('answers'), function(t, a) {
-      return t + (a.friend_votes || 0);
+      return t + (a.followee_votes || 0);
     }, 0) || 1;
   };
 
@@ -336,7 +339,7 @@ QuestionCollection = (function(_super) {
 
   QuestionCollection.prototype.updateOrAdd = function(collection, response) {
     return _.each(response, function(ele) {
-      return collection.get(ele._id).set(ele);
+      return collection.get(ele.id).set(ele);
     });
   };
 
@@ -357,6 +360,8 @@ QuestionItem = (function(_super) {
 
   function QuestionItem() {
     this.render = __bind(this.render, this);
+
+    this.addTooltips = __bind(this.addTooltips, this);
 
     this.expand = __bind(this.expand, this);
 
@@ -401,7 +406,7 @@ QuestionItem = (function(_super) {
       closeButtonText: "Cancel",
       primaryButtonText: "Delete",
       title: "Delete Question?",
-      content: "<p>Are you sure you want to delete the question: <blockquote>" + (this.model.get("question")) + "</blockquote></p>",
+      content: "<p>Are you sure you want to delete the question: <blockquote>" + (this.model.get("text")) + "</blockquote></p>",
       ok: function(dialog) {
         return _this.model.destroy({
           wait: true,
@@ -604,14 +609,18 @@ QuestionItem = (function(_super) {
     return this.addMap();
   };
 
+  QuestionItem.prototype.addTooltips = function() {
+    $(".answer .fill .label").tooltip();
+    return $(".followees .progress .bar").tooltip();
+  };
+
   QuestionItem.prototype.render = function() {
     this.$el.html(this.questionTmpl({
-      user: window.user.id,
+      account: window.account,
       question: this.model,
       active: this.active
     }));
-    $(".answer .fill .label").tooltip();
-    $(".friends .progress .bar").tooltip();
+    this.addTooltips();
     if (this.active) {
       this.addMap();
     }
@@ -706,9 +715,10 @@ QuestionList = (function(_super) {
 
   QuestionList.prototype.remove = function(model) {
     var view;
-    if (this.selectedQuestion === model.id) {
+    if (this.selectedQuestion === model.id.toString()) {
       this.selectedQuestion = void 0;
     }
+    console.log(this.selectedQuestion);
     view = this.childViews[model.id];
     view.$el.remove();
     return delete this.childViews[model.id];
@@ -761,7 +771,7 @@ $(window).ready(function() {
     });
   }, 3000);
   window.geoLocation = GeoLocation.getInstance();
-  window.user = User.getInstance();
+  window.account = Account.getInstance();
   window.app = new Router();
   return Backbone.history.start({
     pushState: true,

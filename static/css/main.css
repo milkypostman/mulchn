@@ -175,18 +175,18 @@ body {
 .rest .answers .answer.vote i {
   opacity: 1.0;
 }
-.rest .friends {
+.rest .followee {
   border-top: 1px dashed lightgray;
   margin-top: 20px;
 }
-.rest .friends .answer p {
+.rest .followee .answer p {
   margin-left: 20px;
 }
-.rest .friends .header {
+.rest .followee .header {
   font-weight: bold;
   margin-top: 10px;
 }
-.rest .friends .header h5 {
+.rest .followee .header h5 {
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .rest .map {

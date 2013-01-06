@@ -25,8 +25,8 @@
                   <li><a class="" href="{{ url_for('question_add') }}">+</a></li>
                 </ul>
                 <ul class="nav pull-right">
-                  {% if user %}
-                    <li><a href="">{{ user['username'] }}</a></li>
+                  {% if account %}
+                    <li><a href="">{{ account.username }}</a></li>
                     <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
                   {% else %}
                     <li class="login"><a class="" href="{{ url_for('login_twitter') }}"><i class="twitter-login"></i></a></li>
@@ -65,8 +65,8 @@
         <script type="text/javascript" src="{{ ASSET_URL }}"></script>
       {% endassets %}
     {% endblock js %}
-    {% if user %}
-      <script id="userid" type="application/json">{{ user._id }}</script>
+    {% if account %}
+      <script id="account_id" type="application/json">{ "id": {{ account.id }}{% if account.admin %}, "admin": true{% endif %} }</script>
     {% endif %}
   </body>
 </html>

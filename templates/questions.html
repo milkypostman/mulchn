@@ -22,12 +22,12 @@
         </div>
       </div>
       <% } %>
-      <h4><%= question.get("question") %></h4>
+      <h4><%= question.get("text") %></h4>
     </div>
     <div class="rest" <% if (active) { %>style="display: block;"<% } %>>
       <ul class="answers slicklist" >
         <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
-           <li class="answer <% if (answer._id == question.get("vote")) { %>vote<% } %>" id="<%= answer._id %>">
+           <li class="answer <% if (answer.id == question.get("vote")) { %>vote<% } %>" id="<%= answer.id %>">
              <div class="icon pull-left color_<%= _i %>">
                <i class="icon-remove icon icon-white"></i>
              </div>
@@ -43,27 +43,27 @@
                </div>
              </div>
              <% } %>
-             <p><%= answer.answer %></p>
+             <p><%= answer.text %></p>
            </li>
            <% } %>
       </ul>
       <% if (question.get("vote")) { %>
-      <div class="friends">
+      <div class="followees">
         <div class="header"><h5>You and the People You Follow</h5></div>
         <div class="progress">
           <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
              <div class="bar color_<%= _i %>"
                   data-placement="bottom"
-                  data-original-title="<%= Math.round(answer.friend_votes / question.friend_votes() * 100) %>%"
-                  style="width: <%= (answer.friend_votes / question.friend_votes() * 100) %>%">
-                  <%= answer.friend_votes %>
+                  data-original-title="<%= Math.round(answer.followee_votes / question.followee_votes() * 100) %>%"
+                  style="width: <%= (answer.followee_votes / question.followee_votes() * 100) %>%">
+                  <%= answer.followee_votes %>
              </div>
              <% } %>
         </div>
       </div>
       <div class="map"><p>map data unavailable</p></div>
       <% } %>
-      <div class="footer"><% if (user && question.get("owner") == user) { %><i title="delete question" class="icon-trash delete"></i><% } %></div>
+      <div class="footer"><% if (account && (question.get("owner") == account.id || account.admin)) { %><i title="delete question" class="icon-trash delete"></i><% } %></div>
     </div>
   </script>
 

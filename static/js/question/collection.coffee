@@ -4,7 +4,7 @@ class QuestionCollection extends Backbone.Collection
 
   updateOrAdd: (collection, response) =>
     _.each(response, (ele) ->
-      collection.get(ele._id).set(ele))
+      collection.get(ele.id).set(ele))
 
 
   update: =>

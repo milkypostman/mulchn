@@ -2,6 +2,7 @@
 
 from bson.objectid import ObjectId, InvalidId
 from datetime import datetime
+from db import Account, Twitter, Vote, VoteHistory, Tag, Question, Answer, AccountFollow
 from flask import Flask
 from flask import Response
 from flask import abort
@@ -17,24 +18,28 @@ from flask.ext import wtf
 from flask.ext.assets import Environment, Bundle
 from functools import wraps
 from itertools import izip_longest
-from pymongo import Connection
 from urlparse import urlsplit
 from wtforms.validators import StopValidation
 
+import db
+import flask
+import logging
 import oauth2 as oauth
 import os, os.path
+import sqlalchemy as sa
 import subprocess
 import time
+import time
+import twitter
 import urllib
 import urlparse
-import twitter
 import warnings
-import flask
+
 
 
 app = Flask(__name__)
 app.config.from_object('config')
-app.config.from_envvar('MULCHN_SETTINGS', silent=True)
+app.config.from_envvar('MULCHN_CONFIG', silent=True)
 app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
 
 assets = Environment(app)
@@ -49,7 +54,7 @@ js_app = Bundle('js/add.coffee',
                 'js/geolocation.coffee',
                 'js/logindialog.coffee',
                 'js/router.coffee',
-                'js/user.coffee',
+                'js/account.coffee',
                 'js/question/model.coffee',
                 'js/question/collection.coffee',
                 'js/question/list.coffee',
@@ -89,7 +94,7 @@ class TagListField(wtf.Field):
 
     def process_formdata(self, valuelist):
         if valuelist:
-            self.data = [x.strip() for x in valuelist[0].split(',')]
+            self.data = list({x.strip() for x in valuelist[0].lower().split(',')})
         else:
             self.data = []
 
@@ -115,50 +120,41 @@ def inject_static_url():
 
 
 @app.context_processor
-def inject_user():
+def inject_account():
     try:
-        return dict(user = g.user)
+        return dict(account = g.account)
     except AttributeError:
         return dict()
 
-@app.before_request
-def init_mongodb():
-    """
-    Initialize MongoDB instance into global application context.
-
-    Uses either `MONGOHQ_URL` variable from environment or configuration file.
-    """
-
-    mongo_url = os.environ.get('MONGOHQ_URL', app.config['MONGODB_URL'])
-    mongo_db = urlsplit(mongo_url).path[1:]
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore', UserWarning)
-        g.db = Connection(mongo_url, tz_aware=True)[mongo_db]
-
 
 @app.teardown_request
-def close_mongodb(exception):
-    """
-    Close up MongoDB instance.
-    """
-    pass
-# del g.db
+def close_sqlalchemy(exception):
+    app.logger.debug("close down and flush")
+    commit()
+    db.session.remove()
 
 
 @app.before_request
-def find_user():
-    """
-    Load user information into the global app context if exists in the database.
-    """
-    if 'user_id' not in session: return
+def start_timer():
+    g.starttime = time.time()
 
-    user = g.db.users.find_one({'_id':session['user_id']})
-    if user is None:
-        session.pop('user_id')
-        return
+@app.teardown_request
+def report_runtime(exception=None):
+    if exception is None:
+        app.logger.info("Page load time: %s", time.time() - g.starttime)
 
-    g.user = user
+@app.before_request
+def find_account():
+    """
+    Load account information into the global app context if exists in the database.
+    """
+    if 'account_id' not in session: return
+
+    account = Account.query.filter_by(id=session['account_id']).first()
+    if account is None:
+        session.pop('account_id')
+    else:
+        g.account = account
 
 
 
@@ -180,17 +176,21 @@ def json_handler(obj):
         return unicode(obj)
     raise TypeError, \
         'Object of type {0} with value {0} is not JSON serializable'.format(
-        type(obj), repr(objc))
+        type(obj), repr(obj))
 
 
-def jsonify(data):
+def jsonify(data, indent=None):
     """
     jsonfiy `data`
     """
-    return app.response_class(
-        json.dumps(data, default=json_handler,
-                   indent=None if request.is_xhr else 2),
-        mimetype="application/json")
+    return json.dumps(data, default=json_handler, indent=indent)
+
+def render_json(data):
+    indent = None if request.is_xhr else 2
+
+    return app.response_class(jsonify(data, indent=indent),
+                              mimetype="application/json")
+
 
 def render(template, **kwargs):
     """
@@ -213,7 +213,7 @@ def access_denied(errors = []):
     if not errors:
         errors = [{'message': "Access Denied."}]
 
-    return jsonify({'errors': errors}), 401
+    return render_json({'errors': errors}), 401
 
 
 
@@ -242,48 +242,25 @@ def errors_dict(fields):
 
 def clean_old_votes(questionId):
     """
-    Clean up extra votes on the question `questionId` for the current user.
+    Clean up extra votes on the question `questionId` for the current account.
 
     Arguments:
     - `questionId`: QuestionId to clean up.
     """
-    uid = ObjectId(g.user['_id'])
-    q = g.db.questions.find_one({'_id':questionId}, {'answers':1})
-    if q is None:
-        abort(404)
-    for ans in q['answers']:
-        g.db.questions.update({'_id':questionId, 'answers._id':ans['_id']},
-                              {"$pull" : {"answers.$.votes": {"user":uid}}})
+
+    old_vote = Vote.query.filter(Vote.account_id==g.account.id,
+                                 Vote.answer_id == Answer.id,
+                                 Answer.question_id==questionId).first()
+    if old_vote is not None:
+        app.logger.debug("Removing old vote for answer %s of question %s for user %s", old_vote.answer_id, questionId, g.account.id)
+        db.session.add(old_vote.create_history())
+        db.session.delete(old_vote)
 
 
-def user_answer(answers):
-    if len(answers) > 1:
-        app.logger.error("Answers ({0}) has multiple votes for {1}!".format(
-                ', '.join(a['_id'] for a in answers), uid))
-
-    return answers[0]['_id']
-
-def user_answers():
-    return {q['_id']:user_answer(q['answers']) for q in
-            g.db.questions.find({"answers.votes.user": g.user['_id']},
-                                {"answers.$._id": "1"})}
 
 
-ANSWER_KEYS = ['answer', '_id']
-def answer_dict(answer, vote):
-    ret = {key:answer[key] for key in ANSWER_KEYS if key in answer}
-    if hasattr(g, 'user'):
-        votes = answer.get('votes', [])
-        ret['votes'] = len(votes)
-        ret['friend_votes'] = len(set(g.user.get('friends')).intersection(
-                    [v['user'] for v in votes]))
-        if vote is not None and vote == answer['_id']:
-            ret['friend_votes'] += 1
-
-    return ret
 
 
-# {"type":"Feature","id":"08","geometry":{"type":"Point","coordinates":[-105.203628,39.500656]},"properties":{"name":"Colorado","population":4301261}},
 def question_vote_locations(question):
     """
     Creates the geojson necessary for rendering.
@@ -296,42 +273,85 @@ def question_vote_locations(question):
 
     # just make up a counter
     identifier = 0
-    for answer in question.get('answers',[]):
-        for v in answer.get('votes', []):
-            if 'position' not in v or 'coords' not in v['position']:
-                continue
-            coords = v['position']['coords']
+    for answer in question.answers:
+        app.logger.debug("Populate vote locations for answer %s", answer.id)
+        for v in answer.votes:
             locations.append(
                 dict(type="Feature",
                      id=identifier,
                      geometry=dict(type="Point",
-                                   coordinates=[coords['longitude'], coords['latitude']],
-                                   properties=dict(answer=answer['_id']))))
+                                   coordinates=[v.longitude, v.latitude],
+                                   properties=dict(answer=answer.id))))
         identifier += 1
 
     return locations
 
 
+def account_answers():
+    return {a.question_id:a.id for a in Answer.query.filter(Vote.account == g.account)}
 
-QUESTION_KEYS = ['question', '_id', 'added', 'owner']
+
+ANSWER_KEYS = ['text', 'id']
+def answer_dict(answer, vote):
+    ret = {key:getattr(answer, key) for key in ANSWER_KEYS}
+
+    # app.logger.debug("Populate votes.")
+    if hasattr(g, 'account'):
+        ret['votes'] = len(answer.votes)
+        app.logger.debug("Getting Followee Votes")
+        ret['followee_votes'] = Vote.query.filter(
+            Vote.answer == answer,
+            Vote.account_id == AccountFollow.followee_id,
+            AccountFollow.follower_id == g.account.id).count()
+
+        if vote is not None and vote == answer.id:
+            ret['followee_votes'] += 1
+
+    return ret
+
+
+
+QUESTION_KEYS = ['text', 'id', 'added']
 def question_dict(question, votes):
     """
     Arguments:
     - `question`: question data
     - `votes`: dictionary mapping question._id to answer._id for all
-    questions the user has made.
+    questions the account has made.
     """
 
-    ret = {key:question[key] for key in QUESTION_KEYS}
+    ret = {key:getattr(question, key) for key in QUESTION_KEYS}
+    ret['tags'] = question.tag_list.copy()
 
-    if question["_id"] in votes:
-        ret['vote'] = votes[question["_id"]]
+
+    if question.id in votes:
+        ret['vote'] = votes[question.id]
         ret['geo'] = question_vote_locations(question)
 
-    ret['answers'] = [answer_dict(ans, ret.get('vote')) for ans in question['answers']]
+    if hasattr(g, 'account') and question.owner == g.account:
+        ret['owner'] = g.account.id
 
+
+    ret['answers'] = [answer_dict(ans, ret.get('vote')) for ans in question.answers]
+    app.logger.debug("Returning: %s", ret)
 
     return ret
+
+
+def questions_dict(questions=None):
+    # logged in account gets their votes
+
+    votes = {}
+    if hasattr(g, 'account'):
+        app.logger.debug("Getting User Votes.")
+        votes = {a.question.id:a.id for a in g.account.voted_answers}
+
+
+    if questions is None:
+        app.logger.debug("Getting all questions.")
+        questions = Question.query.order_by(sa.sql.expression.desc(Question.added)).filter_by(active=True, private=False)
+
+    return [question_dict(q, votes) for q in questions]
 
 
 
@@ -346,7 +366,7 @@ def login_required(f):
 
     @wraps(f)
     def wrapper(*args, **kwargs):
-        if not hasattr(g, 'user'):
+        if not hasattr(g, 'account'):
             if request.is_xhr:
                 return access_denied()
             session['url_after_login'] = f.__name__
@@ -372,25 +392,38 @@ def v1_vote():
     """
 
     data = request.json
-    votedata = {'user': g.user['_id']}
-    if data.get('position'):
-        votedata['position'] = data['position']
+    app.logger.debug("Recieved Vote Data: %s", data)
 
-    qid = ObjectId(data['_id'])
-    vote = ObjectId(data['vote'])
+    question_id = data['id']
 
-    if not g.db.questions.find({'_id':qid, 'answers._id':vote}):
+    app.logger.debug("Looking up answer %s of question %s", data['vote'], question_id)
+    answer = Answer.query.filter(Question.id==question_id, Answer.id == data['vote']).first()
+    if answer is None:
         abort(404)
 
-    clean_old_votes(qid)
-    g.db.questions.update({'_id':qid, 'answers._id':vote},
-                          {'$addToSet': {'answers.$.votes': votedata}})
+    app.logger.debug("Clean old votes.")
+    clean_old_votes(question_id)
 
-    ret = question_dict(g.db.questions.find_one({"_id": qid}),
-                        {qid:vote})
-    ret['vote'] = vote
+    app.logger.debug("Create new vote for user %s, question %s, and answer %s",
+                     g.account.id, question_id, answer.id)
+    vote = Vote(account=g.account, answer=answer)
+    pos = data.get('position')
+    if pos is not None:
+        vote.position_raw = jsonify(pos)
+        if 'coords' in pos:
+            vote.latitude = pos['coords']['latitude']
+            vote.longitude = pos['coords']['longitude']
 
-    return jsonify(ret)
+    db.session.add(vote)
+
+    app.logger.debug("Populate return data")
+    ret = question_dict(Question.query.filter(Question.id==question_id).first(),
+                        {question_id:vote.answer_id})
+    app.logger.debug("Returning Vote Info: %s", ret)
+
+    commit()
+
+    return render_json(ret)
 
 
 @app.route("/v1/question/<question>", methods=['DELETE'])
@@ -403,61 +436,54 @@ def v1_question(question):
     """
 
     if request.method == 'DELETE':
-        try:
-            obj = g.db.questions.find_one({"_id":ObjectId(question)})
-        except InvalidId:
+        app.logger.info("Looking for question %s", question)
+        question = Question.query.filter_by(id=question).first()
+        if not question:
             abort(404)
-
-        if obj['owner'] == g.user['_id']:
-            g.db.questions.remove({"_id": obj['_id']})
+        elif question.owner_id == g.account.id or g.account.admin:
+            question.active = False
+            question.removed = datetime.now()
+            db.session.add(question)
         else:
             access_denied()
+
     else:
         abort(404)
 
-    return jsonify({'response': 'OK'})
+    return render_json({'response': 'OK'})
+
 
 @app.route("/v1/questions/")
 def v1_questions():
-
-    # logged in user gets their votes
-    votes = {}
-    if hasattr(g, 'user'):
-        votes = user_answers()
-
-    questions = [question_dict(q, votes) for q in g.db.questions.find().sort('added', -1)]
-
-    return jsonify(questions)
+    return render_json(questions_dict())
 
 
 
 ### Login / Logout
-
 @app.route("/login/")
 def login():
     return render("login.html")
 
 @app.route("/logout/")
 def logout():
-    if session.pop('user_id', None) is not None and hasattr(g, 'user'):
-        flash("{0} has been logged out.".format(g.user['username']))
-    return redirect(url_for("questions"))
+    if session.pop('account_id', None) is not None and hasattr(g, 'account'):
+        flash("{0} has been logged out.".format(g.account.username))
+    return redirect(url_for("question_stream"))
 
 
 
 ### Pages
 
 @app.route("/")
-def questions():
+def question_stream():
     return render("questions.html")
 
-@app.route("/<tag>/")
+@app.route("/t/<tag>/")
 def tag(tag):
-    questions = g.db.questions.find({'tags':tag})
-    questions = list(questions)
-    return render("questions.html",
-                  questions=questions,
-                  tag=tag)
+    return render(questions_dict(
+            Tag.query.filter_by(name=tag).first().questions))
+
+
 
 @app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
 @login_required
@@ -492,22 +518,22 @@ def question_add():
         form = AddForm(formdata)
 
         if form.validate_on_submit():
-            question = dict(question=form['question'].data, owner=g.user['_id'])
-            question['answers'] = [{'_id': ObjectId(), 'answer':ans} for ans in form['answers'].data]
-            question['added'] = datetime.utcnow()
-            question['tags'] = form['tags'].data
+            question = Question()
+            question.owner = g.account
+            question.text = form['question'].data
+            question.tag_list = form['tags'].data
+            question.answer_list = form['answers'].data
+            db.session.add(question)
 
-            g.db.questions.insert(question)
-
-            flash("Added Question: {0}".format(question['question']))
-            return redirect(url_for('questions'))
+            flash("Added Question: {0}".format(question.text))
+            return redirect(url_for('question_stream'))
     else:
         form = AddForm()
     return render("add.html", form=form)
 
 
 @app.route("/question/<_id>/", methods=['GET'])
-def question(_id):
+def question(qid):
     """
     Fetch question with specified `_id`.
 
@@ -515,12 +541,8 @@ def question(_id):
     - `_id`: QuestionId to return data on.
     """
 
-    try:
-        obj = g.db.questions.find_one({"_id":ObjectId(question)})
-    except InvalidId:
-        obj = None
-
-    if obj is None:
+    obj = Question.query.filter_by(id=qid).first()
+    if not obj:
         abort(404)
 
     return str(obj)
@@ -558,6 +580,24 @@ def login_twitter():
                                                  request_token['oauth_token']))
 
 
+def commit():
+    """
+    Commit the current database session and automatically rollback if
+    an error occurs.
+
+    Return:
+       True on success
+       False on error
+    """
+
+    try:
+        db.session.commit()
+    except sa.exc.InvalidRequestError:
+        db.session.rollback()
+        return False
+
+    return True
+
 @app.route("/login/twitter/authenticated/")
 def login_twitter_authenticated():
 
@@ -579,10 +619,10 @@ def login_twitter_authenticated():
 
     if resp['status'] != '200':
         flash("Failed to login!")
-        return redirect(url_for("questions"))
+        return redirect(url_for("question_stream"))
 
 
-    # data contains our final token and secret for the user
+    # data contains our final token and secret for the account
     data = dict(urlparse.parse_qsl(content))
 
     oauth_token = data['oauth_token']
@@ -594,22 +634,34 @@ def login_twitter_authenticated():
                       access_token_secret =oauth_token_secret)
 
     try:
-        user_twitter_data = api.VerifyCredentials().AsDict()
+        twitter_data = api.VerifyCredentials().AsDict()
     except twitter.TwitterError:
         flash("Cannot validate Twitter credentials.")
-        return redirect(url_for("questions"))
+        return redirect(url_for("question_stream"))
 
 
-    # either create or update user information
-    try:
-        user = g.db.users.find_one({'twitter.id': user_twitter_data['id']})
-        session['user_id'] = user["_id"]
-        user['twitter']['oauth_token']=oauth_token
-        user['twitter']['oauth_token_secret']=oauth_token_secret
-        g.db.users.save(user)
-    except TypeError:
-        user = {'username': user_twitter_data['screen_name'], 'twitter': user_twitter_data}
-        session['user_id'] = g.db.users.insert(user)
+    # print twitter_data
+
+    # either create or update account information
+    twaccount = Twitter.query.filter_by(id=twitter_data['id']).first()
+
+    if twaccount is None:
+        account = Account()
+        db.session.add(account)
+
+        twaccount = Twitter()
+        twaccount.screen_name = account.username = twitter_data['screen_name']
+        twaccount.id = twitter_data['id']
+        twaccount.account = account
+    else:
+        account = twaccount.account
+
+    twaccount.raw = jsonify(twitter_data)
+
+    twaccount.oauth_token = oauth_token
+    twaccount.oauth_token_secret = oauth_token_secret
+    db.session.add(twaccount)
+
 
 
     # try to add friends
@@ -623,24 +675,32 @@ def login_twitter_authenticated():
                     data['next_cursor'] == 0 or \
                     data['next_cursor'] == data['previous_cursor']:
                 break
-            cursor = data['next_cursor']
-        user['twitter']['friends'] = friendIDs
-        g.db.users.save(user)
 
-        user['friends'] = [u['_id'] for u in g.db.users.find({'twitter.id': {"$in": friendIDs}})]
-        g.db.users.save(user)
-        # g.db.users.update({'_id':user['_id']}, {'$set' : {'twitter.friends': friendIDs}})
+            cursor = data['next_cursor']
+
+        twaccount.follow_id_list = friendIDs
+        account.following = [f.account for f in twaccount.following]
+        app.logger.debug("Following: %s", [a.username for a in account.following])
+
+
     except twitter.TwitterError:
         pass
 
 
 
-    flash("Logged in as {0}.".format(user['username']))
+    app.logger.debug("Commiting Twitter Login Information.")
+    if not commit():
+        flash("Error while logging in.")
+        return redirect(url_for("question_stream"))
 
+
+    session['account_id'] = twaccount.account_id
+
+    flash("Logged in as {0}.".format(account.username))
     if 'url_after_login' in session:
         return redirect(url_for(session.pop('url_after_login')))
 
-    return redirect(url_for("questions"))
+    return redirect(url_for("question_stream"))
 
 
 
@@ -648,7 +708,7 @@ def login_twitter_authenticated():
 @app.route("/test/twitter/")
 @login_required
 def test_twitter():
-    access_token = g.user['twitter']
+    access_token = g.account['twitter']
 
     api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
                       consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
@@ -667,38 +727,11 @@ def test_twitter():
 
 
 
-
-### Server Stuff
-
-# def coffeescript_paths():
-#     static_dir = app.static_folder
-#     return [os.path.join(path, fn)
-#             for path, _, filenames in os.walk(static_dir)
-#             for fn in filenames
-#             if os.path.splitext(fn)[1] == '.coffee' and not
-#             os.path.splitext(fn)[0].startswith('.') ]
-
-
-# def compile_coffeescript():
-#     static_url_path = app.static_url_path
-#     static_dir = app.root_path + app.static_folder
-
-#     cs_paths = coffeescript_paths()
-
-#     for cs_path in cs_paths:
-#         js_path = os.path.splitext(cs_path)[0] + '.js'
-#         js_mtime = os.path.getmtime(js_path) if os.path.isfile(js_path) else -1
-
-#         cs_mtime = os.path.getmtime(cs_path)
-#         if cs_mtime > js_mtime:
-#             print("Compiling {0}".format(cs_path))
-#             subprocess.call(['coffee', '-c', cs_path], shell=False)
-
-
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    # if app.debug:
-    #     compile_coffeescript()
+    if app.debug:
+        db.engine.echo = True
+
     app.run(host="0.0.0.0", port=port)
 
 

@@ -2,6 +2,7 @@ Flask
 Flask-Assets
 Flask-WTF
 gunicorn
-pymongo
+psycopg2
+sqlalchemy
 python-dateutil
 python-twitter
