@@ -233,16 +233,16 @@ Router = (function(_super) {
   Router.prototype.routes = {
     "q/:question_id": "question",
     "add": "add",
-    "#:hash": "root",
+    ":hash": "root",
     "": "root"
   };
 
   Router.prototype.root = function(hash) {
     var questionList;
-    if (hash && !this._alreadyTriggered) {
+    if (hash && this._alreadyTriggered !== hash) {
       Backbone.history.navigate("", false);
       location.hash = hash;
-      this._alreadyTriggered = true;
+      this._alreadyTriggered = hash;
       return;
     }
     console.log("root");
@@ -254,6 +254,7 @@ Router = (function(_super) {
   Router.prototype.question = function(question_id) {
     var model, question,
       _this = this;
+    console.log("question");
     model = new QuestionModel({
       id: question_id
     });
@@ -376,7 +377,19 @@ QuestionView = (function(_super) {
 
   __extends(QuestionView, _super);
 
-  function QuestionView() {
+  QuestionView.prototype.questionTmpl = _.template($("#question-template").html());
+
+  QuestionView.prototype.tagName = "div";
+
+  QuestionView.prototype.events = {
+    "click .rest>.answers>.answer": "vote",
+    "click .footer .delete": "delete",
+    "click .rest": "nothing"
+  };
+
+  QuestionView.prototype.active = false;
+
+  function QuestionView(config) {
     this.render = __bind(this.render, this);
 
     this.addTooltips = __bind(this.addTooltips, this);
@@ -396,38 +409,21 @@ QuestionView = (function(_super) {
     this.nothing = __bind(this.nothing, this);
 
     this["delete"] = __bind(this["delete"], this);
-    return QuestionView.__super__.constructor.apply(this, arguments);
-  }
-
-  QuestionView.prototype.questionTmpl = _.template($("#question-template").html());
-
-  QuestionView.prototype.tagName = "div";
-
-  QuestionView.prototype.events = {
-    "click .rest>.answers>.answer": "vote",
-    "click .footer .delete": "delete",
-    "click .rest": "nothing"
-  };
-
-  QuestionView.prototype.active = false;
-
-  QuestionView.prototype.initialize = function(config) {
-    var _this = this;
-    console.log("initialize");
-    this.model.on("change", this.render);
     if (config.active) {
       this.active = config.active;
     }
+    QuestionView.__super__.constructor.call(this, config);
+  }
+
+  QuestionView.prototype.initialize = function(config) {
+    var _this = this;
+    this.model.on("change", this.render);
     if (config.tagName) {
       this.tagName = config.tagName;
     }
-    _.each(config.classes, function(c) {
+    return _.each(config.classes, function(c) {
       return _this.classes.push(c);
     });
-    console.log(this.tagName);
-    console.log(this.classes);
-    console.log(config.active);
-    return console.log(this.attributes());
   };
 
   QuestionView.prototype["delete"] = function(event) {
@@ -532,18 +528,26 @@ QuestionView = (function(_super) {
     }
   };
 
-  QuestionView.prototype.createMap = function(us) {
-    var centered, click, g, height, mapDiv, path, projection, r, radius, strokewidth, svg, width,
+  QuestionView.prototype.createMap = function() {
+    var centered, click, g, g_dots, g_us, height, mapDiv, mapDivWidth, path, projection, r, radius, restDiv, strokewidth, svg, width,
       _this = this;
-    console.log("createMap");
-    mapDiv = this.$el.find(".map");
-    mapDiv.empty();
-    width = mapDiv.innerWidth() * .8;
+    restDiv = this.$el.children(".rest");
+    mapDiv = restDiv.find(".map");
+    if (restDiv.css('display') === 'none') {
+      restDiv.css('visibility', 'hidden').show();
+      mapDivWidth = mapDiv.innerWidth();
+      restDiv.css('visibility', 'visible').hide();
+    } else {
+      mapDivWidth = mapDiv.innerWidth();
+    }
+    width = mapDivWidth * .8;
     height = width * 1 / 2;
     projection = d3.geo.albersUsa().scale(width).translate([0, 0]);
     path = d3.geo.path().projection(projection);
-    svg = d3.select(mapDiv.get()[0]).append("svg").attr("width", width).style("display", "none").attr("height", height);
-    g = svg.append("g").attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")").append("g").attr("id", "states");
+    svg = d3.select(mapDiv.get()[0]).append("svg").attr("width", width).attr("height", height);
+    g = svg.append("g").attr("transform", "translate(" + (width / 2) + "," + (height / 2) + ")").append("g");
+    g_us = g.append("g").attr("id", "states");
+    g_dots = g.append("g").attr("id", "circles");
     radius = 4;
     strokewidth = 1.5;
     centered = null;
@@ -571,20 +575,19 @@ QuestionView = (function(_super) {
         r = radius;
         centered = null;
       }
-      g.selectAll("path").classed("active", centered && function(d) {
+      g_us.selectAll("path").classed("active", centered && function(d) {
         return d.id === centered;
       });
       trans = g.transition().duration(1000).attr("transform", "scale(" + k + ")translate(" + x + "," + y + ")").selectAll("path.state").style("stroke-width", "" + (strokewidth / k) + "px");
-      g.selectAll("circle.dot").transition().duration(spd).attr("r", r);
-      return console.log(centered);
+      return g_dots.selectAll("circle").transition().duration(spd).attr("r", r);
     };
-    console.log(centered);
-    g.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "" + strokewidth + "px").classed("active", centered && function(d) {
-      return d.id === centered;
-    }).classed("state", true).attr("d", path).on("click", click);
+    d3.json("/static/us.json", function(us) {
+      return g_us.selectAll("path").data(topojson.object(us, us.objects.states).geometries).enter().append("path").style("stroke-width", "" + strokewidth + "px").classed("active", centered && function(d) {
+        return d.id === centered;
+      }).classed("state", true).attr("d", path).on("click", click);
+    });
     this.updateMap = function() {
-      console.log("updateMap");
-      return g.selectAll("circle").data(function() {
+      return g_dots.selectAll("circle").data(function() {
         return _this.model.get("geo");
       }).attr("class", function(d) {
         return "dot color_" + d.id;
@@ -601,7 +604,6 @@ QuestionView = (function(_super) {
       }).attr("r", r);
     };
     this.removeMap = function() {
-      console.log("removeMap");
       $(svg[0]).slideUp(function() {
         return $(this).remove();
       });
@@ -613,9 +615,7 @@ QuestionView = (function(_super) {
   };
 
   QuestionView.prototype.addMap = function() {
-    var mapDiv, pDiv, restDiv,
-      _this = this;
-    console.log("addMap");
+    var mapDiv, restDiv, svg;
     if (!this.model.get("vote") || !this.model.get("geo").length > 0) {
       return;
     }
@@ -626,22 +626,17 @@ QuestionView = (function(_super) {
       this.updateMap();
       return mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>");
     } else {
-      pDiv = mapDiv.children("p");
-      pDiv.html('loading map data...');
-      return d3.json("/static/us.json", function(map) {
-        var svg;
-        _this.map = (svg = _this.createMap(map));
-        $(svg).slideDown('slow');
-        return mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>");
-      });
+      this.map = (svg = this.createMap());
+      mapDiv.html(this.map);
+      return mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>");
     }
   };
 
   QuestionView.prototype.expand = function(callback) {
     this.active = true;
+    this.addMap();
     this.$el.addClass("active");
-    this.$el.children(".rest").slideDown(callback);
-    return this.addMap();
+    return this.$el.children(".rest").slideDown(callback);
   };
 
   QuestionView.prototype.addTooltips = function() {
@@ -650,7 +645,6 @@ QuestionView = (function(_super) {
   };
 
   QuestionView.prototype.render = function() {
-    console.log(this.model);
     this.$el.html(this.questionTmpl({
       account: window.account,
       question: this.model,
@@ -718,11 +712,12 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.toggleQuestion = function(event) {
-    return this.toggleView(event.currentTarget.id);
+    return this.toggleView(event.currentTarget);
   };
 
-  QuestionList.prototype.toggleView = function(targetId) {
-    var view;
+  QuestionList.prototype.toggleView = function(target) {
+    var targetId, view;
+    targetId = target.id;
     if (this.selectedQuestion) {
       this.childViews[this.selectedQuestion].collapse();
     }
@@ -782,10 +777,12 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.addAll = function() {
+    var targetId;
     this.$el.empty();
     this.collection.each(this.append);
     if (location.hash) {
-      return this.toggleView(location.hash.substring(1));
+      targetId = location.hash.substring(1);
+      return this.toggleView($("#" + targetId)[0]);
     }
   };
 
