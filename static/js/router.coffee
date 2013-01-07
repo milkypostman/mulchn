@@ -1,5 +1,6 @@
 class Router extends Backbone.Router
   routes: {
+    "question/:question_id/": "question"
     "question/add/": "add"
     ":question/": "root"
     ":hash": "root"
@@ -23,8 +24,15 @@ class Router extends Backbone.Router
     console.log("root")
     questionList = new QuestionList()
     questionList.reset()
-    questionList.render()
-  
+    $("#content").html(questionList.render().el)
+
+  question: (question_id) ->
+    model = new QuestionModel({id: question_id})
+    question = new QuestionView({model: model, active: true});
+    model.fetch()
+    $("#content").html(question.el)
+    console.log(question)
+
   add: ->
     console.log("add")
     questionAdd = new QuestionAdd()

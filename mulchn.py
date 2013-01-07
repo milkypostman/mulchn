@@ -65,6 +65,7 @@ js_app = Bundle('js/add.coffee',
                 'js/account.coffee',
                 'js/question/model.coffee',
                 'js/question/collection.coffee',
+                'js/question/view.coffee',
                 'js/question/list.coffee',
                 'js/main.coffee',
                 filters='coffeescript,rjsmin',
@@ -431,9 +432,9 @@ def v1_vote():
     return render_json(ret)
 
 
-@app.route("/v1/question/<question>", methods=['DELETE'])
+@app.route("/v1/question/<question_id>", methods=['GET','DELETE'])
 @login_required
-def v1_question(question):
+def v1_question(question_id):
     """
     CRUD method for single question.
 
@@ -441,8 +442,8 @@ def v1_question(question):
     """
 
     if request.method == 'DELETE':
-        log.info("question lookup: id=%s", question)
-        question = Question.query.filter_by(id=question).first()
+        log.info("question lookup: id=%s", question_id)
+        question = Question.query.filter_by(id=question_id).first()
         if not question:
             abort(404)
         elif question.owner_id == g.account.id or g.account.admin:
@@ -452,6 +453,16 @@ def v1_question(question):
             db.session.add(question)
         else:
             access_denied()
+
+    elif request.method == 'GET':
+        votes = {}
+        if hasattr(g, 'account'):
+            log.debug("account votes lookup")
+            votes = {v.answer.question.id:v.answer.id for v in g.account.votes}
+
+        return render_json(question_dict(
+                Question.query.filter_by(id=question_id).first(),
+                votes))
 
     else:
         abort(404)
@@ -538,20 +549,20 @@ def question_add():
     return render("add.html", form=form)
 
 
-@app.route("/question/<_id>/", methods=['GET'])
-def question(qid):
+@app.route("/question/<question_id>/", methods=['GET'])
+def question(question_id):
     """
-    Fetch question with specified `_id`.
+    Fetch question with specified `question_id`.
 
     Arguments:
-    - `_id`: QuestionId to return data on.
+    - `question_id`: QuestionId to return data on.
     """
 
-    obj = Question.query.filter_by(id=qid).first()
-    if not obj:
-        abort(404)
+    # obj = Question.query.filter_by(id=question_id).first()
+    # if not obj:
+    #     abort(404)
 
-    return str(obj)
+    return render("questions.html")
 
 
 

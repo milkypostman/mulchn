@@ -1,4 +1,4 @@
-var Account, Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionItem, QuestionList, QuestionModel, Router,
+var Account, Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionList, QuestionModel, QuestionView, Router,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -231,6 +231,7 @@ Router = (function(_super) {
   }
 
   Router.prototype.routes = {
+    "question/:question_id/": "question",
     "question/add/": "add",
     ":question/": "root",
     ":hash": "root",
@@ -248,7 +249,21 @@ Router = (function(_super) {
     console.log("root");
     questionList = new QuestionList();
     questionList.reset();
-    return questionList.render();
+    return $("#content").html(questionList.render().el);
+  };
+
+  Router.prototype.question = function(question_id) {
+    var model, question;
+    model = new QuestionModel({
+      id: question_id
+    });
+    question = new QuestionView({
+      model: model,
+      active: true
+    });
+    model.fetch();
+    $("#content").html(question.el);
+    return console.log(question);
   };
 
   Router.prototype.add = function() {
@@ -354,11 +369,11 @@ QuestionCollection = (function(_super) {
 
 })(Backbone.Collection);
 
-QuestionItem = (function(_super) {
+QuestionView = (function(_super) {
 
-  __extends(QuestionItem, _super);
+  __extends(QuestionView, _super);
 
-  function QuestionItem() {
+  function QuestionView() {
     this.render = __bind(this.render, this);
 
     this.addTooltips = __bind(this.addTooltips, this);
@@ -371,33 +386,48 @@ QuestionItem = (function(_super) {
 
     this.collapse = __bind(this.collapse, this);
 
+    this.attributes = __bind(this.attributes, this);
+
     this.vote = __bind(this.vote, this);
 
     this.nothing = __bind(this.nothing, this);
 
     this["delete"] = __bind(this["delete"], this);
-
-    this.initialize = __bind(this.initialize, this);
-    return QuestionItem.__super__.constructor.apply(this, arguments);
+    return QuestionView.__super__.constructor.apply(this, arguments);
   }
 
-  QuestionItem.prototype.questionTmpl = _.template($("#question-template").html());
+  QuestionView.prototype.questionTmpl = _.template($("#question-template").html());
 
-  QuestionItem.prototype.tagName = "li";
+  QuestionView.prototype.tagName = "div";
 
-  QuestionItem.prototype.events = {
+  QuestionView.prototype.events = {
     "click .rest>.answers>.answer": "vote",
     "click .footer .delete": "delete",
     "click .rest": "nothing"
   };
 
-  QuestionItem.prototype.active = false;
+  QuestionView.prototype.active = false;
 
-  QuestionItem.prototype.initialize = function() {
-    return this.model.on("change", this.render);
+  QuestionView.prototype.initialize = function(config) {
+    var _this = this;
+    console.log("initialize");
+    this.model.on("change", this.render);
+    if (config.active) {
+      this.active = config.active;
+    }
+    if (config.tagName) {
+      this.tagName = config.tagName;
+    }
+    _.each(config.classes, function(c) {
+      return _this.classes.push(c);
+    });
+    console.log(this.tagName);
+    console.log(this.classes);
+    console.log(config.active);
+    return console.log(this.attributes());
   };
 
-  QuestionItem.prototype["delete"] = function(event) {
+  QuestionView.prototype["delete"] = function(event) {
     var question,
       _this = this;
     console.log("delete");
@@ -422,11 +452,11 @@ QuestionItem = (function(_super) {
     return false;
   };
 
-  QuestionItem.prototype.nothing = function() {
+  QuestionView.prototype.nothing = function() {
     return false;
   };
 
-  QuestionItem.prototype.vote = function(event) {
+  QuestionView.prototype.vote = function(event) {
     var answer,
       _this = this;
     answer = event.currentTarget.id;
@@ -463,9 +493,11 @@ QuestionItem = (function(_super) {
     return false;
   };
 
-  QuestionItem.prototype.attributes = function() {
+  QuestionView.prototype.classes = ["question"];
+
+  QuestionView.prototype.attributes = function() {
     var c, classes;
-    classes = ["question"];
+    classes = this.classes;
     if (this.active) {
       classes.push("active");
     }
@@ -483,7 +515,7 @@ QuestionItem = (function(_super) {
     };
   };
 
-  QuestionItem.prototype.collapse = function(callback) {
+  QuestionView.prototype.collapse = function(callback) {
     var _this = this;
     this.$el.children(".question .rest").slideUp(function(event) {
       _this.active = false;
@@ -497,7 +529,7 @@ QuestionItem = (function(_super) {
     }
   };
 
-  QuestionItem.prototype.createMap = function(us) {
+  QuestionView.prototype.createMap = function(us) {
     var centered, click, g, height, mapDiv, path, projection, r, radius, strokewidth, svg, width,
       _this = this;
     console.log("createMap");
@@ -577,7 +609,7 @@ QuestionItem = (function(_super) {
     return svg[0];
   };
 
-  QuestionItem.prototype.addMap = function() {
+  QuestionView.prototype.addMap = function() {
     var mapDiv, pDiv, restDiv,
       _this = this;
     console.log("addMap");
@@ -602,19 +634,20 @@ QuestionItem = (function(_super) {
     }
   };
 
-  QuestionItem.prototype.expand = function(callback) {
+  QuestionView.prototype.expand = function(callback) {
     this.active = true;
     this.$el.addClass("active");
     this.$el.children(".rest").slideDown(callback);
     return this.addMap();
   };
 
-  QuestionItem.prototype.addTooltips = function() {
+  QuestionView.prototype.addTooltips = function() {
     $(".answer .fill .label").tooltip();
     return $(".followees .progress .bar").tooltip();
   };
 
-  QuestionItem.prototype.render = function() {
+  QuestionView.prototype.render = function() {
+    console.log(this.model);
     this.$el.html(this.questionTmpl({
       account: window.account,
       question: this.model,
@@ -627,7 +660,7 @@ QuestionItem = (function(_super) {
     return this;
   };
 
-  return QuestionItem;
+  return QuestionView;
 
 })(Backbone.View);
 
@@ -649,6 +682,8 @@ QuestionList = (function(_super) {
     this.remove = __bind(this.remove, this);
 
     this.add = __bind(this.add, this);
+
+    this.newQuestionView = __bind(this.newQuestionView, this);
 
     this.toggleView = __bind(this.toggleView, this);
 
@@ -697,11 +732,16 @@ QuestionList = (function(_super) {
     }
   };
 
+  QuestionList.prototype.newQuestionView = function(model) {
+    return new QuestionView({
+      model: model,
+      tagName: "li"
+    });
+  };
+
   QuestionList.prototype.add = function(model) {
     var ele, view, _i, _len, _ref;
-    view = new QuestionItem({
-      model: model
-    });
+    view = this.newQuestionView(model);
     this.childViews[model.id] = view;
     _ref = this.$el.children(view.tagName);
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -726,18 +766,14 @@ QuestionList = (function(_super) {
 
   QuestionList.prototype.prepend = function(model) {
     var view;
-    view = new QuestionItem({
-      model: model
-    });
+    view = this.newQuestionView(model);
     this.childViews[model.id] = view;
     return this.$el.prepend(view.render().el);
   };
 
   QuestionList.prototype.append = function(model) {
     var view;
-    view = new QuestionItem({
-      model: model
-    });
+    view = this.newQuestionView(model);
     this.childViews[model.id] = view;
     return this.$el.append(view.render().el);
   };
@@ -751,7 +787,6 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.render = function() {
-    $("#content").html(this.el);
     return this;
   };
 
