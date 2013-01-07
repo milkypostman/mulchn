@@ -21,15 +21,18 @@ class Router extends Backbone.Router
       return
 
     console.log("root")
-    questionList = new QuestionList()
+    questionCollection = new QuestionCollection()
+    questionList = new QuestionList({collection:questionCollection})
+
     $("#content").html(questionList.el)
+
     if $("#json_data").html()
-      questionList.reset($.parseJSON($("#json_data").html()))
+      questionCollection.reset($.parseJSON($("#json_data").html()))
     else
-      questionList.fetch()
+      questionCollection.fetch()
 
   question: (question_id) ->
-    console.log("question")
+    console.log("question: #{question_id}")
     
     model = new QuestionModel({id: question_id})
     question = new QuestionView({model: model, active: true});

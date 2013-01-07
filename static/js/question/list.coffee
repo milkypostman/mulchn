@@ -7,12 +7,11 @@ class QuestionList extends Backbone.View
     "click .question": "toggleQuestion"
     }
 
-
-  initialize: =>
-    @collection = new QuestionCollection()
-    @collection.on("add", @add)
-    @collection.on("reset", @addAll)
-    @collection.on("remove", @remove)
+  initialize: () =>
+    if @collection
+      @collection.on("add", @add)
+      @collection.on("reset", @addAll)
+      @collection.on("remove", @remove)
     @selectedQuestion = undefined
     @childViews = {}
 
