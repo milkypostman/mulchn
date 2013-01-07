@@ -141,9 +141,10 @@ def close_sqlalchemy(exception):
 def start_timer():
     g.starttime = time.time()
 
-@app.teardown_request
-def report_load_time(exception=None):
+@app.after_request
+def report_load_time(request):
     log.info("load time: %s", time.time() - g.starttime)
+    return request
 
 @app.before_request
 def find_account():
