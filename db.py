@@ -9,7 +9,8 @@ import os
 import re
 
 config = flask.Config("")
-config.from_envvar('MULCHN_CONFIG')
+config.from_object('config')
+config.from_envvar('MULCHN_CONFIG', silent=True)
 
 database_url = os.environ.get("DATABASE_URL", config['DATABASE_URL'])
 engine = sa.create_engine(database_url)
