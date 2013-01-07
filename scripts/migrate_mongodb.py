@@ -14,6 +14,7 @@ mongo_db = urlsplit(mongo_url).path[1:]
 mdb = pymongo.Connection(mongo_url, tz_aware=True)[mongo_db]
 
 # mdb = pymongo.Connection()['mulchn']
+db.engine.echo = True
 
 alook = {}
 me = None
