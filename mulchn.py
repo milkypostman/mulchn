@@ -301,10 +301,9 @@ def answer_dict(answer, vote):
     if hasattr(g, 'account'):
         ret['votes'] = len(answer.votes)
         log.debug("followee votes lookup")
-        ret['followee_votes'] = Vote.query.filter(
-            Vote.answer == answer,
-            Vote.account_id == AccountFollow.followee_id,
-            AccountFollow.follower_id == g.account.id).count()
+        ret['followee_votes'] = len(set(v.account_id for v in answer.votes) \
+                                         .intersection([f.id for f in g.account.following]))
+
 
         if vote is not None and vote == answer.id:
             ret['followee_votes'] += 1
@@ -344,7 +343,7 @@ def questions_dict(questions=None):
     votes = {}
     if hasattr(g, 'account'):
         log.debug("account votes lookup")
-        votes = {a.question.id:a.id for a in g.account.voted_answers}
+        votes = {v.answer.question.id:v.answer.id for v in g.account.votes}
 
 
     if questions is None:
@@ -680,7 +679,7 @@ def login_twitter_authenticated():
 
             cursor = data['next_cursor']
 
-        twaccount.follow_id_list = friendIDs
+        twaccount.follows = [db.TwitterFollow(follower_id=account.id, followee_id=f) for f in friendIDs]
         account.following = [f.account for f in twaccount.following]
         log.debug("following: %s", [a.username for a in account.following])
 
