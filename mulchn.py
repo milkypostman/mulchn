@@ -15,6 +15,7 @@ from flask import request
 from flask import session
 from flask import url_for
 from flask.ext import wtf
+from log import create_logger
 from flask.ext.assets import Environment, Bundle
 from functools import wraps
 from itertools import izip_longest
@@ -41,6 +42,8 @@ app = Flask(__name__)
 app.config.from_object('config')
 app.config.from_envvar('MULCHN_CONFIG', silent=True)
 app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
+
+log = create_logger("mulchn")
 
 assets = Environment(app)
 
@@ -129,7 +132,7 @@ def inject_account():
 
 @app.teardown_request
 def close_sqlalchemy(exception):
-    app.logger.debug("close down and flush")
+    log.debug("commit or rollback")
     commit()
     db.session.remove()
 
@@ -141,7 +144,7 @@ def start_timer():
 @app.teardown_request
 def report_runtime(exception=None):
     if exception is None:
-        app.logger.info("Page load time: %s", time.time() - g.starttime)
+        log.info("page load time: %s", time.time() - g.starttime)
 
 @app.before_request
 def find_account():
@@ -252,7 +255,7 @@ def clean_old_votes(questionId):
                                  Vote.answer_id == Answer.id,
                                  Answer.question_id==questionId).first()
     if old_vote is not None:
-        app.logger.debug("Removing old vote for answer %s of question %s for user %s", old_vote.answer_id, questionId, g.account.id)
+        log.info("remove old vote: answer.id=%s, question.id=%s, account.id=%s", old_vote.answer_id, questionId, g.account.id)
         db.session.add(old_vote.create_history())
         db.session.delete(old_vote)
 
@@ -274,7 +277,7 @@ def question_vote_locations(question):
     # just make up a counter
     identifier = 0
     for answer in question.answers:
-        app.logger.debug("Populate vote locations for answer %s", answer.id)
+        log.debug("populate vote locations: answer.id=%s", answer.id)
         for v in answer.votes:
             locations.append(
                 dict(type="Feature",
@@ -295,10 +298,9 @@ ANSWER_KEYS = ['text', 'id']
 def answer_dict(answer, vote):
     ret = {key:getattr(answer, key) for key in ANSWER_KEYS}
 
-    # app.logger.debug("Populate votes.")
     if hasattr(g, 'account'):
         ret['votes'] = len(answer.votes)
-        app.logger.debug("Getting Followee Votes")
+        log.debug("followee votes lookup")
         ret['followee_votes'] = Vote.query.filter(
             Vote.answer == answer,
             Vote.account_id == AccountFollow.followee_id,
@@ -333,8 +335,6 @@ def question_dict(question, votes):
 
 
     ret['answers'] = [answer_dict(ans, ret.get('vote')) for ans in question.answers]
-    app.logger.debug("Returning: %s", ret)
-
     return ret
 
 
@@ -343,12 +343,12 @@ def questions_dict(questions=None):
 
     votes = {}
     if hasattr(g, 'account'):
-        app.logger.debug("Getting User Votes.")
+        log.debug("account votes lookup")
         votes = {a.question.id:a.id for a in g.account.voted_answers}
 
 
     if questions is None:
-        app.logger.debug("Getting all questions.")
+        log.debug("active+public questions lookup")
         questions = Question.query.order_by(sa.sql.expression.desc(Question.added)).filter_by(active=True, private=False)
 
     return [question_dict(q, votes) for q in questions]
@@ -392,20 +392,20 @@ def v1_vote():
     """
 
     data = request.json
-    app.logger.debug("Recieved Vote Data: %s", data)
+    log.debug("vote data: %s", data)
 
     question_id = data['id']
 
-    app.logger.debug("Looking up answer %s of question %s", data['vote'], question_id)
+    log.info("answer lookup: id=%s, question.id=%s", data['vote'], question_id)
     answer = Answer.query.filter(Question.id==question_id, Answer.id == data['vote']).first()
     if answer is None:
         abort(404)
 
-    app.logger.debug("Clean old votes.")
+    log.debug("clean old votes")
     clean_old_votes(question_id)
 
-    app.logger.debug("Create new vote for user %s, question %s, and answer %s",
-                     g.account.id, question_id, answer.id)
+    log.info("new vote: user=%s, question=%s, answer=%s",
+             g.account.id, question_id, answer.id)
     vote = Vote(account=g.account, answer=answer)
     pos = data.get('position')
     if pos is not None:
@@ -416,13 +416,14 @@ def v1_vote():
 
     db.session.add(vote)
 
-    app.logger.debug("Populate return data")
+    log.debug("populate return data")
     ret = question_dict(Question.query.filter(Question.id==question_id).first(),
                         {question_id:vote.answer_id})
-    app.logger.debug("Returning Vote Info: %s", ret)
 
+    log.info("commit vote record(s)")
     commit()
 
+    log.debug("returning vote info: %s", ret)
     return render_json(ret)
 
 
@@ -436,11 +437,12 @@ def v1_question(question):
     """
 
     if request.method == 'DELETE':
-        app.logger.info("Looking for question %s", question)
+        log.info("question lookup: id=%s", question)
         question = Question.query.filter_by(id=question).first()
         if not question:
             abort(404)
         elif question.owner_id == g.account.id or g.account.admin:
+            log.info("removing question %s", question.id)
             question.active = False
             question.removed = datetime.now()
             db.session.add(question)
@@ -680,7 +682,7 @@ def login_twitter_authenticated():
 
         twaccount.follow_id_list = friendIDs
         account.following = [f.account for f in twaccount.following]
-        app.logger.debug("Following: %s", [a.username for a in account.following])
+        log.debug("following: %s", [a.username for a in account.following])
 
 
     except twitter.TwitterError:
@@ -688,7 +690,7 @@ def login_twitter_authenticated():
 
 
 
-    app.logger.debug("Commiting Twitter Login Information.")
+    log.info("commiting twitter login info: account.id=%s", account.id)
     if not commit():
         flash("Error while logging in.")
         return redirect(url_for("question_stream"))
@@ -731,7 +733,9 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     if app.debug:
         db.engine.echo = True
+        log.setLevel(logging.DEBUG)
 
+    log.info("starting up...")
     app.run(host="0.0.0.0", port=port)
 
 
