@@ -29,6 +29,7 @@ class Router extends Backbone.Router
   question: (question_id) ->
     model = new QuestionModel({id: question_id})
     question = new QuestionView({model: model, active: true});
+    setInterval((=> model.fetch()), 10000);
     model.fetch()
     $("#content").html(question.el)
     console.log(question)
