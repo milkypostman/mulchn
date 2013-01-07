@@ -143,8 +143,8 @@ def start_timer():
 
 @app.teardown_request
 def report_runtime(exception=None):
-    if exception is None:
-        log.info("page load time: %s", time.time() - g.starttime)
+    log.info("exception: %s", exception)
+    log.info("page load time: %s", time.time() - g.starttime)
 
 @app.before_request
 def find_account():
