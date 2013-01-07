@@ -40,7 +40,10 @@ class QuestionView extends Backbone.View
     }).render()
     false
 
-  nothing: => false
+
+  nothing: (event) =>
+    event.stopImmediatePropagation()
+
 
   vote: (event) =>
     answer = event.currentTarget.id
