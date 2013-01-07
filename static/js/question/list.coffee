@@ -19,9 +19,10 @@ class QuestionList extends Backbone.View
     setInterval(@collection.update, 10000);
 
   toggleQuestion: (event) =>
-    @toggleView(event.currentTarget.id)
+    @toggleView(event.currentTarget)
 
-  toggleView: (targetId) =>
+  toggleView: (target) =>
+    targetId = target.id
     if @selectedQuestion
       # @childViews[@selectedQuestion].collapse(=> $('html, body').animate({scrollTop: @originalPosition}, 400))
       @childViews[@selectedQuestion].collapse()
@@ -71,7 +72,8 @@ class QuestionList extends Backbone.View
     @collection.each(@append)
 
     if location.hash
-      @toggleView(location.hash.substring(1))
+      targetId = location.hash.substring(1)
+      @toggleView($("##{targetId}")[0])
 
 
   render: =>
