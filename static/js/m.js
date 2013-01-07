@@ -247,12 +247,12 @@ Router = (function(_super) {
     }
     console.log("root");
     questionList = new QuestionList();
+    $("#content").html(questionList.el);
     if ($("#json_data").html()) {
-      questionList.reset($.parseJSON($("#json_data").html()));
+      return questionList.reset($.parseJSON($("#json_data").html()));
     } else {
-      questionList.fetch();
+      return questionList.fetch();
     }
-    return $("#content").html(questionList.render().el);
   };
 
   Router.prototype.question = function(question_id) {
@@ -275,11 +275,9 @@ Router = (function(_super) {
     } else {
       model.fetch();
     }
-    model.on('destroy', function() {
+    return model.on('destroy', function() {
       return window.location = "/";
     });
-    console.log(question);
-    return console.log($(".rest").innerWidth());
   };
 
   Router.prototype.add = function() {
@@ -628,7 +626,6 @@ QuestionView = (function(_super) {
 
   QuestionView.prototype.addMap = function() {
     var mapDiv, restDiv, svg;
-    console.log("addMap");
     if (!this.model.get("vote") || !this.model.get("geo").length > 0) {
       return;
     }
@@ -658,7 +655,6 @@ QuestionView = (function(_super) {
   };
 
   QuestionView.prototype.render = function() {
-    console.log('render');
     this.$el.html(this.questionTmpl({
       account: window.account,
       question: this.model,
