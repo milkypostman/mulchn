@@ -11,19 +11,15 @@ class QuestionView extends Backbone.View
 
   active: false
 
-  initialize: (config) ->
-    console.log("initialize")
-    @model.on("change", @render)
+  constructor: (config) ->
     @active = config.active if config.active
-    @tagName = config.tagName if config.tagName
-    
-    _.each(config.classes, (c) => @classes.push(c))
-    # @classes.push(c) for c in @config.classes
+    super config
 
-    console.log(@tagName)
-    console.log(@classes)
-    console.log(config.active)
-    console.log(@attributes())
+  initialize: (config) ->
+    @model.on("change", @render)
+    @tagName = config.tagName if config.tagName
+    _.each(config.classes, (c) => @classes.push(c))
+
 
   delete: (event) =>
     console.log("delete")
@@ -99,15 +95,21 @@ class QuestionView extends Backbone.View
     @removeMap() if @removeMap
 
 
-  createMap: (us) =>
+  createMap: () =>
     # creates a new map element and returns it
     # element is created as a child of div.map
-    console.log("createMap")
+    # console.log("createMap")
     
-    mapDiv = @$el.find(".map")
-    mapDiv.empty()
-    
-    width=mapDiv.innerWidth()*.8
+    restDiv = @$el.children(".rest")
+    mapDiv = restDiv.find(".map")
+    if restDiv.css('display') == 'none'
+      restDiv.css('visibility', 'hidden').show()
+      mapDivWidth = mapDiv.innerWidth()
+      restDiv.css('visibility', 'visible').hide()
+    else
+      mapDivWidth = mapDiv.innerWidth()
+      
+    width=mapDivWidth*.8
     height=width*1/2
 
     projection = d3.geo.albersUsa()
@@ -119,14 +121,18 @@ class QuestionView extends Backbone.View
 
     svg = d3.select(mapDiv.get()[0]).append("svg")
       .attr("width", width)
-      .style("display", "none")
       .attr("height", height);
 
 
     g = svg.append("g")
       .attr("transform", "translate(#{width / 2},#{height / 2})")
       .append("g")
+
+    g_us = g.append("g")
       .attr("id", "states");
+
+    g_dots = g.append("g")
+      .attr("id", "circles");
 
     radius = 4
     strokewidth = 1.5
@@ -167,7 +173,7 @@ class QuestionView extends Backbone.View
         r = radius;
         centered = null;
       
-      g.selectAll("path")
+      g_us.selectAll("path")
         .classed("active", centered && (d) => d.id == centered )
 
       trans = g.transition()
@@ -176,28 +182,29 @@ class QuestionView extends Backbone.View
         .selectAll("path.state")
         .style("stroke-width", "#{strokewidth / k}px")
 
-      g.selectAll("circle.dot")
+      g_dots.selectAll("circle")
         .transition()
         .duration(spd)
         .attr("r", r)
         
-      console.log(centered)
 
-    console.log(centered)
+    d3.json("/static/us.json", (us) =>
+      g_us.selectAll("path")
+         .data(topojson.object(us, us.objects.states).geometries)
+         .enter().append("path")
+         .style("stroke-width", "#{strokewidth}px")
+         .classed("active", centered && (d) => d.id == centered )
+         .classed("state", true)
+         .attr("d", path)
+         .on("click", click)
 
-    g.selectAll("path")
-      .data(topojson.object(us, us.objects.states).geometries)
-      .enter().append("path")
-      .style("stroke-width", "#{strokewidth}px")
-      .classed("active", centered && (d) => d.id == centered )
-      .classed("state", true)
-      .attr("d", path)
-      .on("click", click)
+  
+      )
 
     @updateMap = =>
-      console.log("updateMap")
+      # console.log("updateMap")
 
-      g.selectAll("circle")
+      g_dots.selectAll("circle")
         .data(=> @model.get("geo"))
         .attr("class", (d) => "dot color_#{d.id}")
         .attr("cx", (d) -> path.centroid(d)[0])
@@ -211,7 +218,7 @@ class QuestionView extends Backbone.View
 
 
     @removeMap = =>
-      console.log("removeMap")
+      # console.log("removeMap")
       $(svg[0]).slideUp(-> $(@).remove())
       @map = undefined
       @updateMap = undefined
@@ -221,7 +228,8 @@ class QuestionView extends Backbone.View
     svg[0]
 
   addMap: =>
-    console.log("addMap")
+    # console.log("addMap")
+
     # don't add the map unless we have voted and have data
     if not @model.get("vote") or not @model.get("geo").length > 0
       return
@@ -234,30 +242,28 @@ class QuestionView extends Backbone.View
       @updateMap()
       mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>")
     else
-      pDiv = mapDiv.children("p")
-      pDiv.html('loading map data...')
+      # console.log(mapDiv)
+      @map = (svg = @createMap())
+      mapDiv.html(@map)
+      mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>")
   
-      d3.json("/static/us.json", (map) =>
-        @map = (svg = @createMap(map))
-        $(svg).slideDown('slow')
-  
-        mapDiv.prepend("<div class=\"header\"><h5>Map Data</h5></div>")
-        )
-
+ 
   expand: (callback) =>
     @active = true
+    @addMap()
+
     @$el.addClass("active")
     @$el.children(".rest").slideDown(callback)
 
-    @addMap()
 
 
   addTooltips: =>
     $(".answer .fill .label").tooltip()
     $(".followees .progress .bar").tooltip()
 
+
   render: =>
-    console.log(@model)
+    # console.log('render')
     @$el.html(@questionTmpl({
       account: window.account
       question: @model
@@ -271,6 +277,7 @@ class QuestionView extends Backbone.View
       @addMap()
 
     @
+
 
 
 
