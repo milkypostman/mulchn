@@ -217,7 +217,13 @@ def render(template, **kwargs):
 
 #### Error Handlers
 
-@app.errorhandler(401)
+def page_not_found(errors = []):
+    if not errors:
+        errors = [{'message': "Page not found."}]
+
+    return render_json({'errors': errors}), 401
+
+
 def access_denied(errors = []):
     """
     Generate a 401 JSON response for key 'errors' from kwargs.
