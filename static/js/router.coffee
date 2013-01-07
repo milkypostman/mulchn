@@ -1,6 +1,7 @@
 class Router extends Backbone.Router
   routes: {
     "q/:question_id": "question"
+    "t/:tag_name": "tag"
     "add": "add"
     ":hash": "root"
     "": "root"
@@ -30,6 +31,20 @@ class Router extends Backbone.Router
       questionCollection.reset($.parseJSON($("#json_data").html()))
     else
       questionCollection.fetch()
+
+  tag: (tag_name) ->
+    console.log("tag: #{tag_name}")
+    tagCollection = new QuestionCollection()
+    tagCollection.url="/v1/tag/#{tag_name}"
+
+    questionList = new QuestionList({collection: tagCollection})
+    $("#content").html(questionList.el)
+
+    if $("#json_data").html()
+      tagCollection.reset($.parseJSON($("#json_data").html()))
+    else
+      tagCollection.fetch()
+
 
   question: (question_id) ->
     console.log("question: #{question_id}")

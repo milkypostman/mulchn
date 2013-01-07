@@ -494,6 +494,15 @@ def v1_question(question_id):
 def v1_questions():
     return render_json(questions_dict())
 
+@app.route("/v1/tag/<tag_name>")
+def v1_tag(tag_name):
+    print tag_name
+    t = Tag.query.filter_by(name=tag_name).first()
+    if t is None:
+        return page_not_found("tag {0} has no questions".format(tag_name))
+
+    return render_json(questions_dict(t.questions))
+
 
 
 ### Login / Logout
@@ -515,10 +524,10 @@ def logout():
 def question_stream():
     return render("questions.html", data=jsonify(questions_dict()))
 
-@app.route("/t/<tag>")
-def tag(tag):
-    return render(questions_dict(
-            Tag.query.filter_by(name=tag).first().questions))
+@app.route("/t/<tag_name>")
+def tag(tag_name):
+    data = Tag.query.filter_by(name=tag_name).first().questions
+    return render("questions.html")
 
 
 
