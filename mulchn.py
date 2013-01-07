@@ -350,6 +350,7 @@ def question_dict(question, votes):
     if hasattr(g, 'account') and question.owner == g.account:
         ret['owner'] = g.account.id
 
+    ret['tags'] = [t.name for t in question.tags]
 
     ret['answers'] = [answer_dict(ans, ret.get('vote')) for ans in question.answers]
     return ret

@@ -213,7 +213,8 @@ class Question(Base):
     text = Column(String(128))
     answers = relationship("Answer", lazy="joined", order_by="Answer.id",
                            backref=backref("question", lazy="joined"))
-    tags = relationship("Tag", secondary=question_tag, lazy="joined")
+    tags = relationship("Tag", secondary=question_tag, lazy="joined",
+                        backref="questions")
     owner_id = Column(ForeignKey('account.id'))
     owner = relationship("Account", backref="questions")
     private = Column(Boolean())
