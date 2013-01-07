@@ -231,10 +231,9 @@ Router = (function(_super) {
   }
 
   Router.prototype.routes = {
-    "question/:question_id/": "question",
-    "question/add/": "add",
-    ":question/": "root",
-    ":hash": "root",
+    "q/:question_id": "question",
+    "add": "add",
+    "#:hash": "root",
     "": "root"
   };
 
@@ -253,7 +252,8 @@ Router = (function(_super) {
   };
 
   Router.prototype.question = function(question_id) {
-    var model, question;
+    var model, question,
+      _this = this;
     model = new QuestionModel({
       id: question_id
     });
@@ -261,6 +261,9 @@ Router = (function(_super) {
       model: model,
       active: true
     });
+    setInterval((function() {
+      return model.fetch();
+    }), 10000);
     model.fetch();
     $("#content").html(question.el);
     return console.log(question);
@@ -350,7 +353,7 @@ QuestionCollection = (function(_super) {
 
   QuestionCollection.prototype.model = QuestionModel;
 
-  QuestionCollection.prototype.url = '/v1/questions/';
+  QuestionCollection.prototype.url = '/v1/questions';
 
   QuestionCollection.prototype.updateOrAdd = function(collection, response) {
     return _.each(response, function(ele) {
@@ -465,7 +468,7 @@ QuestionView = (function(_super) {
       position: window.geoLocation.position
     }, {
       wait: true,
-      url: "/v1/question/vote/",
+      url: "/v1/question/vote",
       complete: function() {
         return $("#" + answer).removeClass("working");
       },

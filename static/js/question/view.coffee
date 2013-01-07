@@ -20,7 +20,6 @@ class QuestionView extends Backbone.View
     _.each(config.classes, (c) => @classes.push(c))
     # @classes.push(c) for c in @config.classes
 
-
     console.log(@tagName)
     console.log(@classes)
     console.log(config.active)
@@ -52,7 +51,7 @@ class QuestionView extends Backbone.View
 
     @model.save({vote: answer, position:window.geoLocation.position}, {
       wait: true
-      url: "/v1/question/vote/"
+      url: "/v1/question/vote"
       complete: =>
           $("##{answer}").removeClass("working")
       error: (model, response) =>

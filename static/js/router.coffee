@@ -1,9 +1,8 @@
 class Router extends Backbone.Router
   routes: {
-    "question/:question_id/": "question"
-    "question/add/": "add"
-    ":question/": "root"
-    ":hash": "root"
+    "q/:question_id": "question"
+    "add": "add"
+    "#:hash": "root"
     "": "root"
   }
 

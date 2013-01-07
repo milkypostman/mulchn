@@ -385,7 +385,7 @@ def login_required(f):
 
 ### API Functions
 
-@app.route("/v1/question/vote/", methods=['POST','PUT'])
+@app.route("/v1/question/vote", methods=['POST','PUT'])
 @login_required
 def v1_vote():
     """
@@ -470,18 +470,18 @@ def v1_question(question_id):
     return render_json({'response': 'OK'})
 
 
-@app.route("/v1/questions/")
+@app.route("/v1/questions")
 def v1_questions():
     return render_json(questions_dict())
 
 
 
 ### Login / Logout
-@app.route("/login/")
+@app.route("/login")
 def login():
     return render("login.html")
 
-@app.route("/logout/")
+@app.route("/logout")
 def logout():
     if session.pop('account_id', None) is not None and hasattr(g, 'account'):
         flash("{0} has been logged out.".format(g.account.username))
@@ -495,14 +495,14 @@ def logout():
 def question_stream():
     return render("questions.html")
 
-@app.route("/t/<tag>/")
+@app.route("/t/<tag>")
 def tag(tag):
     return render(questions_dict(
             Tag.query.filter_by(name=tag).first().questions))
 
 
 
-@app.route("/question/add/", methods=['GET', 'PUT', 'POST'])
+@app.route("/add", methods=['GET', 'PUT', 'POST'])
 @login_required
 def question_add():
     """
@@ -543,13 +543,13 @@ def question_add():
             db.session.add(question)
 
             flash("Added Question: {0}".format(question.text))
-            return redirect(url_for('question_stream'))
+            return redirect(url_for('question', question_id=question.id))
     else:
         form = AddForm()
     return render("add.html", form=form)
 
 
-@app.route("/question/<question_id>/", methods=['GET'])
+@app.route("/q/<question_id>", methods=['GET'])
 def question(question_id):
     """
     Fetch question with specified `question_id`.
@@ -568,7 +568,7 @@ def question(question_id):
 
 ### Twitter MumboJumbo
 
-@app.route("/login/twitter/")
+@app.route("/login/twitter")
 def login_twitter():
     # initialize untokenized client
     consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
@@ -615,7 +615,7 @@ def commit():
 
     return True
 
-@app.route("/login/twitter/authenticated/")
+@app.route("/login/twitter/authenticated")
 def login_twitter_authenticated():
 
     # build token from oauth token redirected to us
@@ -722,7 +722,7 @@ def login_twitter_authenticated():
 
 
 
-@app.route("/test/twitter/")
+@app.route("/test/twitter")
 @login_required
 def test_twitter():
     access_token = g.account['twitter']

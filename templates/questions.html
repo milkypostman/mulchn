@@ -22,7 +22,7 @@
         </div>
       </div>
       <% } %>
-      <div class='title'><h4><%= question.get("text") %></h4><a href="/question/<%= question.id %>/"><i class="icon icon-share"></i></a></div>
+      <div class='title'><h4><%= question.get("text") %></h4><a href="{{ url_for("question", question_id ="") }}<%= question.id %>"><i class="icon icon-share"></i></a></div>
     </div>
     <div class="rest" <% if (active) { %>style="display: block;"<% } %>>
       <ul class="answers slicklist" >

@@ -108,8 +108,8 @@ class Twitter(Base):
                                 primaryjoin="TwitterFollow.follower_id==Twitter.id",
                                 cascade="all, delete-orphan")
 
-    follow_id_list = association_proxy('follows', 'followee_id',
-                                          creator=_twitter_follow_find_or_create)
+    # follow_id_list = association_proxy('follows', 'followee_id',
+    #                                       creator=_twitter_follow_find_or_create)
 
     following = relationship("Twitter",
                              secondary="twitter_follow",
@@ -242,8 +242,8 @@ class Answer(Base):
     text = Column(String(128))
     question_id = Column(ForeignKey('question.id'))
 
-    voters = association_proxy('votes', 'account',
-                               creator=lambda account: Vote(account=account, answer=None))
+    # voters = association_proxy('votes', 'account',
+    #                            creator=lambda account: Vote(account=account, answer=None))
 
 
     def __init__(self, text=None):

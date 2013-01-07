@@ -17,8 +17,3 @@
 .slicklist > li .slicklist {
   margin-top: 20px;
 }
-.slicklist > li .slicklist > li {
-  border: none;
-  margin: 15px 0;
-  padding: 0px;
-}

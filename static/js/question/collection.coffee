@@ -1,6 +1,6 @@
 class QuestionCollection extends Backbone.Collection
   model: QuestionModel
-  url: '/v1/questions/'
+  url: '/v1/questions'
 
   updateOrAdd: (collection, response) =>
     _.each(response, (ele) ->

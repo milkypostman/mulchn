@@ -80,7 +80,7 @@ vote = (evt) ->
     data.geotimestamp = geoPosition.timestamp
 
   $.ajax({
-    url: "/v1/question/vote/"
+    url: "/v1/question/vote"
     type: "POST"
     data: data
     dataType: 'json'
@@ -145,7 +145,7 @@ $(window).load ->
   $('#content').append(questionsUl)
   
   $.ajax({
-    url: '/v1/questions/',
+    url: '/v1/questions',
     success: (data) ->
       questions = data.questions
       votes = data.votes
