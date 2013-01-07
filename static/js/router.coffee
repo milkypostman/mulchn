@@ -22,11 +22,11 @@ class Router extends Backbone.Router
 
     console.log("root")
     questionList = new QuestionList()
+    $("#content").html(questionList.el)
     if $("#json_data").html()
       questionList.reset($.parseJSON($("#json_data").html()))
     else
       questionList.fetch()
-    $("#content").html(questionList.render().el)
 
   question: (question_id) ->
     console.log("question")
