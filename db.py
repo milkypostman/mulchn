@@ -12,7 +12,7 @@ config = flask.Config("")
 config.from_object('config')
 config.from_envvar('MULCHN_CONFIG', silent=True)
 
-database_url = os.environ.get("DATABASE_URL", config['DATABASE_URL'])
+database_url = os.environ.get("DATABASE_URL", config.get('DATABASE_URL'))
 engine = sa.create_engine(database_url)
 session = sa.orm.scoped_session(sa.orm.sessionmaker(bind=engine))
 
