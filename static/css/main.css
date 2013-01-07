@@ -3,6 +3,7 @@ body {
 }
 #container {
   padding-top: 60px;
+  padding-bottom: 60px;
 }
 .navbar-inner li.login a {
   padding-bottom: 0;
@@ -214,12 +215,16 @@ body {
   text-align: left;
 }
 .rest .footer {
-  text-align: right;
+  text-align: center;
+  height: 14px;
 }
-.rest .footer .icon-trash {
+.rest .footer .icon {
   opacity: .5;
   text-size: 90%;
   vertical-align: bottom;
+}
+.rest .footer .icon:hover {
+  cursor: pointer;
 }
 .relativerow {
   position: relative;

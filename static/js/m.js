@@ -232,13 +232,14 @@ Router = (function(_super) {
 
   Router.prototype.routes = {
     "q/:question_id": "question",
+    "t/:tag_name": "tag",
     "add": "add",
     ":hash": "root",
     "": "root"
   };
 
   Router.prototype.root = function(hash) {
-    var questionList;
+    var questionCollection, questionList;
     if (hash && this._alreadyTriggered !== hash) {
       Backbone.history.navigate("", false);
       location.hash = hash;
@@ -246,19 +247,39 @@ Router = (function(_super) {
       return;
     }
     console.log("root");
-    questionList = new QuestionList();
+    questionCollection = new QuestionCollection();
+    questionList = new QuestionList({
+      collection: questionCollection
+    });
     $("#content").html(questionList.el);
     if ($("#json_data").html()) {
-      return questionList.reset($.parseJSON($("#json_data").html()));
+      return questionCollection.reset($.parseJSON($("#json_data").html()));
     } else {
-      return questionList.fetch();
+      return questionCollection.fetch();
     }
+  };
+
+  Router.prototype.tag = function(tag_name) {
+    var questionList, tagCollection;
+    console.log("tag: " + tag_name);
+    tagCollection = new QuestionCollection();
+    tagCollection.url = "/v1/tag/" + tag_name;
+    questionList = new QuestionList({
+      collection: tagCollection
+    });
+    $("#content").html(questionList.el);
+    if ($("#json_data").html()) {
+      tagCollection.reset($.parseJSON($("#json_data").html()));
+    } else {
+      tagCollection.fetch();
+    }
+    return console.log(questionList.collection.url);
   };
 
   Router.prototype.question = function(question_id) {
     var model, question,
       _this = this;
-    console.log("question");
+    console.log("question: " + question_id);
     model = new QuestionModel({
       id: question_id
     });
@@ -392,9 +413,10 @@ QuestionView = (function(_super) {
   QuestionView.prototype.tagName = "div";
 
   QuestionView.prototype.events = {
+    "click .rest": "nothing",
     "click .rest>.answers>.answer": "vote",
     "click .footer .delete": "delete",
-    "click .rest": "nothing"
+    "click .footer a": "allow"
   };
 
   QuestionView.prototype.active = false;
@@ -417,6 +439,8 @@ QuestionView = (function(_super) {
     this.vote = __bind(this.vote, this);
 
     this.nothing = __bind(this.nothing, this);
+
+    this.allow = __bind(this.allow, this);
 
     this["delete"] = __bind(this["delete"], this);
     if (config.active) {
@@ -461,8 +485,12 @@ QuestionView = (function(_super) {
     return false;
   };
 
-  QuestionView.prototype.nothing = function() {
-    return false;
+  QuestionView.prototype.allow = function() {
+    return true;
+  };
+
+  QuestionView.prototype.nothing = function(event) {
+    return event.stopImmediatePropagation();
   };
 
   QuestionView.prototype.vote = function(event) {
@@ -699,6 +727,8 @@ QuestionList = (function(_super) {
     this.toggleQuestion = __bind(this.toggleQuestion, this);
 
     this.initialize = __bind(this.initialize, this);
+
+    this.nothing = __bind(this.nothing, this);
     return QuestionList.__super__.constructor.apply(this, arguments);
   }
 
@@ -713,17 +743,24 @@ QuestionList = (function(_super) {
     "click .question": "toggleQuestion"
   };
 
+  QuestionList.prototype.nothing = function() {
+    console.log("ignoring click");
+    return false;
+  };
+
   QuestionList.prototype.initialize = function() {
-    this.collection = new QuestionCollection();
-    this.collection.on("add", this.add);
-    this.collection.on("reset", this.addAll);
-    this.collection.on("remove", this.remove);
+    if (this.collection) {
+      this.collection.on("add", this.add);
+      this.collection.on("reset", this.addAll);
+      this.collection.on("remove", this.remove);
+    }
     this.selectedQuestion = void 0;
     this.childViews = {};
     return setInterval(this.collection.update, 10000);
   };
 
   QuestionList.prototype.toggleQuestion = function(event) {
+    console.log(event);
     return this.toggleView(event.currentTarget);
   };
 
