@@ -120,6 +120,11 @@ class AddForm(wtf.Form):
 
 ### Request Setup
 
+@app.before_request
+def remove_trailing_slash():
+    if request.path != '/' and request.path.endswith('/'):
+        return redirect(request.path[:-1])
+
 @app.context_processor
 def inject_static_url():
     static_url = app.static_url_path
@@ -148,9 +153,10 @@ def start_timer():
     g.starttime = time.time()
 
 @app.after_request
-def report_load_time(request):
-    log.info("load time: %s", time.time() - g.starttime)
-    return request
+def report_load_time(response):
+    if hasattr(g, 'starttime'):
+        log.info("load time: %s", time.time() - g.starttime)
+    return response
 
 @app.before_request
 def find_account():
