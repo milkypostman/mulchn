@@ -52,7 +52,7 @@ class QuestionList extends Backbone.View
   remove: (model) =>
     if @selectedQuestion == model.id.toString()
       @selectedQuestion = undefined
-    console.log(@selectedQuestion)
+    # console.log("remove: #{@selectedQuestion}")
     view = @childViews[model.id]
     view.$el.remove()
     delete @childViews[model.id]
@@ -79,8 +79,10 @@ class QuestionList extends Backbone.View
   render: =>
     @
 
+  reset: (data) =>
+    @collection.reset(data)
 
-  reset: =>
+  fetch: =>
     @collection.fetch()
 
 

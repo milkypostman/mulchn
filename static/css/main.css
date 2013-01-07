@@ -1,7 +1,7 @@
 body {
   background: #fff;
 }
-#content {
+#container {
   padding-top: 60px;
 }
 .navbar-inner li.login a {

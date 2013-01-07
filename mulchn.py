@@ -349,6 +349,15 @@ def question_dict(question, votes):
     return ret
 
 
+def question_dict_id(question_id):
+    votes = {}
+    if hasattr(g, 'account'):
+        log.debug("account votes lookup")
+        votes = {v.answer.question.id:v.answer.id for v in g.account.votes}
+
+    return question_dict(Question.query.filter_by(id=question_id).first(),
+                         votes)
+
 def questions_dict(questions=None):
     # logged in account gets their votes
 
@@ -466,9 +475,7 @@ def v1_question(question_id):
             log.debug("account votes lookup")
             votes = {v.answer.question.id:v.answer.id for v in g.account.votes}
 
-        return render_json(question_dict(
-                Question.query.filter_by(id=question_id).first(),
-                votes))
+        return render_json(question_dict_id(question_id))
 
     else:
         abort(404)
@@ -499,7 +506,7 @@ def logout():
 
 @app.route("/")
 def question_stream():
-    return render("questions.html")
+    return render("questions.html", data=jsonify(questions_dict()))
 
 @app.route("/t/<tag>")
 def tag(tag):
@@ -568,7 +575,7 @@ def question(question_id):
     # if not obj:
     #     abort(404)
 
-    return render("questions.html")
+    return render("questions.html", data=jsonify(question_dict_id(question_id)))
 
 
 

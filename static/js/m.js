@@ -247,7 +247,11 @@ Router = (function(_super) {
     }
     console.log("root");
     questionList = new QuestionList();
-    questionList.reset();
+    if ($("#json_data").html()) {
+      questionList.reset($.parseJSON($("#json_data").html()));
+    } else {
+      questionList.fetch();
+    }
     return $("#content").html(questionList.render().el);
   };
 
@@ -262,12 +266,20 @@ Router = (function(_super) {
       model: model,
       active: true
     });
+    $("#content").html(question.el);
     setInterval((function() {
       return model.fetch();
     }), 10000);
-    model.fetch();
-    $("#content").html(question.el);
-    return console.log(question);
+    if ($("#json_data").html()) {
+      model.set($.parseJSON($("#json_data").html()));
+    } else {
+      model.fetch();
+    }
+    model.on('destroy', function() {
+      return window.location = "/";
+    });
+    console.log(question);
+    return console.log($(".rest").innerWidth());
   };
 
   Router.prototype.add = function() {
@@ -616,6 +628,7 @@ QuestionView = (function(_super) {
 
   QuestionView.prototype.addMap = function() {
     var mapDiv, restDiv, svg;
+    console.log("addMap");
     if (!this.model.get("vote") || !this.model.get("geo").length > 0) {
       return;
     }
@@ -645,6 +658,7 @@ QuestionView = (function(_super) {
   };
 
   QuestionView.prototype.render = function() {
+    console.log('render');
     this.$el.html(this.questionTmpl({
       account: window.account,
       question: this.model,
@@ -666,6 +680,8 @@ QuestionList = (function(_super) {
   __extends(QuestionList, _super);
 
   function QuestionList() {
+    this.fetch = __bind(this.fetch, this);
+
     this.reset = __bind(this.reset, this);
 
     this.render = __bind(this.render, this);
@@ -756,7 +772,6 @@ QuestionList = (function(_super) {
     if (this.selectedQuestion === model.id.toString()) {
       this.selectedQuestion = void 0;
     }
-    console.log(this.selectedQuestion);
     view = this.childViews[model.id];
     view.$el.remove();
     return delete this.childViews[model.id];
@@ -790,7 +805,11 @@ QuestionList = (function(_super) {
     return this;
   };
 
-  QuestionList.prototype.reset = function() {
+  QuestionList.prototype.reset = function(data) {
+    return this.collection.reset(data);
+  };
+
+  QuestionList.prototype.fetch = function() {
     return this.collection.fetch();
   };
 

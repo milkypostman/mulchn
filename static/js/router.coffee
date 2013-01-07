@@ -22,7 +22,10 @@ class Router extends Backbone.Router
 
     console.log("root")
     questionList = new QuestionList()
-    questionList.reset()
+    if $("#json_data").html()
+      questionList.reset($.parseJSON($("#json_data").html()))
+    else
+      questionList.fetch()
     $("#content").html(questionList.render().el)
 
   question: (question_id) ->
@@ -30,10 +33,15 @@ class Router extends Backbone.Router
     
     model = new QuestionModel({id: question_id})
     question = new QuestionView({model: model, active: true});
-    setInterval((=> model.fetch()), 10000);
-    model.fetch()
     $("#content").html(question.el)
-    console.log(question)
+
+    setInterval((=> model.fetch()), 10000);
+    if $("#json_data").html()
+      model.set($.parseJSON($("#json_data").html()))
+    else
+      model.fetch()
+
+    model.on('destroy', -> window.location = "/")
 
   add: ->
     console.log("add")

@@ -74,4 +74,5 @@
   {% assets "js_d3" %}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
   {% endassets %}
+  <script type="application/json" id="json_data">{{ data|safe }}</script>
 {% endblock js %}
