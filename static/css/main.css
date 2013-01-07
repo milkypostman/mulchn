@@ -1,5 +1,7 @@
 body {
   background: #fff;
+}
+#content {
   padding-top: 60px;
 }
 .navbar-inner li.login a {
@@ -87,6 +89,7 @@ body {
 }
 .question .header .title i {
   display: none;
+  margin-left: 10px;
 }
 .question .header .title h4 {
   display: inline;
