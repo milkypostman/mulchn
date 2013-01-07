@@ -47,6 +47,11 @@ log = create_logger("mulchn")
 
 assets = Environment(app)
 
+css_slicklist = Bundle('css/slicklist.less',
+                  filters="less",
+                  output="css/slicklist.css")
+assets.register('css_slicklist', css_slicklist)
+
 css_main = Bundle('css/main.less',
                   filters="less",
                   output="css/main.css")

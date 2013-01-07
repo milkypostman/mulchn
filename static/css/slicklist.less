@@ -1,0 +1,45 @@
+.slicklist {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.slicklist > li {
+    padding: 15px 15px;
+}
+
+
+.slicklist {
+    
+    > li {
+        &:hover {
+            background: #e0e0e0;
+            cursor: pointer;
+        }
+        &.active {
+            background: #ededed;
+            cursor: default;
+        }
+        
+        &.active:hover {
+            
+        }
+
+        .slicklist {
+            margin-top: 20px;
+        }
+
+        & &  {
+            &:last-child {
+            }
+
+            &:hover {
+            }
+        }
+    }
+}
+
+
+
+
+

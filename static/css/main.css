@@ -75,15 +75,21 @@ body {
   background: #eee;
   background: #fff;
 }
-.question:hover {
-  background: #e0e0e0;
-  cursor: pointer;
-}
 .question .header .vote-count-prefix {
   color: gray;
 }
 .question .header .vote-count {
   color: black;
+}
+.question .header .title {
+  margin: 0;
+  margin-right: 110px;
+}
+.question .header .title i {
+  display: none;
+}
+.question .header .title h4 {
+  display: inline;
 }
 .question .vote-null .fill {
   text-align: center;
@@ -101,10 +107,6 @@ body {
   background-repeat: repeat-x;
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff5bc0de', endColorstr='#ff339bb9', GradientType=0);
 }
-.question .header h4 {
-  margin: 0;
-  margin-right: 110px;
-}
 .question .rest {
   display: none;
 }
@@ -113,9 +115,8 @@ body {
   text-align: right;
   whitespace: nowrap;
 }
-.question.active {
-  background: #ededed;
-  cursor: default;
+.question.active .header i {
+  display: inline-block;
 }
 .question.active .header .fill .label {
   background-color: #777777;
@@ -136,11 +137,17 @@ body {
   color: lightgray;
 }
 .rest .answers .answer {
+  border: none;
+  margin: 15px 0;
+  padding: 0px;
   position: relative;
   padding-right: 0 !important;
 }
 .rest .answers .answer i {
   opacity: 0;
+}
+.rest .answers .answer:hover {
+  background: none;
 }
 .rest .answers .answer p {
   margin-left: 20px;

@@ -1,39 +1,24 @@
 .slicklist {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
 }
-    
 .slicklist > li {
-    padding: 15px 15px;
+  padding: 15px 15px;
 }
-
-
 .slicklist > li:hover {
+  background: #e0e0e0;
+  cursor: pointer;
 }
-
 .slicklist > li.active {
+  background: #ededed;
+  cursor: default;
 }
-
-.slicklist > li.active:hover {
-}
-
-
-.slicklist > li .slicklist > li {
-    border: none;
-    margin: 15px 0;
-    padding: 0px;
-}
-
-
 .slicklist > li .slicklist {
-    margin-top: 20px;
+  margin-top: 20px;
 }
-
-.slicklist > li .slicklist > li:last-child {
+.slicklist > li .slicklist > li {
+  border: none;
+  margin: 15px 0;
+  padding: 0px;
 }
-
-.slicklist > li > .slicklist > li:hover {
-}
-
-

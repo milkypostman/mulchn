@@ -92,17 +92,28 @@ body {
     border-top: none;
     background: #eee;
     background: #fff;
-    &:hover {
-        background: #e0e0e0;
-        cursor: pointer;
-    }
 
-    .header .vote-count-prefix {
-        color: gray;
-    }
+    .header {
+        .vote-count-prefix {
+            color: gray;
+        }
 
-    .header .vote-count {
-        color: black;
+        .vote-count {
+            color: black;
+        }
+
+        .title {
+            margin: 0;
+            margin-right: 110px;
+
+            i {
+                display: none;
+            }
+
+            h4 {
+                display: inline;
+            }
+        }
     }
 
     .vote-null .fill {
@@ -117,11 +128,6 @@ body {
         .fill .label-info;
     }
 
-    .header h4 {
-        margin: 0;
-        margin-right: 110px;
-    }
-
     .rest {
         display: none;
     }
@@ -133,22 +139,24 @@ body {
     }
 
     &.active {
-        background: #ededed;
-        cursor: default;
+        .header {
+            i {
+                display: inline-block;
+            }
+            .fill .label {
+                .background_gradient(#777);
+                color: #333;
+                text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+                text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+            }
 
-        .header .fill .label {
-            .background_gradient(#777);
-            color: #333;
-            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
-            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
-        }
+            .vote-count {
+                color: white;
+            }
 
-        .header .vote-count {
-            color: white;
-        }
-
-        .header .vote-count-prefix {
-            color: lightgray;
+            .vote-count-prefix {
+                color: lightgray;
+            }
         }
 
     }
@@ -165,6 +173,13 @@ body {
                 opacity: 0;
             }
 
+            &:hover {
+                background: none;
+            }
+
+            border: none;
+            margin: 15px 0;
+            padding: 0px;
             position: relative;
             padding-right: 0 !important;
 
@@ -410,7 +425,7 @@ circle.dot {
     .container {
         max-width: none;
         width: auto;
-        /* margin: 0; */
+    /* margin: 0; */
     }
     .navbar-fixed-top {
         position: static;
