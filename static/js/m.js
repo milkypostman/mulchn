@@ -269,11 +269,10 @@ Router = (function(_super) {
     });
     $("#content").html(questionList.el);
     if ($("#json_data").html()) {
-      tagCollection.reset($.parseJSON($("#json_data").html()));
+      return tagCollection.reset($.parseJSON($("#json_data").html()));
     } else {
-      tagCollection.fetch();
+      return tagCollection.fetch();
     }
-    return console.log(questionList.collection.url);
   };
 
   Router.prototype.question = function(question_id) {
@@ -413,10 +412,9 @@ QuestionView = (function(_super) {
   QuestionView.prototype.tagName = "div";
 
   QuestionView.prototype.events = {
-    "click .rest": "nothing",
     "click .rest>.answers>.answer": "vote",
     "click .footer .delete": "delete",
-    "click .footer a": "allow"
+    "click .rest": "nothing"
   };
 
   QuestionView.prototype.active = false;
@@ -439,8 +437,6 @@ QuestionView = (function(_super) {
     this.vote = __bind(this.vote, this);
 
     this.nothing = __bind(this.nothing, this);
-
-    this.allow = __bind(this.allow, this);
 
     this["delete"] = __bind(this["delete"], this);
     if (config.active) {
@@ -483,10 +479,6 @@ QuestionView = (function(_super) {
       }
     }).render();
     return false;
-  };
-
-  QuestionView.prototype.allow = function() {
-    return true;
   };
 
   QuestionView.prototype.nothing = function(event) {
@@ -727,8 +719,6 @@ QuestionList = (function(_super) {
     this.toggleQuestion = __bind(this.toggleQuestion, this);
 
     this.initialize = __bind(this.initialize, this);
-
-    this.nothing = __bind(this.nothing, this);
     return QuestionList.__super__.constructor.apply(this, arguments);
   }
 
@@ -743,11 +733,6 @@ QuestionList = (function(_super) {
     "click .question": "toggleQuestion"
   };
 
-  QuestionList.prototype.nothing = function() {
-    console.log("ignoring click");
-    return false;
-  };
-
   QuestionList.prototype.initialize = function() {
     if (this.collection) {
       this.collection.on("add", this.add);
@@ -760,7 +745,6 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.toggleQuestion = function(event) {
-    console.log(event);
     return this.toggleView(event.currentTarget);
   };
 

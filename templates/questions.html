@@ -64,7 +64,7 @@
       <div class="map"><p>map data unavailable</p></div>
       <% } %>
       <div class="footer">
-        <% if (account && (question.get("owner") == account.id || account.admin)) { %><i title="delete question" class="icon icon-trash delete pull-right"></i><% } %>
+        <% if (account.id && (question.get("owner") == account.id || account.admin)) { %><i title="delete question" class="icon icon-trash delete pull-right"></i><% } %>
         {# <% if (question.get("tags")) { %> #}
         <div class="tags">
           <% for (_i=0, _tags=question.get("tags"), _len=_tags.length; _i < _len; _i++) { tag = _tags[_i]; %>
