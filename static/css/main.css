@@ -93,7 +93,9 @@ body {
   margin-left: 10px;
 }
 .question .header .title h4 {
+  margin: 0;
   display: inline;
+  vertical-align: top;
 }
 .question .vote-null .fill {
   text-align: center;
@@ -543,6 +545,9 @@ circle.dot.color_9 {
 @media (max-width: 768px) {
   body {
     padding: 0px;
+  }
+  #container {
+    padding: 0;
   }
   .container {
     max-width: none;
