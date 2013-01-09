@@ -212,7 +212,7 @@ class Question(Base):
     removed = Column(DateTime())
     text = Column(String(128))
     answers = relationship("Answer", lazy="joined", order_by="Answer.id",
-                           backref=backref("question", lazy="joined"))
+                           backref=backref("question"))
     tags = relationship("Tag", secondary=question_tag, lazy="joined",
                         backref="questions")
     owner_id = Column(ForeignKey('account.id'))

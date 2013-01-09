@@ -48,8 +48,8 @@ log = create_logger("mulchn")
 assets = Environment(app)
 
 css_slicklist = Bundle('css/slicklist.less',
-                  filters="less",
-                  output="css/slicklist.css")
+                       filters="less",
+                       output="css/slicklist.css")
 assets.register('css_slicklist', css_slicklist)
 
 css_main = Bundle('css/main.less',
@@ -269,16 +269,14 @@ def clean_old_votes(questionId):
     - `questionId`: QuestionId to clean up.
     """
 
-    old_vote = Vote.query.filter(Vote.account_id==g.account.id,
-                                 Vote.answer_id == Answer.id,
-                                 Answer.question_id==questionId).first()
+    old_vote = Vote.query.join(Answer).filter(
+        Vote.account_id==g.account.id,
+        Answer.question_id==questionId).first()
+
     if old_vote is not None:
         log.info("remove old vote: answer.id=%s, question.id=%s, account.id=%s", old_vote.answer_id, questionId, g.account.id)
         db.session.add(old_vote.create_history())
         db.session.delete(old_vote)
-
-
-
 
 
 
@@ -320,7 +318,7 @@ def answer_dict(answer, vote):
         ret['votes'] = len(answer.votes)
         log.debug("followee votes lookup")
         ret['followee_votes'] = len(set(v.account_id for v in answer.votes) \
-                                         .intersection([f.id for f in g.account.following]))
+                                        .intersection([f.id for f in g.account.following]))
 
 
         if vote is not None and vote == answer.id:
@@ -338,6 +336,7 @@ def question_dict(question, votes):
     - `votes`: dictionary mapping question._id to answer._id for all
     questions the account has made.
     """
+    if question is None: return None
 
     ret = {key:getattr(question, key) for key in QUESTION_KEYS}
     ret['tags'] = question.tag_list.copy()
@@ -350,35 +349,45 @@ def question_dict(question, votes):
     if hasattr(g, 'account') and question.owner == g.account:
         ret['owner'] = g.account.id
 
-    ret['tags'] = [t.name for t in question.tags]
+    ret['tags'] = sorted([t.name for t in question.tags])
 
     ret['answers'] = [answer_dict(ans, ret.get('vote')) for ans in question.answers]
     return ret
 
 
-def question_dict_id(question_id):
+def question_id_dict(question_id):
     votes = {}
     if hasattr(g, 'account'):
         log.debug("account votes lookup")
-        votes = {v.answer.question.id:v.answer.id for v in g.account.votes}
+        votes = {v.answer.question_id:v.answer.id for v in g.account.votes}
 
-    return question_dict(Question.query.filter_by(id=question_id).first(),
-                         votes)
+    q = Question.query.filter_by(active=True, id=question_id).first()
+
+    return question_dict(q, votes)
 
 def questions_dict(questions=None):
     # logged in account gets their votes
-
     votes = {}
     if hasattr(g, 'account'):
         log.debug("account votes lookup")
-        votes = {v.answer.question.id:v.answer.id for v in g.account.votes}
+        ## FIXME: when a limited subset, only look at those questions
+        votes = {v.answer.question_id:v.answer.id for v in g.account.votes}
 
 
     if questions is None:
         log.debug("active+public questions lookup")
-        questions = Question.query.order_by(sa.sql.expression.desc(Question.added)).filter_by(active=True, private=False)
+        questions = Question.query.filter_by(active=True, private=False) \
+            .order_by(sa.sql.expression.desc(Question.added))
 
     return [question_dict(q, votes) for q in questions]
+
+
+def tag_questions_dict(tag_name):
+    return questions_dict(Question.query.join((Question.tags, Tag)) \
+                 .filter(Tag.name==tag_name,
+                         Question.active==True,
+                         Question.private==False) \
+                 .order_by(sa.sql.expression.desc(Question.added)))
 
 
 
@@ -424,7 +433,9 @@ def v1_vote():
     question_id = data['id']
 
     log.info("answer lookup: id=%s, question.id=%s", data['vote'], question_id)
-    answer = Answer.query.filter(Question.id==question_id, Answer.id == data['vote']).first()
+    answer = Answer.query.filter(Answer.question_id==question_id,
+                                 Answer.id == data['vote']).first()
+
     if answer is None:
         abort(404)
 
@@ -479,10 +490,15 @@ def v1_question(question_id):
     elif request.method == 'GET':
         votes = {}
         if hasattr(g, 'account'):
-            log.debug("account votes lookup")
-            votes = {v.answer.question.id:v.answer.id for v in g.account.votes}
+            log.debug("v1_question: account votes lookup")
+            ## FIXME: optimize to only look for votes on the current question
+            votes = {v.answer.question_id:v.answer.id for v in g.account.votes}
 
-        return render_json(question_dict_id(question_id))
+        q = question_id_dict(question_id)
+        if not q:
+            return page_not_found("question #{0} does not exist.".format(question_id))
+
+        return render_json(q)
 
     else:
         abort(404)
@@ -496,16 +512,12 @@ def v1_questions():
 
 @app.route("/v1/tag/<tag_name>")
 def v1_tag(tag_name):
-    print tag_name
-    q = Question.query.join((Question.tags, Tag)) \
-        .filter(Tag.name==tag_name,
-                Question.active==True,
-                Question.private==False) \
-                .order_by(sa.sql.expression.desc(Question.added))
-    # if t is None:
-    #     return page_not_found("tag {0} has no questions".format(tag_name))
+    q = tag_questions_dict(tag_name)
 
-    return render_json(questions_dict(q))
+    if not q:
+        return page_not_found("tag {0} has no questions".format(tag_name))
+
+    return render_json(q)
 
 
 
@@ -530,8 +542,13 @@ def question_stream():
 
 @app.route("/t/<tag_name>")
 def tag(tag_name):
-    data = Tag.query.filter_by(name=tag_name).first().questions
-    return render("questions.html")
+
+    q = tag_questions_dict(tag_name)
+
+    if not q:
+        abort(404)
+
+    return render("questions.html", data=jsonify(q))
 
 
 
@@ -591,11 +608,11 @@ def question(question_id):
     - `question_id`: QuestionId to return data on.
     """
 
-    # obj = Question.query.filter_by(id=question_id).first()
-    # if not obj:
-    #     abort(404)
+    q = question_id_dict(question_id)
+    if q is None:
+        abort(404)
 
-    return render("questions.html", data=jsonify(question_dict_id(question_id)))
+    return render("questions.html", data=jsonify(q))
 
 
 
@@ -636,8 +653,8 @@ def commit():
     an error occurs.
 
     Return:
-       True on success
-       False on error
+    True on success
+    False on error
     """
 
     try:
