@@ -77,6 +77,7 @@ body {
   border-top: none;
   background: #eee;
   background: #fff;
+  padding: 15px 15px;
 }
 .question .header .vote-count-prefix {
   color: gray;
@@ -146,6 +147,9 @@ body {
 }
 .question.active .header .vote-count-prefix {
   color: lightgray;
+}
+.rest .answers {
+  margin-top: 20px;
 }
 .rest .answers .answer {
   border: none;

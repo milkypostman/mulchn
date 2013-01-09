@@ -3,9 +3,6 @@
   margin: 0;
   padding: 0;
 }
-.slicklist > li {
-  padding: 15px 15px;
-}
 .slicklist > li:hover {
   background: #e0e0e0;
   cursor: pointer;
@@ -13,7 +10,4 @@
 .slicklist > li.active {
   background: #ededed;
   cursor: default;
-}
-.slicklist > li .slicklist {
-  margin-top: 20px;
 }
