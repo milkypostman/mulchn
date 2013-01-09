@@ -497,11 +497,15 @@ def v1_questions():
 @app.route("/v1/tag/<tag_name>")
 def v1_tag(tag_name):
     print tag_name
-    t = Tag.query.filter_by(name=tag_name).first()
-    if t is None:
-        return page_not_found("tag {0} has no questions".format(tag_name))
+    q = Question.query.join((Question.tags, Tag)) \
+        .filter(Tag.name==tag_name,
+                Question.active==True,
+                Question.private==False) \
+                .order_by(sa.sql.expression.desc(Question.added))
+    # if t is None:
+    #     return page_not_found("tag {0} has no questions".format(tag_name))
 
-    return render_json(questions_dict(t.questions))
+    return render_json(questions_dict(q))
 
 
 
