@@ -68,7 +68,7 @@
         {# <% if (question.get("tags")) { %> #}
         <div class="tags">
           <% for (_i=0, _tags=question.get("tags"), _len=_tags.length; _i < _len; _i++) { tag = _tags[_i]; %>
-             <a href="{{ url_for("tag", tag_name="") }}<%= tag %>"><%= tag %></a>
+             <% if (_i > 0) { %>, <% } %><a href="{{ url_for("tag", tag_name="") }}<%= tag %>"><%= tag %></a>
              <% } %>
         </div>
         {# <% } %> #}
