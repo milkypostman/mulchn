@@ -114,13 +114,18 @@ body {
 
             i {
                 display: none;
-                margin-left: 10px;
+                opacity: .5;
+                vertical-align: middle;
+                &:hover {
+                    opacity: 1;
+                }
             }
 
             h4 {
                 margin: 0;
                 display: inline;
                 vertical-align: top;
+                margin-right: 5px;
             }
         }
     }
@@ -449,7 +454,7 @@ circle.dot {
     .container {
         max-width: none;
         width: auto;
-    /* margin: 0; */
+        /* margin: 0; */
     }
     .navbar-fixed-top {
         position: static;

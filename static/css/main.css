@@ -90,12 +90,17 @@ body {
 }
 .question .header .title i {
   display: none;
-  margin-left: 10px;
+  opacity: .5;
+  vertical-align: middle;
+}
+.question .header .title i:hover {
+  opacity: 1;
 }
 .question .header .title h4 {
   margin: 0;
   display: inline;
   vertical-align: top;
+  margin-right: 5px;
 }
 .question .vote-null .fill {
   text-align: center;
