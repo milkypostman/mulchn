@@ -20,7 +20,6 @@ from flask.ext.assets import Environment, Bundle
 from functools import wraps
 from itertools import izip_longest
 from urlparse import urlsplit
-from wtforms.validators import StopValidation
 
 import db
 import flask
@@ -305,9 +304,6 @@ def question_vote_locations(question):
 
     return locations
 
-
-def account_answers():
-    return {a.question_id:a.id for a in Answer.query.filter(Vote.account == g.account)}
 
 
 ANSWER_KEYS = ['text', 'id']
