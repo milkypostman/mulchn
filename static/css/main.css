@@ -223,6 +223,9 @@ body {
   padding-top: 10px;
   margin-top: 20px;
 }
+.rest .footer .tags {
+  color: gray;
+}
 .rest .footer .icon {
   opacity: .5;
   text-size: 90%;
