@@ -22,7 +22,7 @@
           <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
               <div class="container">
-                <a class="brand" href="/">MULCHN</a>
+                <a class="brand" href="/">Mulchn</a>
                 <ul class="nav">
                   <li><a class="" href="{{ url_for('question_add') }}"><i class="icn icn-add"></i></a></li>
                 </ul>
@@ -31,7 +31,7 @@
                     <li><a href="">{{ account.username }}</a></li>
                     <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
                   {% else %}
-                    <li class="login"><a class="" href="{{ url_for('login_twitter') }}"><i class="twitter-login"></i></a></li>
+                    <li class="login"><a class="" href="{{ url_for('login_twitter') }}">login with twitter</a></li>
                   {% endif %}
                 </ul>
               </div>
