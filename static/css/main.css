@@ -61,7 +61,6 @@ body {
   border-radius: 4px;
   padding-left: 0;
   padding-right: 0;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 .fill .label {
   background: none;
@@ -142,6 +141,9 @@ body {
   display: inline;
   vertical-align: top;
   margin-right: 5px;
+}
+.question .header .label {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .question .vote-null .fill {
   text-align: center;
