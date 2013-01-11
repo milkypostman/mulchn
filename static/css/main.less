@@ -20,6 +20,16 @@ body {
         background-image: url("/static/img/twitter_signin.png");
         // background-position: 0 -24px;
     }
+    .navbar-inverse & {
+        background-color: darkred;
+        background-image: -moz-linear-gradient(top, #660000, #550000);
+        background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#660000), to(#550000));
+        background-image: -webkit-linear-gradient(top, #660000, #550000);
+        background-image: -o-linear-gradient(top, #660000, #550000);
+        background-image: linear-gradient(to bottom, #660000, #550000);
+        background-repeat: repeat-x;
+    }
+
 }
 
 
@@ -27,6 +37,24 @@ body {
     max-width: 600px;
 }
 
+.navbar .brand {
+    font-weight: bold;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, .75);
+
+}
+
+.icn {
+    height: 16px;
+    width: 16px;
+    line-height: 16px;
+    vertical-align: text-top;
+    display: inline-block;
+}
+
+.icn-add {
+    background-image: url("/static/img/add.png");
+    background-size: 16px 16px;
+}
 
 
 .fill {
