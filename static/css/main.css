@@ -32,15 +32,20 @@ body {
   color: #ff3319;
 }
 .icn {
-  height: 16px;
-  width: 16px;
-  line-height: 16px;
+  height: 14px;
+  width: 14px;
+  line-height: 14px;
+  margin-top: 1px;
   vertical-align: text-top;
   display: inline-block;
 }
 .icn-add {
   background-image: url("/static/img/add.png");
-  background-size: 16px 16px;
+  background-size: 14px 14px;
+}
+.icn-add:hover {
+  background-image: url("/static/img/addh.png");
+  background-size: 14px 14px;
 }
 .fill {
   margin-bottom: 0;
