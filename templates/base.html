@@ -5,7 +5,7 @@
       <title>{% block title %}{% endblock %} : Mulchn</title>
       {% block css %}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link href="{{ static_url }}css/bootstrap.css" rel="stylesheet" />
+        <link href="{{ STATIC_URL }}css/bootstrap.css" rel="stylesheet" />
         {% assets "css_slicklist" %}
           <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}" />
         {% endassets %}
@@ -52,7 +52,7 @@
           <div class="span12">
             <div id="content">
               {% block content %}
-                <center><img src="{{ static_url }}img/working.gif"></img></center>
+                <center><img src="{{ STATIC_URL }}img/working.gif"></img></center>
               {% endblock %}
             </div>
           </div>
