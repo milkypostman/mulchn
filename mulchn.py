@@ -316,10 +316,6 @@ def answer_dict(answer, vote):
         ret['followee_votes'] = len(set(v.account_id for v in answer.votes) \
                                         .intersection([f.id for f in g.account.following]))
 
-
-        if vote is not None and vote == answer.id:
-            ret['followee_votes'] += 1
-
     return ret
 
 

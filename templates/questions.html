@@ -49,7 +49,7 @@
       </ul>
       <% if (question.get("vote")) { %>
       <div class="followees">
-        <div class="header"><h5>You and the People You Follow</h5></div>
+        <div class="header"><h5>Among the People You Follow</h5></div>
         <div class="progress">
           <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
              <div class="bar color_<%= _i %>"
