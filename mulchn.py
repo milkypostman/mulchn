@@ -112,10 +112,12 @@ strip_filter = lambda s: s.strip() if s else None
 class AddForm(wtf.Form):
     """Add Question Form"""
     tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.InputRequired()])
-    question = wtf.StringField("Question", validators=[wtf.DataRequired()],
+    question = wtf.StringField("Question",
+                               validators=[wtf.DataRequired(), wtf.Length(max=128)],
                                filters=[strip_filter])
     answers = wtf.FieldList(wtf.TextField("Answer",
-                                          validators=[wtf.DataRequired()],
+                                          validators=[wtf.DataRequired(),
+                                                      wtf.Length(max=128)],
                                           filters=[strip_filter]),
                             min_entries=2,
                             max_entries=5)
