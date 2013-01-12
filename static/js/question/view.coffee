@@ -6,7 +6,7 @@ class QuestionView extends Backbone.View
   events: {
     "click .rest>.answers>.answer": "vote"
     "click .footer .delete": "delete"
-    "click .rest": "nothing"
+    "click .rest": "stopPropagation"
   }
 
   active: false
@@ -41,7 +41,7 @@ class QuestionView extends Backbone.View
     false
 
 
-  nothing: (event) =>
+  stopPropagation: (event) =>
     event.stopImmediatePropagation()
 
 
