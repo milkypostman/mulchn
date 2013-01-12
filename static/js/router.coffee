@@ -25,7 +25,7 @@ class Router extends Backbone.Router
     questionCollection = new QuestionCollection()
     questionList = new QuestionList({collection:questionCollection})
 
-    $("#content").html(questionList.el)
+    $("#content").append(questionList.el)
 
     if $("#json_data").html()
       questionCollection.reset($.parseJSON($("#json_data").html()))
@@ -38,7 +38,7 @@ class Router extends Backbone.Router
     tagCollection.url="/v1/tag/#{tag_name}"
 
     questionList = new QuestionList({collection: tagCollection})
-    $("#content").html(questionList.el)
+    $("#content").append(questionList.el)
 
     if $("#json_data").html()
       tagCollection.reset($.parseJSON($("#json_data").html()))
@@ -51,7 +51,7 @@ class Router extends Backbone.Router
     
     model = new QuestionModel({id: question_id})
     question = new QuestionView({model: model, active: true});
-    $("#content").html(question.el)
+    $("#content").append(question.el)
 
     setInterval((=> model.fetch()), 10000);
     if $("#json_data").html()
