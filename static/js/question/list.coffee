@@ -5,6 +5,7 @@ class QuestionList extends Backbone.View
   
   events: {
     "click .question": "toggleQuestion"
+    "click .question a": "stopPropagation"
     }
 
   initialize: () =>
@@ -16,6 +17,9 @@ class QuestionList extends Backbone.View
     @childViews = {}
 
     setInterval(@collection.update, 60000);
+
+  stopPropagation: (event) =>
+    event.stopImmediatePropagation()
 
   toggleQuestion: (event) =>
     @toggleView(event.currentTarget)
