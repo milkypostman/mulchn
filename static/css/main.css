@@ -531,6 +531,7 @@ a {
 }
 .rest .answers .answer p {
   margin-left: 20px;
+  margin-right: 110px;
 }
 .rest .answers .answer .icon {
   height: 14px;
