@@ -261,8 +261,8 @@ class QuestionView extends Backbone.View
 
 
   addTooltips: =>
-    $(".answer .fill .label").tooltip()
-    $(".followees .progress .bar").tooltip()
+    @$(".answer .fill .label").tooltip()
+    @$(".followees .progress .bar").tooltip()
 
 
   render: =>
