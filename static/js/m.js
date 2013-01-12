@@ -837,7 +837,7 @@ QuestionList = (function(_super) {
 $(window).ready(function() {
   console.log("main");
   window.setTimeout(function() {
-    return $('.alert').fadeOut('fast', function() {
+    return $('.alert').slideUp('fast', function() {
       return $(this).remove();
     });
   }, 3000);

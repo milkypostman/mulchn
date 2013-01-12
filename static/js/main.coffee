@@ -1,7 +1,7 @@
 $(window).ready( ->
   console.log("main")
   window.setTimeout(
-    -> $('.alert').fadeOut('fast', -> $(this).remove())
+    -> $('.alert').slideUp('fast', -> $(this).remove())
     3000)
   
   window.geoLocation = GeoLocation.getInstance()
