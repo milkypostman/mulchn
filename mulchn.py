@@ -449,6 +449,7 @@ def v1_vote():
             vote.longitude = pos['coords']['longitude']
 
     db.session.add(vote)
+    db.session.commit()
 
     log.debug("populate return data")
     ret = question_dict(Question.query.filter(Question.id==question_id).first(),
