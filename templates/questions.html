@@ -82,7 +82,7 @@
              <div id="answer">
                <span class="answer-text color_<%= _i %>"><%= answer.text %></span>:
                <% _.each(answer.followees, function (followee, _j) { 
-                  if (_j > 0) { %>, <% } %><a href="http://twitter.com/<%= followee.username %>/">@<%= followee.username %></a><% }) %>
+                  if (_j > 0) { %>, <% } %><a href="https://twitter.com/share?url=http://mulchn.com{{ url_for("question", question_id ="") }}<%= question.id %>&hashtags=mulchn&related=mulchn:Mulchn Twitter Account&text=@<%= followee.username %> <%= answer.text %>" target="_blank">@<%= followee.username %></a><% }) %>
              </div>
              <% }}) %>
         </div>
