@@ -564,8 +564,11 @@ a {
 }
 .rest .followees {
   border-top: 1px dashed lightgray;
-  margin-bottom: 17px;
-  padding-top: 7px;
+  margin-bottom: 15px;
+  padding-top: 5px;
+}
+.rest .followees .progress {
+  margin-bottom: 15px;
 }
 .rest .followees .followees-list {
   font-size: 90%;
