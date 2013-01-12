@@ -42,39 +42,49 @@
       </div>
 
       <ul class="answers slicklist" >
-        <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
-           <li class="answer <% if (answer.id == question.get("vote")) { %>vote<% } %>" id="<%= answer.id %>">
-             <div class="icon pull-left color_<%= _i %>">
-               <i class="icon-remove icon icon-white"></i>
-             </div>
-             <% if (question.get("vote")) { %>
-             <div class="pull-right">
-               <div class="fill">
-                 <div class="label color_<%= _i %>"
-                      data-placement="right"
-                      data-original-title="<%= Math.round(answer.votes / question.votes() * 100) %>%"
-                      style="width: <%= (answer.votes / question.votes() * 100) %>%">
-                      <span class="vote-count"><%= answer.votes || 0 %></span>
-                 </div>
-               </div>
-             </div>
-             <% } %>
-             <p><%= answer.text %></p>
-           </li>
-           <% } %>
+        <% _.each(question.get("answers"), function (answer, _i) { %>
+        <li class="answer <% if (answer.id == question.get("vote")) { %>vote<% } %>" id="<%= answer.id %>">
+          <div class="icon pull-left color_<%= _i %>">
+            <i class="icon-remove icon icon-white"></i>
+          </div>
+          <% if (question.get("vote")) { %>
+          <div class="pull-right">
+            <div class="fill">
+              <div class="label color_<%= _i %>"
+                   data-placement="right"
+                   data-original-title="<%= Math.round(answer.votes / question.votes() * 100) %>%"
+                   style="width: <%= (answer.votes / question.votes() * 100) %>%">
+                   <span class="vote-count"><%= answer.votes || 0 %></span>
+              </div>
+            </div>
+          </div>
+          <% } %>
+          <p><%= answer.text %></p>
+        </li>
+        <% }) %>
       </ul>
       <% if (question.get("vote")) { %>
       <div class="followees">
         <div class="header"><h5>Among the People You Follow</h5></div>
         <div class="progress">
-          <% for (_i=0, _answers=question.get("answers"), _len=_answers.length; _i < _len; _i++) { answer = _answers[_i];  %>
-             <div class="bar color_<%= _i %>"
-                  data-placement="bottom"
-                  data-original-title="<%= Math.round(answer.followee_votes / question.followee_votes() * 100) %>%"
-                  style="width: <%= (answer.followee_votes / question.followee_votes() * 100) %>%">
-                  <%= answer.followee_votes %>
+          <% _.each(question.get("answers"), function (answer, _i) { %>
+          <div class="bar color_<%= _i %>"
+               data-placement="bottom"
+               data-original-title="<%= Math.round(answer.followee_votes / question.followee_votes() * 100) %>%"
+               style="width: <%= (answer.followee_votes / question.followee_votes() * 100) %>%">
+               <%= answer.followee_votes %>
+          </div>
+          <% }) %>
+        </div>
+        <div class="followees-list">
+          <% _.each(question.get("answers"), function (answer, _i) {
+             if (answer.followees.length > 0) { %>
+             <div id="answer">
+               <span class="answer-text color_<%= _i %>"><%= answer.text %></span>:
+               <% _.each(answer.followees, function (followee, _j) { 
+                  if (_j > 0) { %>, <% } %><a href="http://twitter.com/<%= followee.username %>/">@<%= followee.username %></a><% }) %>
              </div>
-             <% } %>
+             <% }}) %>
         </div>
       </div>
       <div class="map"><p>map data unavailable</p></div>
@@ -82,13 +92,11 @@
       <div class="footer">
         <% if (account.id && (question.get("owner") == account.id || account.admin)) { %><i title="delete question" class="icon icon-trash delete pull-right"></i><% } %>
         {# <% if (question.get("tags")) { %> #}
-        <div class="tags"><%
-        for (_i=0, _tags=question.get("tags"), _len=_tags.length; _i < _len; _i++) {
-          tag = _tags[_i];
-          if (_i > 0) {
-            %>, <%
-          } %><a href="{{ url_for("tag", tag_name="") }}<%= tag %>"><%= tag %></a><% } %></div>
-        {# <% } %> #}
+        <div class="tags"><% _.each(question.get("tags"), function(tag, _i) {
+                             if (_i > 0) {
+                             %>, <%
+                             } %><a href="{{ url_for("tag", tag_name="") }}<%= tag %>"><%= tag %></a><% }) %></div>
+                             {# <% } %> #}
 
       </div>
     </div>

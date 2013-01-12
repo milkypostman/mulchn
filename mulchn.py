@@ -320,8 +320,12 @@ def answer_dict(answer, vote):
     if hasattr(g, 'account'):
         ret['votes'] = len(answer.votes)
         log.debug("followee votes lookup")
-        ret['followee_votes'] = len(set(v.account_id for v in answer.votes) \
-                                        .intersection([f.id for f in g.account.following]))
+        ret['followees'] = set(v.account_id for v in answer.votes) \
+            .intersection([f.id for f in g.account.following])
+        ret['followees'] = [{'id':a.id, 'username':a.username}
+                            for a in Account.query \
+                                .filter(Account.id.in_(ret['followees']))]
+        ret['followee_votes'] = len(ret['followees'])
 
     return ret
 
