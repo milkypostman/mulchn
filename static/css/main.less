@@ -1,3 +1,45 @@
+@color_0: #1f77b4;
+@color_1: #ff7f0e;
+@color_2: #2ca02c;
+@color_3: #d62728;
+@color_4: #9467bd;
+@color_5: #8c564b;
+@color_6: #e377c2;
+@color_7: #7f7f7f;
+@color_8: #bcbd22;
+@color_9: #17becf;
+
+.color-loop (@index) when (@index < 10) {
+    (~".color_@{index}") {
+        @cur: "color_@{index}";
+        color: @@cur;
+    }
+    (~".answer .icon.color_@{index}") {
+        @cur: "color_@{index}";
+        background-color: @@cur;
+    }
+    (~".answer .fill .label.color_@{index}") {
+        @cur: "color_@{index}";
+        .background_gradient(@@cur);
+    }
+    (~"circle.dot.color_@{index}") {
+        @cur: "color_@{index}";
+        fill: @@cur;
+    }
+
+    (~".progress .bar.color_@{index}") {
+        @cur: "color_@{index}";
+        .background_gradient(@@cur);
+    }
+
+    .color-loop(@index + 1);
+    
+}
+.color-loop (11) {}
+.color-loop (0);
+
+
+
 body {
     background: #fff;
 }
@@ -429,17 +471,6 @@ circle.dot {
     background-repeat: repeat-x;
 }   
 
-@color_0: #1f77b4;
-@color_1: #ff7f0e;
-@color_2: #2ca02c;
-@color_3: #d62728;
-@color_4: #9467bd;
-@color_5: #8c564b;
-@color_6: #e377c2;
-@color_7: #7f7f7f;
-@color_8: #bcbd22;
-@color_9: #17becf;
-
 .block {
     width: 14px;
     height: 14px;
@@ -447,32 +478,6 @@ circle.dot {
     margin-top: 2px;
     vertical-align: text-bottom;
 }
-
-.color-loop (@index) when (@index < 10) {
-    (~".answer .icon.color_@{index}") {
-        @cur: "color_@{index}";
-        background-color: @@cur;
-    }
-    (~".answer .fill .label.color_@{index}") {
-        @cur: "color_@{index}";
-        .background_gradient(@@cur);
-    }
-    (~"circle.dot.color_@{index}") {
-        @cur: "color_@{index}";
-        fill: @@cur;
-    }
-
-    (~".progress .bar.color_@{index}") {
-        @cur: "color_@{index}";
-        .background_gradient(@@cur);
-    }
-
-    .color-loop(@index + 1);
-    
-}
-.color-loop (11) {}
-.color-loop (0);
-
 
 @media (max-width: 980px) {
     .navbar-fixed-top .navbar-inner {
