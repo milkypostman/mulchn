@@ -15,7 +15,7 @@ class QuestionList extends Backbone.View
     @selectedQuestion = undefined
     @childViews = {}
 
-    setInterval(@collection.update, 10000);
+    setInterval(@collection.update, 60000);
 
   toggleQuestion: (event) =>
     @toggleView(event.currentTarget)

@@ -741,7 +741,7 @@ QuestionList = (function(_super) {
     }
     this.selectedQuestion = void 0;
     this.childViews = {};
-    return setInterval(this.collection.update, 10000);
+    return setInterval(this.collection.update, 60000);
   };
 
   QuestionList.prototype.toggleQuestion = function(event) {
