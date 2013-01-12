@@ -103,15 +103,22 @@ class TagListField(wtf.Field):
     def process_formdata(self, valuelist):
         if valuelist:
             self.data = list({x.strip() for x in valuelist[0].lower().split(',')})
+            self.data = [d for d in self.data if d]
         else:
             self.data = []
 
+strip_filter = lambda s: s.strip() if s else None
 
 class AddForm(wtf.Form):
     """Add Question Form"""
     tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.InputRequired()])
-    question = wtf.StringField("Question", validators=[wtf.DataRequired()])
-    answers = wtf.FieldList(wtf.TextField("Answer", validators=[wtf.DataRequired()]), min_entries=2, max_entries=5)
+    question = wtf.StringField("Question", validators=[wtf.DataRequired()],
+                               filters=[strip_filter])
+    answers = wtf.FieldList(wtf.TextField("Answer",
+                                          validators=[wtf.DataRequired()],
+                                          filters=[strip_filter]),
+                            min_entries=2,
+                            max_entries=5)
 
 
 
