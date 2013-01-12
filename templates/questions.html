@@ -26,21 +26,6 @@
       </div>
     </div>
     <div class="rest" <% if (active) { %>style="display: block;"<% } %>>
-      <div class="icons">
-        <div class="button tweet-button">
-          <a href="https://twitter.com/share?url=http://mulchn.com{{ url_for("question", question_id ="") }}<%= question.id %>&hashtags=mulchn&related=mulchn:Mulchn Twitter Account&text=<%= question.get("text") %>" target="_blank">
-            <i></i>
-            <span>Tweet</span>
-          </a>
-        </div>
-        <div class="button">
-          <a href="{{ url_for("question", question_id ="") }}<%= question.id %>" target="_blank">
-            <i class="icon icon-share"></i>
-            <span>Link</span>
-          </a>
-        </div>
-      </div>
-
       <ul class="answers slicklist" >
         <% _.each(question.get("answers"), function (answer, _i) { %>
         <li class="answer <% if (answer.id == question.get("vote")) { %>vote<% } %>" id="<%= answer.id %>">
@@ -63,6 +48,21 @@
         </li>
         <% }) %>
       </ul>
+      <div class="icons">
+        <div class="button tweet-button">
+          <a href="https://twitter.com/share?url=http://mulchn.com{{ url_for("question", question_id ="") }}<%= question.id %>&hashtags=mulchn&related=mulchn:Mulchn Twitter Account&text=<%= question.get("text") %>" target="_blank">
+            <i></i>
+            <span>Tweet</span>
+          </a>
+        </div>
+        <div class="button">
+          <a href="{{ url_for("question", question_id ="") }}<%= question.id %>" target="_blank">
+            <i class="icon icon-share"></i>
+            <span>Link</span>
+          </a>
+        </div>
+      </div>
+
       <% if (question.get("vote")) { %>
       <div class="followees">
         <div class="header"><h5>Among the People You Follow</h5></div>

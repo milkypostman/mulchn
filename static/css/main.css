@@ -509,7 +509,9 @@ a {
   background: none;
 }
 .rest .icons {
-  margin-top: 15px;
+  text-align: left;
+  margin-top: 25px;
+  margin-bottom: 5px;
 }
 .rest .answers {
   margin-top: 20px;
@@ -562,7 +564,8 @@ a {
 }
 .rest .followees {
   border-top: 1px dashed lightgray;
-  margin-top: 20px;
+  margin-bottom: 17px;
+  padding-top: 7px;
 }
 .rest .followees .followees-list {
   font-size: 90%;
@@ -579,7 +582,7 @@ a {
 }
 .rest .map {
   border-top: 1px dashed lightgray;
-  margin-top: 20px;
+  margin-bottom: 10px;
 }
 .rest .map .header {
   font-weight: bold;
@@ -594,12 +597,11 @@ a {
 .rest .footer {
   border-top: 1px dashed lightgray;
   text-align: left;
-  height: 14px;
   padding-top: 10px;
-  margin-top: 20px;
 }
 .rest .footer .tags {
   color: gray;
+  font-size: 90%;
 }
 .rest .footer .icon {
   opacity: .5;
