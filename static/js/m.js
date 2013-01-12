@@ -251,7 +251,7 @@ Router = (function(_super) {
     questionList = new QuestionList({
       collection: questionCollection
     });
-    $("#content").html(questionList.el);
+    $("#content").append(questionList.el);
     if ($("#json_data").html()) {
       return questionCollection.reset($.parseJSON($("#json_data").html()));
     } else {
@@ -267,7 +267,7 @@ Router = (function(_super) {
     questionList = new QuestionList({
       collection: tagCollection
     });
-    $("#content").html(questionList.el);
+    $("#content").append(questionList.el);
     if ($("#json_data").html()) {
       return tagCollection.reset($.parseJSON($("#json_data").html()));
     } else {
@@ -286,7 +286,7 @@ Router = (function(_super) {
       model: model,
       active: true
     });
-    $("#content").html(question.el);
+    $("#content").append(question.el);
     setInterval((function() {
       return model.fetch();
     }), 10000);
@@ -414,7 +414,7 @@ QuestionView = (function(_super) {
   QuestionView.prototype.events = {
     "click .rest>.answers>.answer": "vote",
     "click .footer .delete": "delete",
-    "click .rest": "nothing"
+    "click .rest": "stopPropagation"
   };
 
   QuestionView.prototype.active = false;
@@ -436,7 +436,7 @@ QuestionView = (function(_super) {
 
     this.vote = __bind(this.vote, this);
 
-    this.nothing = __bind(this.nothing, this);
+    this.stopPropagation = __bind(this.stopPropagation, this);
 
     this["delete"] = __bind(this["delete"], this);
     if (config.active) {
@@ -481,7 +481,7 @@ QuestionView = (function(_super) {
     return false;
   };
 
-  QuestionView.prototype.nothing = function(event) {
+  QuestionView.prototype.stopPropagation = function(event) {
     return event.stopImmediatePropagation();
   };
 
@@ -670,8 +670,8 @@ QuestionView = (function(_super) {
   };
 
   QuestionView.prototype.addTooltips = function() {
-    $(".answer .fill .label").tooltip();
-    return $(".followees .progress .bar").tooltip();
+    this.$(".answer .fill .label").tooltip();
+    return this.$(".followees .progress .bar").tooltip();
   };
 
   QuestionView.prototype.render = function() {
@@ -718,6 +718,8 @@ QuestionList = (function(_super) {
 
     this.toggleQuestion = __bind(this.toggleQuestion, this);
 
+    this.stopPropagation = __bind(this.stopPropagation, this);
+
     this.initialize = __bind(this.initialize, this);
     return QuestionList.__super__.constructor.apply(this, arguments);
   }
@@ -730,7 +732,8 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.events = {
-    "click .question": "toggleQuestion"
+    "click .question": "toggleQuestion",
+    "click .question a": "stopPropagation"
   };
 
   QuestionList.prototype.initialize = function() {
@@ -742,6 +745,10 @@ QuestionList = (function(_super) {
     this.selectedQuestion = void 0;
     this.childViews = {};
     return setInterval(this.collection.update, 60000);
+  };
+
+  QuestionList.prototype.stopPropagation = function(event) {
+    return event.stopImmediatePropagation();
   };
 
   QuestionList.prototype.toggleQuestion = function(event) {
