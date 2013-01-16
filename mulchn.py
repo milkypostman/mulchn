@@ -536,14 +536,14 @@ def login():
 def logout():
     if session.pop('account_id', None) is not None and hasattr(g, 'account'):
         flash("{0} has been logged out.".format(g.account.username))
-    return redirect(url_for("question_stream"))
+    return redirect(url_for("questions"))
 
 
 
 ### Pages
 
 @app.route("/")
-def question_stream():
+def questions():
     return render("questions.html", data=jsonify(questions_dict()))
 
 @app.route("/t/<tag_name>")
@@ -692,7 +692,7 @@ def login_twitter_authenticated():
 
     if resp['status'] != '200':
         flash("Failed to login!")
-        return redirect(url_for("question_stream"))
+        return redirect(url_for("questions"))
 
 
     # data contains our final token and secret for the account
@@ -710,7 +710,7 @@ def login_twitter_authenticated():
         twitter_data = api.VerifyCredentials().AsDict()
     except twitter.TwitterError:
         flash("Cannot validate Twitter credentials.")
-        return redirect(url_for("question_stream"))
+        return redirect(url_for("questions"))
 
 
     # print twitter_data
@@ -764,7 +764,7 @@ def login_twitter_authenticated():
     log.info("commiting twitter login info: account.id=%s", account.id)
     if not commit():
         flash("Error while logging in.")
-        return redirect(url_for("question_stream"))
+        return redirect(url_for("questions"))
 
 
     session['account_id'] = twaccount.account_id
@@ -773,7 +773,7 @@ def login_twitter_authenticated():
     if 'url_after_login' in session:
         return redirect(url_for(session.pop('url_after_login')))
 
-    return redirect(url_for("question_stream"))
+    return redirect(url_for("questions"))
 
 
 
