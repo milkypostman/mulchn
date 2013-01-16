@@ -16,7 +16,6 @@ class QuestionList extends Backbone.View
     @selectedQuestion = undefined
     @childViews = {}
 
-    setInterval(@collection.update, 60000);
 
   stopPropagation: (event) =>
     event.stopImmediatePropagation()
