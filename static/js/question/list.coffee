@@ -35,6 +35,7 @@ class QuestionList extends Backbone.View
       view = @childViews[targetId]
       # @originalPosition = $('html, body').scrollTop()
       # view.expand(=> $('html, body').animate({scrollTop: view.$el.offset().top - 50}, 100))
+      # location.hash="q=#{targetId}"
       view.expand()
       @selectedQuestion = targetId
 
@@ -70,15 +71,17 @@ class QuestionList extends Backbone.View
     @$el.append(view.render().el)
 
   addAll: =>
-    @$el.empty()
+    @render
     @collection.each(@append)
 
     if location.hash
-      targetId = location.hash.substring(1)
-      @toggleView($("##{targetId}")[0])
+      targetId = location.hash.substring(3)
+      if (targetEl = $("##{targetId}")[0])
+        @toggleView(targetEl)
 
 
   render: =>
+    @$el.empty()
     @
 
   reset: (data) =>

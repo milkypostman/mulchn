@@ -3,34 +3,36 @@ class Router extends Backbone.Router
     "q/:question_id": "question"
     "t/:tag_name": "tag"
     "add": "add"
-    ":hash": "root"
+    ":page": "root"
     "": "root"
   }
 
-  root: (hash) ->
-    # Fix for hashes in pushState and hash fragment
-    if (hash && @_alreadyTriggered != hash)
-
-      # Reset to home, pushState support automatically converts hashes
-      Backbone.history.navigate("", false);
-
-      # Trigger the default browser behavior
-      location.hash = hash;
-
-      # Set an internal flag to stop recursive looping
-      @_alreadyTriggered = hash;
-      return
+  root: (page) ->
 
     console.log("root")
+
+  
+    if not page
+      page = 1
+    else
+      page = parseInt(page)
+
     questionCollection = new QuestionCollection()
     questionList = new QuestionList({collection:questionCollection})
+    questionPaginator = new QuestionPaginator({collection:questionCollection})
+    questionCollection.page = page
 
-    $("#content").append(questionList.el)
+    $("#content").html(questionList.el)
+    $("#content").append(questionPaginator.el)
 
     if $("#json_data").html()
-      questionCollection.reset($.parseJSON($("#json_data").html()))
+
+      questionCollection.reset(questionCollection.parse($.parseJSON($("#json_data").html())))
+      $("#json_data").remove()
     else
       questionCollection.fetch()
+
+  
 
   tag: (tag_name) ->
     console.log("tag: #{tag_name}")

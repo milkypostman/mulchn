@@ -1037,9 +1037,6 @@
 
       // Or if we've started out with a hash-based route, but we're currently
       // in a browser where it could be `pushState`-based instead...
-      } else if (this._wantsPushState && this._hasPushState && atRoot && loc.hash) {
-        this.fragment = this.getHash().replace(routeStripper, '');
-        window.history.replaceState({}, document.title, loc.protocol + '//' + loc.host + this.options.root + this.fragment);
       }
 
       if (!this.options.silent) {

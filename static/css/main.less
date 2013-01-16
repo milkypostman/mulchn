@@ -597,6 +597,34 @@ circle.dot {
     background-repeat: repeat-x;
 }   
 
+.paginator {
+    margin: 20px 0;
+    text-align: center;
+
+    ul {
+        display: inline-block;
+        *display: inline;
+        margin: 0;
+
+        > li {
+            display: inline;
+            // color: #999999;
+
+            span,
+            a {
+                text-decoration: none;
+            }
+        }
+        > li.disabled {
+            span,
+            a {
+                color: #999999;
+                cursor: default;
+            }
+        }
+    }
+}
+
 .block {
     width: 14px;
     height: 14px;

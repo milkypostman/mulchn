@@ -672,6 +672,27 @@ circle.dot {
   margin-top: 20px;
   font-style: italic;
 }
+.paginator {
+  margin: 20px 0;
+  text-align: center;
+}
+.paginator ul {
+  display: inline-block;
+  *display: inline;
+  margin: 0;
+}
+.paginator ul > li {
+  display: inline;
+}
+.paginator ul > li span,
+.paginator ul > li a {
+  text-decoration: none;
+}
+.paginator ul > li.disabled span,
+.paginator ul > li.disabled a {
+  color: #999999;
+  cursor: default;
+}
 .block {
   width: 14px;
   height: 14px;

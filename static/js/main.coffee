@@ -8,7 +8,6 @@ $(window).ready( ->
   window.account = Account.getInstance()
   
   window.app = new Router()
-  # console.log(Backbone.History);
   Backbone.history.start({pushState: true, hashChange: true})
   
   )

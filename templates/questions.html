@@ -1,7 +1,26 @@
 {% extends "base.html" %}
 {% block title %}feed{% endblock %}
+{% block pager %}
+  
+{% endblock pager %}
 {% block content %}
   {{ super() }}
+  <script type="text/html" id="paginator-template">
+    <div class="paginator">
+      <ul>
+        <% if (page != firstPage) { %>
+        <li><a id="prev" href="/<%= page-1 %>">« prev</a></li>
+        <% } else { %>
+        <li class="disabled"><span id="prev"></span></li>
+        <% } %>
+        <% if (page != lastPage) { %>
+        <li><a id="next" href="/<%= page+1 %>">next »</a></li>
+        <% } else { %>
+        <li class="disabled"><span id="next"></span></li>
+        <% } %>
+      </ul>
+    </div>
+  </script>
   <script type="text/html" id="question-template">
     <div class="header">
       <% if (question.get("vote")) { %>
@@ -100,6 +119,8 @@
 
       </div>
     </div>
+    {# <%= currentPage %> #}
+    {# <%= totalPages %> #}
   </script>
 
 {% endblock content %}

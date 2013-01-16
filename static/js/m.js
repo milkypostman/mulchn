@@ -1,4 +1,4 @@
-var Account, Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionList, QuestionModel, QuestionView, Router,
+var Account, Dialog, GeoLocation, LoginDialog, QuestionAdd, QuestionCollection, QuestionList, QuestionModel, QuestionPaginator, QuestionView, Router,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -234,26 +234,31 @@ Router = (function(_super) {
     "q/:question_id": "question",
     "t/:tag_name": "tag",
     "add": "add",
-    ":hash": "root",
+    ":page": "root",
     "": "root"
   };
 
-  Router.prototype.root = function(hash) {
-    var questionCollection, questionList;
-    if (hash && this._alreadyTriggered !== hash) {
-      Backbone.history.navigate("", false);
-      location.hash = hash;
-      this._alreadyTriggered = hash;
-      return;
-    }
+  Router.prototype.root = function(page) {
+    var questionCollection, questionList, questionPaginator;
     console.log("root");
+    if (!page) {
+      page = 1;
+    } else {
+      page = parseInt(page);
+    }
     questionCollection = new QuestionCollection();
     questionList = new QuestionList({
       collection: questionCollection
     });
-    $("#content").append(questionList.el);
+    questionPaginator = new QuestionPaginator({
+      collection: questionCollection
+    });
+    questionCollection.page = page;
+    $("#content").html(questionList.el);
+    $("#content").append(questionPaginator.el);
     if ($("#json_data").html()) {
-      return questionCollection.reset($.parseJSON($("#json_data").html()));
+      questionCollection.reset(questionCollection.parse($.parseJSON($("#json_data").html())));
+      return $("#json_data").remove();
     } else {
       return questionCollection.fetch();
     }
@@ -379,12 +384,43 @@ QuestionCollection = (function(_super) {
     this.update = __bind(this.update, this);
 
     this.updateOrAdd = __bind(this.updateOrAdd, this);
+
+    this.parse = __bind(this.parse, this);
+
+    this.info = __bind(this.info, this);
+
+    this.url = __bind(this.url, this);
     return QuestionCollection.__super__.constructor.apply(this, arguments);
   }
 
   QuestionCollection.prototype.model = QuestionModel;
 
-  QuestionCollection.prototype.url = '/v1/questions';
+  QuestionCollection.prototype.type = 'GET';
+
+  QuestionCollection.prototype.dataType = 'jsonp';
+
+  QuestionCollection.prototype.url = function() {
+    if (this.page) {
+      return "v1/questions?page=" + this.page;
+    } else {
+      return "v1/questions";
+    }
+  };
+
+  QuestionCollection.prototype.info = function() {
+    return {
+      'page': this.page,
+      'perPage': this.length,
+      'totalPages': this.totalPages,
+      'firstPage': 1,
+      'lastPage': this.totalPages
+    };
+  };
+
+  QuestionCollection.prototype.parse = function(response) {
+    this.totalPages = response.numPages;
+    return response.questions;
+  };
 
   QuestionCollection.prototype.updateOrAdd = function(collection, response) {
     return _.each(response, function(ele) {
@@ -743,8 +779,7 @@ QuestionList = (function(_super) {
       this.collection.on("remove", this.remove);
     }
     this.selectedQuestion = void 0;
-    this.childViews = {};
-    return setInterval(this.collection.update, 60000);
+    return this.childViews = {};
   };
 
   QuestionList.prototype.stopPropagation = function(event) {
@@ -816,16 +851,19 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.addAll = function() {
-    var targetId;
-    this.$el.empty();
+    var targetEl, targetId;
+    this.render;
     this.collection.each(this.append);
     if (location.hash) {
-      targetId = location.hash.substring(1);
-      return this.toggleView($("#" + targetId)[0]);
+      targetId = location.hash.substring(3);
+      if ((targetEl = $("#" + targetId)[0])) {
+        return this.toggleView(targetEl);
+      }
     }
   };
 
   QuestionList.prototype.render = function() {
+    this.$el.empty();
     return this;
   };
 
@@ -838,6 +876,64 @@ QuestionList = (function(_super) {
   };
 
   return QuestionList;
+
+})(Backbone.View);
+
+QuestionPaginator = (function(_super) {
+
+  __extends(QuestionPaginator, _super);
+
+  function QuestionPaginator() {
+    this.render = __bind(this.render, this);
+
+    this.initialize = __bind(this.initialize, this);
+
+    this.prevPage = __bind(this.prevPage, this);
+
+    this.nextPage = __bind(this.nextPage, this);
+    return QuestionPaginator.__super__.constructor.apply(this, arguments);
+  }
+
+  QuestionPaginator.prototype.tagName = "div";
+
+  QuestionPaginator.prototype.attributes = {
+    id: "paginator",
+    "class": "paginator"
+  };
+
+  QuestionPaginator.prototype.template = _.template($("#paginator-template").html());
+
+  QuestionPaginator.prototype.events = {
+    'click a#next': 'nextPage',
+    'click a#prev': 'prevPage'
+  };
+
+  QuestionPaginator.prototype.nextPage = function(e) {
+    e.preventDefault();
+    return window.app.navigate("/" + (this.collection.page + 1), {
+      trigger: true
+    });
+  };
+
+  QuestionPaginator.prototype.prevPage = function(e) {
+    e.preventDefault();
+    return window.app.navigate("/" + (this.collection.page - 1), {
+      trigger: true
+    });
+  };
+
+  QuestionPaginator.prototype.initialize = function() {
+    if (this.collection) {
+      return this.collection.on("reset", this.render);
+    }
+  };
+
+  QuestionPaginator.prototype.render = function() {
+    this.$el.html(this.template(this.collection.info()));
+    return this;
+  };
+
+  return QuestionPaginator;
 
 })(Backbone.View);
 

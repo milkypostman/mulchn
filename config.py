@@ -13,6 +13,6 @@ TWITTER_ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
 TWITTER_CONSUMER_KEY = 'vpYayPLKb1jeTb90KO14pQ'
 TWITTER_CONSUMER_SECRET = 'hnJRDSzY1JGCdfmvUxoaEsjdTw8vLDOasAuQkZi1J4'
 
-
+PAGINATION_NUM = 256
 
 

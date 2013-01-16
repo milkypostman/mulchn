@@ -24,11 +24,11 @@ from urlparse import urlsplit
 import db
 import flask
 import logging
+import math
 import oauth2 as oauth
 import os, os.path
 import sqlalchemy as sa
 import subprocess
-import time
 import time
 import twitter
 import urllib
@@ -41,6 +41,8 @@ app = Flask(__name__)
 app.config.from_object('config')
 app.config.from_envvar('MULCHN_CONFIG', silent=True)
 app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
+
+PAGINATION_NUM=app.config.get("PAGINATION_NUM", 5)
 
 log = create_logger("mulchn")
 
@@ -66,6 +68,7 @@ js_app = Bundle('js/add.coffee',
                 'js/question/collection.coffee',
                 'js/question/view.coffee',
                 'js/question/list.coffee',
+                'js/question/paginator.coffee',
                 'js/main.coffee',
                 filters='coffeescript,rjsmin',
                 output='js/m.js')
@@ -371,7 +374,17 @@ def question_id_dict(question_id):
 
     return question_dict(q, votes)
 
-def questions_dict(questions=None):
+def questions_query(limit, offset):
+    log.debug("active+public questions lookup")
+    questions = Question.query.filter_by(active=True, private=False) \
+        .order_by(sa.sql.expression.desc(Question.added))
+    question_count = questions.count()
+    questions = questions.limit(limit).offset(offset)
+
+    return question_count, questions
+
+
+def questions_dict(questions):
     # logged in account gets their votes
     votes = {}
     if hasattr(g, 'account'):
@@ -380,20 +393,19 @@ def questions_dict(questions=None):
         votes = {v.answer.question_id:v.answer.id for v in g.account.votes}
 
 
-    if questions is None:
-        log.debug("active+public questions lookup")
-        questions = Question.query.filter_by(active=True, private=False) \
-            .order_by(sa.sql.expression.desc(Question.added))
-
     return [question_dict(q, votes) for q in questions]
 
+def tag_questions_query(tag_name, limit, offset):
+    questions = Question.query.join((Question.tags, Tag)) \
+        .filter(Tag.name==tag_name,
+                Question.active==True,
+                Question.private==False) \
+                .order_by(sa.sql.expression.desc(Question.added))
+    question_count = questions.count()
+    questions = questions.limit(limit).offset(offset)
 
-def tag_questions_dict(tag_name):
-    return questions_dict(Question.query.join((Question.tags, Tag)) \
-                 .filter(Tag.name==tag_name,
-                         Question.active==True,
-                         Question.private==False) \
-                 .order_by(sa.sql.expression.desc(Question.added)))
+    return question_count, questions
+
 
 
 
@@ -492,7 +504,7 @@ def v1_question(question_id):
             question.removed = datetime.now()
             db.session.add(question)
         else:
-            access_denied()
+            return access_denied()
 
     elif request.method == 'GET':
         votes = {}
@@ -515,16 +527,25 @@ def v1_question(question_id):
 
 @app.route("/v1/questions")
 def v1_questions():
-    return render_json(questions_dict())
+    # FIXME: pagination
+    page = int(request.args.get('page', '1'))
+
+    c, q = questions_query(PAGINATION_NUM, (page-1)*PAGINATION_NUM)
+    return render_json({'questions':questions_dict(q),
+                        'numPages': int(math.ceil(c/float(PAGINATION_NUM)))})
 
 @app.route("/v1/tag/<tag_name>")
 def v1_tag(tag_name):
-    q = tag_questions_dict(tag_name)
+    # FIXME: pagination
 
+    page = int(request.args.get('page', '1'))
+
+    c, q = tag_questions_query(tag_name, PAGINATION_NUM, (page-1)*PAGINATION_NUM)
     if not q:
         return page_not_found("tag {0} has no questions".format(tag_name))
 
-    return render_json(q)
+    return render_json({'questions':questions_dict(q),
+                        'numPages': int(math.ceil(c/float(PAGINATION_NUM)))})
 
 
 
@@ -543,20 +564,38 @@ def logout():
 
 ### Pages
 
-@app.route("/")
-def questions():
-    return render("questions.html", data=jsonify(questions_dict()))
+@app.route("/", defaults={'page':1})
+@app.route("/<int:page>")
+def questions(page):
+    log.debug("Page: %d", page)
 
-@app.route("/t/<tag_name>")
-def tag(tag_name):
+    if page < 1: abort(404)
 
-    q = tag_questions_dict(tag_name)
+    c, q = questions_query(limit=PAGINATION_NUM, offset=(page-1)*PAGINATION_NUM)
 
-    if not q:
-        abort(404)
+    pages = int(math.ceil(c/float(PAGINATION_NUM)))
 
-    return render("questions.html", data=jsonify(q))
+    return render("questions.html",
+                  data=jsonify({'questions':questions_dict(q),
+                                'nextPage': page+1 if page < pages else None,
+                                'prevPage': page-1 if page > 1 else None,
+                                'numPages': pages}))
 
+@app.route("/t/<tag_name>", defaults={'page':1})
+@app.route("/t/<tag_name>/<int:page>")
+def tag(tag_name, page):
+
+    c, q = tag_questions_query(tag_name, PAGINATION_NUM, PAGINATION_NUM*(page-1))
+
+    if not q: abort(404)
+
+    pages = int(math.ceil(c/float(PAGINATION_NUM)))
+
+    return render("questions.html",
+                  data=jsonify({'questions':questions_dict(q),
+                                'nextPage': page+1 if page < pages else None,
+                                'prevPage': page-1 if page > 1 else None,
+                                'numPages': pages}))
 
 
 @app.route("/add", methods=['GET', 'PUT', 'POST'])
