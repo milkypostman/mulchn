@@ -36,14 +36,22 @@ class Router extends Backbone.Router
 
   tag: (tag_name) ->
     console.log("tag: #{tag_name}")
+
+    if not page
+      page = 1
+    else
+      page = parseInt(page)
+
     tagCollection = new QuestionCollection()
     tagCollection.url="/v1/tag/#{tag_name}"
 
     questionList = new QuestionList({collection: tagCollection})
-    $("#content").append(questionList.el)
+    tagCollection.page = page
+    $("#content").html(questionList.el)
+
 
     if $("#json_data").html()
-      tagCollection.reset($.parseJSON($("#json_data").html()))
+      tagCollection.reset(tagCollection.parse($.parseJSON($("#json_data").html())))
     else
       tagCollection.fetch()
 
