@@ -14,7 +14,6 @@ class QuestionCollection extends Backbone.Collection
     else
       "v1/questions"
       
-    
 
   info: => {
     'page': @page
@@ -26,7 +25,7 @@ class QuestionCollection extends Backbone.Collection
   
   parse: (response) =>
     @totalPages = response.numPages
-    return response.questions
+    response.questions
 
   updateOrAdd: (collection, response) =>
     _.each(response, (ele) ->
