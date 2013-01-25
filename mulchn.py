@@ -96,6 +96,18 @@ assets.register('js_d3', js_d3)
 
 ### Forms
 
+def TagLength(max=32, message=None):
+    if message is None:
+        message = "Tag cannot exceed %i characters." % (max)
+
+    def tag_length(form, field):
+        if any(len(val) > max for val in field.data):
+            raise wtf.ValidationError(message)
+
+
+    return tag_length
+
+
 class TagListField(wtf.Field):
     """ parse a tag list field """
     widget = wtf.TextInput()
@@ -114,9 +126,12 @@ strip_filter = lambda s: s.strip() if s else None
 
 class AddForm(wtf.Form):
     """Add Question Form"""
-    tags = TagListField("Tags (comma separated: music, beatles, ...)", validators=[wtf.InputRequired()])
+    tags = TagListField("Tags (comma separated: music, beatles, ...)",
+                        validators=[wtf.InputRequired(), TagLength(max=32)])
+
     question = wtf.StringField("Question",
-                               validators=[wtf.DataRequired(), wtf.Length(max=128)],
+                               validators=[wtf.DataRequired(),
+                                           wtf.Length(max=128)],
                                filters=[strip_filter])
     answers = wtf.FieldList(wtf.TextField("Answer",
                                           validators=[wtf.DataRequired(),
