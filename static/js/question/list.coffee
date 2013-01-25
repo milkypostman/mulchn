@@ -5,7 +5,6 @@ class QuestionList extends Backbone.View
   
   events: {
     "click .question": "toggleQuestion"
-    "click .question a": "stopPropagation"
     }
 
   initialize: () =>

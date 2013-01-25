@@ -768,8 +768,7 @@ QuestionList = (function(_super) {
   };
 
   QuestionList.prototype.events = {
-    "click .question": "toggleQuestion",
-    "click .question a": "stopPropagation"
+    "click .question": "toggleQuestion"
   };
 
   QuestionList.prototype.initialize = function() {
