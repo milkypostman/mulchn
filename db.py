@@ -176,14 +176,20 @@ class Vote(Base):
         return vh
 
 
-question_tag = Table('question_tag', Base.metadata,
-                     Column('question_id', ForeignKey('question.id'), primary_key=True),
-                     Column('tag_id', ForeignKey('tag.id'), primary_key=True)
-                     )
+class QuestionTag(Base):
+    question_id =  Column(ForeignKey('question.id'), primary_key=True)
+    tag_id = Column(ForeignKey('tag.id'), primary_key=True)
 
 class Tag(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(128))
+
+    # when we search from tags, we only want questions that are public and active
+    questions = relationship("Question", secondary="question_tag",
+                        secondaryjoin="and_(Question.id==QuestionTag.question_id, "
+                             "Question.private==False,"
+                             "Question.active==True)",
+                        back_populates="tags")
 
     def __init__(self, name=None):
         """
@@ -213,8 +219,10 @@ class Question(Base):
     text = Column(String(128))
     answers = relationship("Answer", lazy="joined", order_by="Answer.id",
                            backref=backref("question"))
-    tags = relationship("Tag", secondary=question_tag, lazy="joined",
-                        backref="questions")
+
+    tags = relationship("Tag", secondary="question_tag", lazy="joined",
+                        back_populates="questions")
+
     owner_id = Column(ForeignKey('account.id'))
     owner = relationship("Account", backref="questions")
     private = Column(Boolean())
