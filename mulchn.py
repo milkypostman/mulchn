@@ -300,7 +300,8 @@ def clean_old_votes(questionId):
         Answer.question_id==questionId).first()
 
     if old_vote is not None:
-        log.info("remove old vote: answer.id=%s, question.id=%s, account.id=%s", old_vote.answer_id, questionId, g.account.id)
+        log.info("remove old vote: answer.id=%s, question.id=%s, account.id=%s",
+                 old_vote.answer_id, questionId, g.account.id)
         db.session.add(old_vote.create_history())
         db.session.delete(old_vote)
 
@@ -411,6 +412,13 @@ def questions_dict(questions):
     return [question_dict(q, votes) for q in questions]
 
 def tag_questions_query(tag_name, limit, offset):
+    '''get the question count and corresponding query object
+
+    :param integer limit: query limit
+    :param integer offset: query offset
+    :return tuple: (query count, query limited to specified limit and offset)
+    '''
+
     questions = Question.query.join((Question.tags, Tag)) \
         .filter(Tag.name==tag_name,
                 Question.active==True,
@@ -427,8 +435,7 @@ def tag_questions_query(tag_name, limit, offset):
 ### Decorators
 
 def login_required(f):
-    """
-    decorator to check for valid login
+    """ decorator to check for valid login
 
     automatically redirects back to the current function after login
     """
