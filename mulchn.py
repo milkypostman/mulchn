@@ -296,11 +296,14 @@ def errors_dict(fields):
     return errors
 
 def clean_old_votes(questionId):
-    """
-    Clean up extra votes on the question `questionId` for the current account.
+    """Clean up extra votes on the question `questionId` for the
+    current account.
 
-    Arguments:
-    - `questionId`: QuestionId to clean up.
+    The current user is assumed to be the vote. Has to be.
+
+    :param questionId: QuestionId to clean up.
+
+    :return: True if there are old votes, False otherwise.
     """
 
     old_vote = Vote.query.join(Answer).filter(
@@ -318,11 +321,9 @@ def clean_old_votes(questionId):
 
 
 def question_vote_locations(question):
-    """
-    Creates the geojson necessary for rendering.
+    """Creates the geojson necessary for rendering.
 
-    Arguments:
-    - `question`: question to generate this data for.
+    :param question: question to generate this data for.
     """
 
     locations = []
@@ -663,7 +664,7 @@ def question_add():
         formdata = request.form.copy()
         formdata.update(request.files)
 
-        # cleanup answer fields if people were sloppy
+        # cleanup_answer fields if people were sloppy
         # FIXME: will not work with double digits
         answer_fields = sorted(f for f in formdata.iteritems() if f[0].startswith("answers"))
         answer_keys = [f[0] for f in answer_fields]
