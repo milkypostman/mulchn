@@ -35,8 +35,8 @@
                 {% endif %}
                 <div class="nav-collapse collapse">
                   <ul class="nav">
-                    <li {% if request.path.startswith(url_for('question_add')) %}class="active"{% endif %}><a href="{{ url_for('question_add') }}">{# <i class="icon icon-add"></i> #}add</a></li>
-                    <li {% if request.path.startswith(url_for('new')) %}class="active"{% endif %}><a href="{{url_for('new')}}">new</a></li>
+                    <li {% if request.path.startswith(url_for('new')) %}class="active"{% endif %}><a href="{{url_for('new')}}">newest</a></li>
+                    <li {% if request.path.startswith(url_for('question_add')) %}class="active"{% endif %}><a href="{{ url_for('question_add') }}">add</a></li>
                     <li class="nav-small-screen {% if request.path.startswith(url_for('tag')) %}active{% endif %}"><a href="{{url_for('tag')}}">tags</a></li>
                   </ul>
                   <ul class="nav pull-right">
