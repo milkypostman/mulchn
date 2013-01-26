@@ -401,19 +401,6 @@ def question_id_dict(question_id):
 
     return question_dict(q, votes)
 
-def questions_query(limit, offset, order_by=None):
-    log.debug("active+public questions lookup")
-    if order_by is None:
-        order_by = sa.sql.expression.desc(Question.modified)
-
-    questions = Question.query.filter_by(active=True, private=False) \
-        .order_by(order_by)
-
-    question_count = questions.count()
-    questions = questions.limit(limit).offset(offset)
-
-    return question_count, questions
-
 
 def questions_dict(questions):
     # logged in account gets their votes
@@ -425,28 +412,6 @@ def questions_dict(questions):
 
 
     return [question_dict(q, votes) for q in questions]
-
-
-def tag_questions_query(tag_name, limit, offset, order_by=None):
-    '''get the question count and corresponding query object
-
-    :param integer limit: query limit
-    :param integer offset: query offset
-    :return tuple: (query count, query limited to specified limit and offset)
-    '''
-    if order_by is None:
-        order_by = sa.sql.expression.desc(Question.modified)
-
-    questions = Question.query.join((Question.tags, Tag)) \
-        .filter(Tag.name==tag_name,
-                Question.active==True,
-                Question.private==False) \
-                .order_by(order_by)
-
-    question_count = questions.count()
-    questions = questions.limit(limit).offset(offset)
-
-    return question_count, questions
 
 
 def tag_rank_query():
@@ -554,12 +519,18 @@ def logout():
 @app.route("/new", defaults={'page':1})
 @app.route("/new/<int:page>")
 def new(page):
-    log.debug("Page: %d", page)
+    log.debug("new questions page: %d", page)
 
     if page < 1: abort(404)
 
-    c, q = questions_query(limit=PAGINATION_NUM, offset=(page-1)*PAGINATION_NUM,
-                           order_by = sa.sql.expression.desc(Question.added))
+    questions = Question.query.filter_by(active=True, private=False) \
+        .order_by(sa.sql.expression.desc(Question.added))
+
+    c = questions.count()
+
+    limit=PAGINATION_NUM
+    offset=(page-1)*PAGINATION_NUM
+    q = questions.limit(limit).offset(offset)
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
 
@@ -576,14 +547,21 @@ def new(page):
 @app.route("/", defaults={'page':1})
 @app.route("/<int:page>")
 def questions(page):
-    log.debug("Page: %d", page)
+    log.debug("questions page: %d", page)
 
     if page < 1: abort(404)
 
-    c, q = questions_query(limit=PAGINATION_NUM, offset=(page-1)*PAGINATION_NUM,
-                           order_by = sa.sql.expression.desc(Question.modified))
+    questions = Question.query.filter_by(active=True, private=False) \
+        .order_by(sa.sql.expression.desc(Question.modified))
+
+    c = questions.count()
+
+    limit=PAGINATION_NUM
+    offset=(page-1)*PAGINATION_NUM
+    q = questions.limit(limit).offset(offset)
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
+
     payload = {'questions':questions_dict(q),
                'nextPage': page+1 if page < pages else None,
                'prevPage': page-1 if page > 1 else None,
@@ -605,7 +583,16 @@ def tag(tag_name, page):
                       taglist=[(tag.name, count)
                                for tag, count in tag_rank_query()])
 
-    c, q = tag_questions_query(tag_name, PAGINATION_NUM, PAGINATION_NUM*(page-1))
+    questions = Question.query.join((Question.tags, Tag)) \
+        .filter(Tag.name==tag_name,
+                Question.active==True,
+                Question.private==False) \
+                .order_by(sa.sql.expression.desc(Question.added))
+
+    c = questions.count()
+    limit=PAGINATION_NUM
+    offset=(page-1)*PAGINATION_NUM
+    q = questions.limit(limit).offset(offset)
 
     if not q: abort(404)
 
