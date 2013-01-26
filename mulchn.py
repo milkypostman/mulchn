@@ -510,7 +510,7 @@ def login():
 @app.route("/logout")
 def logout():
     if session.pop('account_id', None) is not None and hasattr(g, 'account'):
-        flash("{0} has been logged out.".format(g.account.username))
+        flash("{0} has been logged out.".format(g.account.username), 'warn')
     return redirect(url_for("questions"))
 
 
@@ -686,7 +686,7 @@ def question_add():
             question.modified = datetime.now()
             db.session.add(question)
 
-            flash("Added Question: {0}".format(question.text))
+            flash("Added Question: {0}".format(question.text), 'success')
             return redirect(url_for('question', question_id=question.id))
     else:
         form = AddForm()
@@ -793,7 +793,7 @@ def login_twitter_authenticated():
                                    "POST")
 
     if resp['status'] != '200':
-        flash("Failed to login!")
+        flash("Failed to login!", 'error')
         return redirect(url_for("questions"))
 
 
@@ -811,7 +811,7 @@ def login_twitter_authenticated():
     try:
         twitter_data = api.VerifyCredentials().AsDict()
     except twitter.TwitterError:
-        flash("Cannot validate Twitter credentials.")
+        flash("Cannot validate Twitter credentials.", 'error')
         return redirect(url_for("questions"))
 
 
@@ -866,13 +866,13 @@ def login_twitter_authenticated():
 
     log.info("commiting twitter login info: account.id=%s", account.id)
     if not commit():
-        flash("Error while logging in.")
+        flash("Error while logging in.", 'error')
         return redirect(url_for("questions"))
 
 
     session['account_id'] = twaccount.account_id
 
-    flash("Logged in as {0}.".format(account.username))
+    flash("Logged in as {0}.".format(account.username), 'success')
     if 'url_after_login' in session:
         return redirect(url_for(session.pop('url_after_login')))
 

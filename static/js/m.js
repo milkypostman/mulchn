@@ -962,8 +962,9 @@ QuestionPaginator = (function(_super) {
 
 $(window).ready(function() {
   console.log("main");
+  $('.messages').slideDown();
   window.setTimeout(function() {
-    return $('.alert').slideUp('fast', function() {
+    return $('.messages').slideUp(function() {
       return $(this).remove();
     });
   }, 3000);

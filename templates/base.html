@@ -64,14 +64,16 @@
             </div>
           </div>
         {% endblock navbar %}
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=True) %}
           {% if messages %}
-            {% for message in messages %}
-              <div class="alert alert-info">
-                <button type="button" class="close" data-dismiss="alert">x</button>
-                {{ message }}
-              </div>
-            {% endfor %}
+            <div class="messages container">
+              {% for category, message in messages %}
+                <div class="alert alert-{{category}}">
+                  <button type="button" class="close" data-dismiss="alert">x</button>
+                  {{message}}
+                </div>
+              {% endfor %}
+            </div>
           {% endif %}
         {% endwith %}
         {% block main %}

@@ -1,7 +1,8 @@
 $(window).ready( ->
   console.log("main")
+  $('.messages').slideDown()
   window.setTimeout(
-    -> $('.alert').slideUp('fast', -> $(this).remove())
+    -> $('.messages').slideUp(-> $(this).remove())
     3000)
   
   window.geoLocation = GeoLocation.getInstance()
