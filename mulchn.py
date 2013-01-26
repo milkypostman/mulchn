@@ -708,7 +708,7 @@ def question(question_id):
     if q is None:
         abort(404)
 
-    return render("questions.html", data=jsonify(q))
+    return render_taglist("questions.html", data=jsonify(q))
 
 
 
