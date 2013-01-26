@@ -3,13 +3,13 @@ class Router extends Backbone.Router
     "q/:question_id": "question"
     "t/:tag_name": "tag"
     "add": "add"
-    ":page": "root"
-    "": "root"
+    "new/:page": "questions"
+    "new": "questions"
+    ":page": "questions"
+    "": "questions"
   }
 
-  root: (page) ->
-
-    console.log("root")
+  questions: (page) ->
 
     # if page is present but not an integer, ignore this page
     if page and not parseInt(page)
@@ -19,6 +19,8 @@ class Router extends Backbone.Router
       page = 1
     else
       page = parseInt(page)
+
+    console.log("questions:#{page}")
 
     questionCollection = new QuestionCollection()
     questionList = new QuestionList({collection:questionCollection})

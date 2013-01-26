@@ -401,10 +401,14 @@ def question_id_dict(question_id):
 
     return question_dict(q, votes)
 
-def questions_query(limit, offset):
+def questions_query(limit, offset, order_by=None):
     log.debug("active+public questions lookup")
+    if order_by is None:
+        order_by = sa.sql.expression.desc(Question.modified)
+
     questions = Question.query.filter_by(active=True, private=False) \
-        .order_by(sa.sql.expression.desc(Question.modified))
+        .order_by(order_by)
+
     question_count = questions.count()
     questions = questions.limit(limit).offset(offset)
 
@@ -422,19 +426,23 @@ def questions_dict(questions):
 
     return [question_dict(q, votes) for q in questions]
 
-def tag_questions_query(tag_name, limit, offset):
+
+def tag_questions_query(tag_name, limit, offset, order_by=None):
     '''get the question count and corresponding query object
 
     :param integer limit: query limit
     :param integer offset: query offset
     :return tuple: (query count, query limited to specified limit and offset)
     '''
+    if order_by is None:
+        order_by = sa.sql.expression.desc(Question.modified)
 
     questions = Question.query.join((Question.tags, Tag)) \
         .filter(Tag.name==tag_name,
                 Question.active==True,
                 Question.private==False) \
-                .order_by(sa.sql.expression.desc(Question.added))
+                .order_by(order_by)
+
     question_count = questions.count()
     questions = questions.limit(limit).offset(offset)
 
@@ -544,6 +552,24 @@ def logout():
 
 ### Pages
 
+@app.route("/new", defaults={'page':1})
+@app.route("/new/<int:page>")
+def new(page):
+    log.debug("Page: %d", page)
+
+    if page < 1: abort(404)
+
+    c, q = questions_query(limit=PAGINATION_NUM, offset=(page-1)*PAGINATION_NUM,
+                           order_by = sa.sql.expression.desc(Question.added))
+
+    pages = int(math.ceil(c/float(PAGINATION_NUM)))
+
+    return render_taglist("questions.html",
+                  data=jsonify({'questions':questions_dict(q),
+                                'nextPage': page+1 if page < pages else None,
+                                'prevPage': page-1 if page > 1 else None,
+                                'numPages': pages}))
+
 @app.route("/", defaults={'page':1})
 @app.route("/<int:page>")
 def questions(page):
@@ -551,7 +577,8 @@ def questions(page):
 
     if page < 1: abort(404)
 
-    c, q = questions_query(limit=PAGINATION_NUM, offset=(page-1)*PAGINATION_NUM)
+    c, q = questions_query(limit=PAGINATION_NUM, offset=(page-1)*PAGINATION_NUM,
+                           order_by = sa.sql.expression.desc(Question.modified))
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
 
@@ -640,6 +667,20 @@ def question(question_id):
     Arguments:
     - `question_id`: QuestionId to return data on.
     """
+    if request.method == 'DELETE':
+        log.info("question lookup: id=%s", question_id)
+        question = Question.query.filter_by(id=question_id).first()
+        if not question:
+            abort(404)
+        elif question.owner_id == g.account.id or g.account.admin:
+            log.info("removing question %s", question.id)
+            question.active = False
+            question.removed = datetime.now()
+            db.session.add(question)
+            return render_json({'response': 'OK'})
+        else:
+            return access_denied()
+
 
     q = question_id_dict(question_id)
     if q is None:
@@ -689,20 +730,6 @@ def commit():
     True on success
     False on error
     """
-    if request.method == 'DELETE':
-        log.info("question lookup: id=%s", question_id)
-        question = Question.query.filter_by(id=question_id).first()
-        if not question:
-            abort(404)
-        elif question.owner_id == g.account.id or g.account.admin:
-            log.info("removing question %s", question.id)
-            question.active = False
-            question.removed = datetime.now()
-            db.session.add(question)
-            return render_json({'response': 'OK'})
-        else:
-            return access_denied()
-
 
     try:
         db.session.commit()
