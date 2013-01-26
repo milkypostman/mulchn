@@ -544,6 +544,41 @@ def new(page):
 
     return render_taglist("questions.html", data=jsonify(payload))
 
+@app.route("/u/<string:username>/unanswered", defaults={'page':1})
+@app.route("/u/<string:username>/unanswered/<int:page>")
+def user_unanswered(username, page):
+    log.debug("%s unanswered page: %d", username, page)
+
+    if page < 1: abort(404)
+
+    answered = db.session.query(Question.id) \
+        .join(Answer, Vote, Account) \
+        .filter(Account.username == username)
+
+    if not answered: abort(404)
+
+    questions = Question.query.filter_by(active=True, private=False) \
+        .filter(sa.func.not_(Question.id.in_(answered))) \
+        .order_by(sa.sql.expression.desc(Question.modified))
+
+    c = questions.count()
+
+    limit=PAGINATION_NUM
+    offset=(page-1)*PAGINATION_NUM
+    q = questions.limit(limit).offset(offset)
+
+    pages = int(math.ceil(c/float(PAGINATION_NUM)))
+
+    payload = {'questions':questions_dict(q),
+               'nextPage': page+1 if page < pages else None,
+               'prevPage': page-1 if page > 1 else None,
+               'numPages': pages}
+
+    if request.is_xhr:
+        return render_json(payload)
+
+    return render_taglist("questions.html", data=jsonify(payload))
+
 @app.route("/", defaults={'page':1})
 @app.route("/<int:page>")
 def questions(page):

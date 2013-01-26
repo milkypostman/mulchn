@@ -44,6 +44,9 @@
                   <ul class="nav">
                     <li {% if request.path.startswith(url_for('new')) %}class="active"{% endif %}><a href="{{url_for('new')}}">newest</a></li>
                     <li {% if request.path.startswith(url_for('question_add')) %}class="active"{% endif %}><a href="{{ url_for('question_add') }}">add</a></li>
+                    {% if account %}
+                      <li {% if request.path.startswith(url_for('user_unanswered', username=account.username)) %}class="active"{% endif %}><a href="{{ url_for('user_unanswered', username=account.username) }}">unanswered</a></li>
+                    {% endif %}
                     <li class="nav-small-screen {% if request.path.startswith(url_for('tag')) %}active{% endif %}"><a href="{{url_for('tag')}}">tags</a></li>
                   </ul>
                   <ul class="nav pull-right">

@@ -3,6 +3,8 @@ class Router extends Backbone.Router
     "q/:question_id": "question"
     "t/:tag_name": "tag"
     "t/:tag_name/:page": "tag"
+    "u/:username/unanswered": "user_unanswered"
+    "u/:username/unanswered/:page": "user_unanswered"
     "add": "add"
     "new/:page": "new"
     "new": "new"
@@ -35,6 +37,16 @@ class Router extends Backbone.Router
       questionCollection.fetch()
 
 
+  user_unanswered: (username, page) ->
+    document.title = "#{username} unanswered : Mulchn"
+
+    # if page is present but not an integer, ignore this page
+    if page and not parseInt(page)
+      return
+
+    @questionsList(page, "/u/#{username}/unanswered")  
+
+  
   questions: (page) ->
     document.title = "questions feed : Mulchn"
 
