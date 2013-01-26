@@ -233,6 +233,14 @@ def render_json(data):
                               mimetype="application/json")
 
 
+def render_taglist(template, **kwargs):
+    if 'taglist' not in kwargs:
+        kwargs['taglist'] = [(tag.name, count) \
+                               for tag, count in tag_rank_query()]
+
+    return render_template(template, **kwargs)
+
+
 def render(template, **kwargs):
     """
     Customizable render function.
@@ -430,6 +438,16 @@ def tag_questions_query(tag_name, limit, offset):
     return question_count, questions
 
 
+def tag_rank_query():
+    '''return list of tags and corresponding number of questions
+
+    :return: list of tuples of (tag, count)
+    '''
+    tags = Tag.query.add_column(sa.func.count(Question.id).label('count')) \
+        .join(Tag.questions).group_by(Tag.id).order_by('count desc')
+
+    return tags
+
 
 
 ### Decorators
@@ -597,15 +615,21 @@ def questions(page):
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
 
-    return render("questions.html",
+    return render_taglist("questions.html",
                   data=jsonify({'questions':questions_dict(q),
                                 'nextPage': page+1 if page < pages else None,
                                 'prevPage': page-1 if page > 1 else None,
                                 'numPages': pages}))
 
+@app.route("/t", defaults={'tag_name':None, 'page':1})
 @app.route("/t/<tag_name>", defaults={'page':1})
 @app.route("/t/<tag_name>/<int:page>")
 def tag(tag_name, page):
+    if tag_name is None:
+        return render("tags.html",
+                      navname="tags",
+                      taglist=[(tag.name, count)
+                               for tag, count in tag_rank_query()])
 
     c, q = tag_questions_query(tag_name, PAGINATION_NUM, PAGINATION_NUM*(page-1))
 
@@ -613,7 +637,7 @@ def tag(tag_name, page):
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
 
-    return render("questions.html",
+    return render_taglist("questions.html",
                   data=jsonify({'questions':questions_dict(q),
                                 'nextPage': page+1 if page < pages else None,
                                 'prevPage': page-1 if page > 1 else None,

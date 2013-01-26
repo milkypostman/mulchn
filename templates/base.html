@@ -22,18 +22,31 @@
           <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
               <div class="container">
+                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                  <span class="icon-bar"></span> 
+                  <span class="icon-bar"></span> 
+                  <span class="icon-bar"></span> 
+                </button>
                 <a class="brand" href="/">Mulchn</a>
-                <ul class="nav">
-                  <li><a class="" href="{{ url_for('question_add') }}"><i class="icon icon-add"></i></a></li>
-                </ul>
-                <ul class="nav pull-right">
-                  {% if account %}
-                    <li><a href="">{{ account.username }}</a></li>
-                    <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
-                  {% else %}
-                    <li class="login"><a class="" href="{{ url_for('login_twitter') }}">login with twitter</a></li>
-                  {% endif %}
-                </ul>
+                {% if not account %}
+                  <ul class="nav-medium-screen nav pull-right"><li>
+                      <a class="" href="{{ url_for('login_twitter') }}">login with twitter</a>
+                  </li></ul>
+                {% endif %}
+                <div class="nav-collapse collapse">
+                  <ul class="nav">
+                    <li {% if request.path.startswith(url_for('question_add')) %}class="active"{% endif %}><a href="{{ url_for('question_add') }}">{# <i class="icon icon-add"></i> #}add</a></li>
+                    <li class="nav-small-screen {% if request.path.startswith(url_for('tag')) %}active{% endif %}"><a href="{{url_for('tag')}}">tags</a></li>
+                  </ul>
+                  <ul class="nav pull-right">
+                    {% if account %}
+                      <li><a href="">{{ account.username }}</a></li>
+                      <li><a class="" href="{{ url_for('logout') }}">logout</a></li>
+                    {% else %}
+                      <li class="login"><a class="" href="{{ url_for('login_twitter') }}">login with twitter</a></li>
+                    {% endif %}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -48,21 +61,20 @@
             {% endfor %}
           {% endif %}
         {% endwith %}
-        <div class="row-fluid">
-          <div class="span12">
-            <div id="content">
-              {% block content %}
-              {% endblock %}
+        {% block main %}
+          <div class="row-fluid">
+            <div class="span12">
+              <div id="content">
+                {% block content %}
+                {% endblock %}
+              </div>
             </div>
           </div>
-        </div>
+        {% endblock main %}
       {% endblock container %}
     </div>
     {% block js %}
       {% assets "js_frameworks" %}
-        <script type="text/javascript" src="{{ ASSET_URL }}"></script>
-      {% endassets %}
-      {% assets "js_app" %}
         <script type="text/javascript" src="{{ ASSET_URL }}"></script>
       {% endassets %}
       <script type="text/javascript">
@@ -71,9 +83,9 @@
         _gaq.push(['_trackPageview']);
 
         (function() {
-          var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-          ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-          var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
       </script>
     {% endblock js %}

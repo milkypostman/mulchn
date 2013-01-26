@@ -265,16 +265,22 @@ Router = (function(_super) {
   };
 
   Router.prototype.tag = function(tag_name) {
-    var questionList, tagCollection;
+    var page, questionList, tagCollection;
     console.log("tag: " + tag_name);
+    if (!page) {
+      page = 1;
+    } else {
+      page = parseInt(page);
+    }
     tagCollection = new QuestionCollection();
     tagCollection.url = "/v1/tag/" + tag_name;
     questionList = new QuestionList({
       collection: tagCollection
     });
-    $("#content").append(questionList.el);
+    tagCollection.page = page;
+    $("#content").html(questionList.el);
     if ($("#json_data").html()) {
-      return tagCollection.reset($.parseJSON($("#json_data").html()));
+      return tagCollection.reset(tagCollection.parse($.parseJSON($("#json_data").html())));
     } else {
       return tagCollection.fetch();
     }

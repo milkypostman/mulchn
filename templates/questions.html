@@ -1,8 +1,6 @@
-{% extends "base.html" %}
+{% extends "taglist.html" %}
 {% block title %}feed{% endblock %}
-{% block pager %}
-  
-{% endblock pager %}
+
 {% block content %}
   {{ super() }}
   <script type="text/html" id="paginator-template">
@@ -127,6 +125,9 @@
 
 {% block js %}
   {{ super() }}
+  {% assets "js_app" %}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+  {% endassets %}
   {% assets "js_d3" %}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
   {% endassets %}

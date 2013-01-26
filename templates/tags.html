@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}feed{% endblock %}
+
+{% block content %}
+  {{ super() }}
+  <div id="tagcontent">
+    <ul id="taglist">
+      <li class="nav-header">tags</li>
+      {% for tag, count in taglist %}
+        <li><a href="/t/{{ tag }}">{{tag}}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endblock content %}
+
