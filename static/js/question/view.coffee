@@ -50,7 +50,7 @@ class QuestionView extends Backbone.View
 
     @model.save({vote: answer, position:window.geoLocation.position}, {
       wait: true
-      url: "/v1/question/vote"
+      url: "/vote"
       complete: =>
           $("##{answer}").removeClass("working")
       error: (model, response) =>

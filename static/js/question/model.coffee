@@ -2,7 +2,7 @@ class QuestionModel extends Backbone.Model
   # idAttribute: "_id"
 
   url: ->
-    "/v1/question/#{@id}"
+    "/q/#{@id}"
 
   votes: ->
     _.reduce(@get('answers')

@@ -477,9 +477,9 @@ def login_required(f):
 
 ### API Functions
 
-@app.route("/v1/question/vote", methods=['POST','PUT'])
+@app.route("/vote", methods=['POST','PUT'])
 @login_required
-def v1_vote():
+def vote():
     """
     Vote on a question.
 
@@ -526,70 +526,6 @@ def v1_vote():
 
     log.debug("returning vote info: %s", ret)
     return render_json(ret)
-
-
-@app.route("/v1/question/<question_id>", methods=['GET','DELETE'])
-@login_required
-def v1_question(question_id):
-    """
-    CRUD method for single question.
-
-    **Currently only supports the DELETE option.**
-    """
-
-    if request.method == 'DELETE':
-        log.info("question lookup: id=%s", question_id)
-        question = Question.query.filter_by(id=question_id).first()
-        if not question:
-            abort(404)
-        elif question.owner_id == g.account.id or g.account.admin:
-            log.info("removing question %s", question.id)
-            question.active = False
-            question.removed = datetime.now()
-            db.session.add(question)
-        else:
-            return access_denied()
-
-    elif request.method == 'GET':
-        votes = {}
-        if hasattr(g, 'account'):
-            log.debug("v1_question: account votes lookup")
-            ## FIXME: optimize to only look for votes on the current question
-            votes = {v.answer.question_id:v.answer.id for v in g.account.votes}
-
-        q = question_id_dict(question_id)
-        if not q:
-            return page_not_found("question #{0} does not exist.".format(question_id))
-
-        return render_json(q)
-
-    else:
-        abort(404)
-
-    return render_json({'response': 'OK'})
-
-
-@app.route("/v1/questions")
-def v1_questions():
-    # FIXME: pagination
-    page = int(request.args.get('page', '1'))
-
-    c, q = questions_query(PAGINATION_NUM, (page-1)*PAGINATION_NUM)
-    return render_json({'questions':questions_dict(q),
-                        'numPages': int(math.ceil(c/float(PAGINATION_NUM)))})
-
-@app.route("/v1/tag/<tag_name>")
-def v1_tag(tag_name):
-    # FIXME: pagination
-
-    page = int(request.args.get('page', '1'))
-
-    c, q = tag_questions_query(tag_name, PAGINATION_NUM, (page-1)*PAGINATION_NUM)
-    if not q:
-        return page_not_found("tag {0} has no questions".format(tag_name))
-
-    return render_json({'questions':questions_dict(q),
-                        'numPages': int(math.ceil(c/float(PAGINATION_NUM)))})
 
 
 
@@ -696,7 +632,7 @@ def question_add():
     return render("add.html", form=form)
 
 
-@app.route("/q/<question_id>", methods=['GET'])
+@app.route("/q/<question_id>", methods=['GET', 'DELETE'])
 def question(question_id):
     """
     Fetch question with specified `question_id`.
@@ -753,6 +689,20 @@ def commit():
     True on success
     False on error
     """
+    if request.method == 'DELETE':
+        log.info("question lookup: id=%s", question_id)
+        question = Question.query.filter_by(id=question_id).first()
+        if not question:
+            abort(404)
+        elif question.owner_id == g.account.id or g.account.admin:
+            log.info("removing question %s", question.id)
+            question.active = False
+            question.removed = datetime.now()
+            db.session.add(question)
+            return render_json({'response': 'OK'})
+        else:
+            return access_denied()
+
 
     try:
         db.session.commit()
