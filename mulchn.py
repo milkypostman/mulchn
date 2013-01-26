@@ -312,6 +312,8 @@ def clean_old_votes(questionId):
                  old_vote.answer_id, questionId, g.account.id)
         db.session.add(old_vote.create_history())
         db.session.delete(old_vote)
+        return True
+    return False
 
 
 
@@ -401,7 +403,7 @@ def question_id_dict(question_id):
 def questions_query(limit, offset):
     log.debug("active+public questions lookup")
     questions = Question.query.filter_by(active=True, private=False) \
-        .order_by(sa.sql.expression.desc(Question.added))
+        .order_by(sa.sql.expression.desc(Question.modified))
     question_count = questions.count()
     questions = questions.limit(limit).offset(offset)
 
@@ -498,7 +500,8 @@ def v1_vote():
         abort(404)
 
     log.debug("clean old votes")
-    clean_old_votes(question_id)
+    if not clean_old_votes(question_id):
+        answer.question.modified = datetime.now()
 
     log.info("new vote: user=%s, question=%s, answer=%s",
              g.account.id, question_id, answer.id)
@@ -682,6 +685,7 @@ def question_add():
             question.text = form['question'].data
             question.tag_list = form['tags'].data
             question.answer_list = form['answers'].data
+            question.modified = datetime.now()
             db.session.add(question)
 
             flash("Added Question: {0}".format(question.text))

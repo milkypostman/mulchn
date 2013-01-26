@@ -215,6 +215,7 @@ def _tag_find_or_create(tag_name):
 class Question(Base):
     id = Column(Integer, primary_key=True)
     added = Column(DateTime(), default=sa.sql.func.now())
+    modified = Column(DateTime())
     removed = Column(DateTime())
     text = Column(String(128))
     answers = relationship("Answer", lazy="joined", order_by="Answer.id",
