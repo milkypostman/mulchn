@@ -2,6 +2,7 @@ class Router extends Backbone.Router
   routes: {
     "q/:question_id": "question"
     "t/:tag_name": "tag"
+    "t/:tag_name/:page": "tag"
     "add": "add"
     "new/:page": "questions"
     "new": "questions"
@@ -31,7 +32,6 @@ class Router extends Backbone.Router
     $("#content").append(questionPaginator.el)
 
     if $("#json_data").html()
-
       questionCollection.reset(questionCollection.parse($.parseJSON($("#json_data").html())))
       $("#json_data").remove()
     else
@@ -39,7 +39,7 @@ class Router extends Backbone.Router
 
   
 
-  tag: (tag_name) ->
+  tag: (tag_name, page) ->
     console.log("tag: #{tag_name}")
 
     if not page
@@ -48,15 +48,18 @@ class Router extends Backbone.Router
       page = parseInt(page)
 
     tagCollection = new QuestionCollection()
-    tagCollection.url="/v1/tag/#{tag_name}"
+    tagCollection.base_url="/t/#{tag_name}"
 
     questionList = new QuestionList({collection: tagCollection})
+    questionPaginator = new QuestionPaginator({collection:tagCollection})
     tagCollection.page = page
-    $("#content").html(questionList.el)
 
+    $("#content").html(questionList.el)
+    $("#content").append(questionPaginator.el)
 
     if $("#json_data").html()
       tagCollection.reset(tagCollection.parse($.parseJSON($("#json_data").html())))
+      $("#json_data").remove()
     else
       tagCollection.fetch()
 

@@ -233,14 +233,16 @@ Router = (function(_super) {
   Router.prototype.routes = {
     "q/:question_id": "question",
     "t/:tag_name": "tag",
+    "t/:tag_name/:page": "tag",
     "add": "add",
-    ":page": "root",
-    "": "root"
+    "new/:page": "questions",
+    "new": "questions",
+    ":page": "questions",
+    "": "questions"
   };
 
-  Router.prototype.root = function(page) {
+  Router.prototype.questions = function(page) {
     var questionCollection, questionList, questionPaginator;
-    console.log("root");
     if (page && !parseInt(page)) {
       return;
     }
@@ -249,6 +251,7 @@ Router = (function(_super) {
     } else {
       page = parseInt(page);
     }
+    console.log("questions:" + page);
     questionCollection = new QuestionCollection();
     questionList = new QuestionList({
       collection: questionCollection
@@ -267,8 +270,8 @@ Router = (function(_super) {
     }
   };
 
-  Router.prototype.tag = function(tag_name) {
-    var page, questionList, tagCollection;
+  Router.prototype.tag = function(tag_name, page) {
+    var questionList, questionPaginator, tagCollection;
     console.log("tag: " + tag_name);
     if (!page) {
       page = 1;
@@ -276,14 +279,19 @@ Router = (function(_super) {
       page = parseInt(page);
     }
     tagCollection = new QuestionCollection();
-    tagCollection.url = "/v1/tag/" + tag_name;
+    tagCollection.base_url = "/t/" + tag_name;
     questionList = new QuestionList({
+      collection: tagCollection
+    });
+    questionPaginator = new QuestionPaginator({
       collection: tagCollection
     });
     tagCollection.page = page;
     $("#content").html(questionList.el);
+    $("#content").append(questionPaginator.el);
     if ($("#json_data").html()) {
-      return tagCollection.reset(tagCollection.parse($.parseJSON($("#json_data").html())));
+      tagCollection.reset(tagCollection.parse($.parseJSON($("#json_data").html())));
+      return $("#json_data").remove();
     } else {
       return tagCollection.fetch();
     }
@@ -366,7 +374,7 @@ QuestionModel = (function(_super) {
   }
 
   QuestionModel.prototype.url = function() {
-    return "/v1/question/" + this.id;
+    return "/q/" + this.id;
   };
 
   QuestionModel.prototype.votes = function() {
@@ -408,11 +416,15 @@ QuestionCollection = (function(_super) {
 
   QuestionCollection.prototype.dataType = 'jsonp';
 
-  QuestionCollection.prototype.url = function() {
-    if (this.page) {
-      return "v1/questions?page=" + this.page;
+  QuestionCollection.prototype.base_url = "";
+
+  QuestionCollection.prototype.url = function(page) {
+    if (page) {
+      return "" + this.base_url + "/" + page;
+    } else if (this.page) {
+      return "" + this.base_url + "/" + this.page;
     } else {
-      return "v1/questions";
+      return "" + this.base_url + "/";
     }
   };
 
@@ -539,7 +551,7 @@ QuestionView = (function(_super) {
       position: window.geoLocation.position
     }, {
       wait: true,
-      url: "/v1/question/vote",
+      url: "/vote",
       complete: function() {
         return $("#" + answer).removeClass("working");
       },
@@ -918,14 +930,15 @@ QuestionPaginator = (function(_super) {
 
   QuestionPaginator.prototype.nextPage = function(e) {
     e.preventDefault();
-    return window.app.navigate("/" + (this.collection.page + 1), {
+    console.log(this.collection.page + 1);
+    return window.app.navigate("" + (this.collection.url(this.collection.page + 1)), {
       trigger: true
     });
   };
 
   QuestionPaginator.prototype.prevPage = function(e) {
     e.preventDefault();
-    return window.app.navigate("/" + (this.collection.page - 1), {
+    return window.app.navigate("" + (this.collection.url(this.collection.page - 1)), {
       trigger: true
     });
   };

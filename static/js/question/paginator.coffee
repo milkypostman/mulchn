@@ -11,11 +11,12 @@ class QuestionPaginator extends Backbone.View
 
   nextPage: (e) =>
     e.preventDefault()
-    window.app.navigate("/#{@collection.page + 1}", {trigger: true})
+    console.log(@collection.page + 1)
+    window.app.navigate("#{@collection.url(@collection.page + 1)}", {trigger: true})
 
   prevPage: (e) =>
     e.preventDefault()
-    window.app.navigate("/#{@collection.page - 1}", {trigger: true})
+    window.app.navigate("#{@collection.url(@collection.page - 1)}", {trigger: true})
 
   initialize: () =>
     if @collection

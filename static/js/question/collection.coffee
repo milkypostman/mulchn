@@ -7,12 +7,16 @@ class QuestionCollection extends Backbone.Collection
   # the type of reply (jsonp by default)
   dataType: 'jsonp',
 
+  base_url: "",
+
   # the URL (or base URL) for the service
-  url: =>
-    if @page
-      "v1/questions?page=#{@page}"
+  url: (page) =>
+    if page
+      "#{@base_url}/#{page}"
+    else if @page
+      "#{@base_url}/#{@page}"
     else
-      "v1/questions"
+      "#{@base_url}/"
       
 
   info: => {

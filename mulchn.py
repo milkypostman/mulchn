@@ -551,7 +551,6 @@ def logout():
 
 
 ### Pages
-
 @app.route("/new", defaults={'page':1})
 @app.route("/new/<int:page>")
 def new(page):
@@ -564,11 +563,15 @@ def new(page):
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
 
-    return render_taglist("questions.html",
-                  data=jsonify({'questions':questions_dict(q),
-                                'nextPage': page+1 if page < pages else None,
-                                'prevPage': page-1 if page > 1 else None,
-                                'numPages': pages}))
+    payload = {'questions':questions_dict(q),
+               'nextPage': page+1 if page < pages else None,
+               'prevPage': page-1 if page > 1 else None,
+               'numPages': pages}
+
+    if request.is_xhr:
+        return render_json(payload)
+
+    return render_taglist("questions.html", data=jsonify(payload))
 
 @app.route("/", defaults={'page':1})
 @app.route("/<int:page>")
@@ -581,12 +584,16 @@ def questions(page):
                            order_by = sa.sql.expression.desc(Question.modified))
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
+    payload = {'questions':questions_dict(q),
+               'nextPage': page+1 if page < pages else None,
+               'prevPage': page-1 if page > 1 else None,
+               'numPages': pages}
+
+    if request.is_xhr:
+        return render_json(payload)
 
     return render_taglist("questions.html",
-                  data=jsonify({'questions':questions_dict(q),
-                                'nextPage': page+1 if page < pages else None,
-                                'prevPage': page-1 if page > 1 else None,
-                                'numPages': pages}))
+                  data=jsonify(payload))
 
 @app.route("/t", defaults={'tag_name':None, 'page':1})
 @app.route("/t/<tag_name>", defaults={'page':1})
@@ -604,11 +611,16 @@ def tag(tag_name, page):
 
     pages = int(math.ceil(c/float(PAGINATION_NUM)))
 
+    payload = {'questions':questions_dict(q),
+               'nextPage': page+1 if page < pages else None,
+               'prevPage': page-1 if page > 1 else None,
+               'numPages': pages}
+
+    if request.is_xhr:
+        return render_json(payload)
+
     return render_taglist("questions.html",
-                  data=jsonify({'questions':questions_dict(q),
-                                'nextPage': page+1 if page < pages else None,
-                                'prevPage': page-1 if page > 1 else None,
-                                'numPages': pages}))
+                  data=jsonify(payload))
 
 
 @app.route("/add", methods=['GET', 'PUT', 'POST'])
