@@ -241,6 +241,9 @@ Router = (function(_super) {
   Router.prototype.root = function(page) {
     var questionCollection, questionList, questionPaginator;
     console.log("root");
+    if (page && !parseInt(page)) {
+      return;
+    }
     if (!page) {
       page = 1;
     } else {
@@ -315,6 +318,10 @@ Router = (function(_super) {
     var questionAdd;
     console.log("add");
     return questionAdd = new QuestionAdd();
+  };
+
+  Router.prototype.pass = function() {
+    return void 0;
   };
 
   return Router;

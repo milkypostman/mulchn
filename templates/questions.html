@@ -117,17 +117,12 @@
 
       </div>
     </div>
-    {# <%= currentPage %> #}
-    {# <%= totalPages %> #}
   </script>
 
 {% endblock content %}
 
 {% block js %}
   {{ super() }}
-  {% assets "js_app" %}
-    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
-  {% endassets %}
   {% assets "js_d3" %}
     <script type="text/javascript" src="{{ ASSET_URL }}"></script>
   {% endassets %}
