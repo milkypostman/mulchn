@@ -234,6 +234,8 @@ Router = (function(_super) {
     "q/:question_id": "question",
     "t/:tag_name": "tag",
     "t/:tag_name/:page": "tag",
+    "u/:username/unanswered": "user_unanswered",
+    "u/:username/unanswered/:page": "user_unanswered",
     "add": "add",
     "new/:page": "new",
     "new": "new",
@@ -266,6 +268,14 @@ Router = (function(_super) {
     } else {
       return questionCollection.fetch();
     }
+  };
+
+  Router.prototype.user_unanswered = function(username, page) {
+    document.title = "" + username + " unanswered : Mulchn";
+    if (page && !parseInt(page)) {
+      return;
+    }
+    return this.questionsList(page, "/u/" + username + "/unanswered");
   };
 
   Router.prototype.questions = function(page) {

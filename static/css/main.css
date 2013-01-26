@@ -279,31 +279,8 @@ a {
   color: #734a00;
   color: #733300;
 }
-.navbar-inner li.login a {
-  padding-bottom: 0;
-}
-.navbar-inner i.twitter-login {
-  height: 22px;
-  width: 150px;
-  display: inline-block;
-  background-image: url("/static/img/twitter_signin.png");
-}
-.navbar-inverse .navbar-inner {
-  background-color: #2b2b2b;
-  background-image: -moz-linear-gradient(top, #333333, #222222);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333333), to(#222222));
-  background-image: -webkit-linear-gradient(top, #333333, #222222);
-  background-image: -o-linear-gradient(top, #333333, #222222);
-  background-image: linear-gradient(to bottom, #333333, #222222);
-  background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff333333', endColorstr='#ff222222', GradientType=0);
-  border-color: #252525;
-}
 .container {
   max-width: 800px;
-}
-.navbar .brand {
-  color: #ff3319;
 }
 .icon {
   height: 14px;
@@ -701,9 +678,52 @@ circle.dot {
   margin-top: 2px;
   vertical-align: text-bottom;
 }
+.account-image {
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+}
+.navbar .brand {
+  color: #ff3319;
+}
+.navbar li.login a {
+  padding-bottom: 0;
+}
+.navbar i.twitter-login {
+  height: 22px;
+  width: 150px;
+  display: inline-block;
+  background-image: url("/static/img/twitter_signin.png");
+}
+.navbar-inverse .navbar {
+  background-color: #2b2b2b;
+  background-image: -moz-linear-gradient(top, #333333, #222222);
+  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333333), to(#222222));
+  background-image: -webkit-linear-gradient(top, #333333, #222222);
+  background-image: -o-linear-gradient(top, #333333, #222222);
+  background-image: linear-gradient(to bottom, #333333, #222222);
+  background-repeat: repeat-x;
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ff333333', endColorstr='#ff222222', GradientType=0);
+  border-color: #252525;
+}
 .navbar .nav-medium-screen,
 .navbar .nav-small-screen {
   display: none;
+}
+.navbar .btn {
+  height: 34px;
+  margin-top: 3px;
+}
+.navbar .account-image {
+  margin-top: 4px;
+  height: 32px;
+  width: 34px;
+  margin-left: 5px;
+  margin-right: 5px;
+  text-align: center;
+  overflow: hidden;
+  vertical-align: bottom;
+  box-sizing: border-box;
 }
 @media (max-width: 980px) {
   .navbar-fixed-top .navbar-inner {
