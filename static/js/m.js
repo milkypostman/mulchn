@@ -235,17 +235,14 @@ Router = (function(_super) {
     "t/:tag_name": "tag",
     "t/:tag_name/:page": "tag",
     "add": "add",
-    "new/:page": "questions",
-    "new": "questions",
+    "new/:page": "new",
+    "new": "new",
     ":page": "questions",
     "": "questions"
   };
 
-  Router.prototype.questions = function(page) {
+  Router.prototype.questionsList = function(page, base_url) {
     var questionCollection, questionList, questionPaginator;
-    if (page && !parseInt(page)) {
-      return;
-    }
     if (!page) {
       page = 1;
     } else {
@@ -253,6 +250,7 @@ Router = (function(_super) {
     }
     console.log("questions:" + page);
     questionCollection = new QuestionCollection();
+    questionCollection.base_url = base_url;
     questionList = new QuestionList({
       collection: questionCollection
     });
@@ -270,31 +268,24 @@ Router = (function(_super) {
     }
   };
 
+  Router.prototype.questions = function(page) {
+    document.title = "questions feed : Mulchn";
+    if (page && !parseInt(page)) {
+      return;
+    }
+    return this.questionsList(page, '');
+  };
+
   Router.prototype.tag = function(tag_name, page) {
-    var questionList, questionPaginator, tagCollection;
     console.log("tag: " + tag_name);
-    if (!page) {
-      page = 1;
-    } else {
-      page = parseInt(page);
-    }
-    tagCollection = new QuestionCollection();
-    tagCollection.base_url = "/t/" + tag_name;
-    questionList = new QuestionList({
-      collection: tagCollection
-    });
-    questionPaginator = new QuestionPaginator({
-      collection: tagCollection
-    });
-    tagCollection.page = page;
-    $("#content").html(questionList.el);
-    $("#content").append(questionPaginator.el);
-    if ($("#json_data").html()) {
-      tagCollection.reset(tagCollection.parse($.parseJSON($("#json_data").html())));
-      return $("#json_data").remove();
-    } else {
-      return tagCollection.fetch();
-    }
+    document.title = "" + tag_name + " : Mulchn";
+    return this.questionsList(page, "/t/" + tag_name);
+  };
+
+  Router.prototype["new"] = function(page) {
+    console.log("new: " + page);
+    document.title = "newest : Mulchn";
+    return this.questionsList(page, '/new');
   };
 
   Router.prototype.question = function(question_id) {
@@ -325,6 +316,7 @@ Router = (function(_super) {
   Router.prototype.add = function() {
     var questionAdd;
     console.log("add");
+    document.title = "create question : Mulchn";
     return questionAdd = new QuestionAdd();
   };
 
