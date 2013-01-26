@@ -796,6 +796,7 @@ def login_twitter_authenticated():
     else:
         account = twaccount.account
 
+    account.image_url = twitter_data['profile_image_url']
     twaccount.raw = jsonify(twitter_data)
 
     twaccount.oauth_token = oauth_token

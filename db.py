@@ -46,6 +46,7 @@ class Account(Base):
     username = Column(String(128))
     active = Column(Boolean, default=True)
     admin = Column(Boolean, default=False)
+    image_url = Column(String)
     following = relationship("Account",
                              secondary='account_follow',
                              primaryjoin=AccountFollow.follower_id==id,
