@@ -8,3 +8,5 @@ DATABASE_URL="postgres://localhost/mulchn"
 
 STATIC_FOLDER="static_src"
 STATIC_URL_PATH="/static"
+
+PAGINATION_NUM = 7
