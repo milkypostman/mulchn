@@ -320,10 +320,6 @@ Router = (function(_super) {
     return questionAdd = new QuestionAdd();
   };
 
-  Router.prototype.pass = function() {
-    return void 0;
-  };
-
   return Router;
 
 })(Backbone.Router);

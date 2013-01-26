@@ -11,9 +11,9 @@ class Router extends Backbone.Router
 
     console.log("root")
 
+    # if page is present but not an integer, ignore this page
     if page and not parseInt(page)
       return
-
   
     if not page
       page = 1
