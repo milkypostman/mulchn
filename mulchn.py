@@ -882,12 +882,14 @@ def test_twitter():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    extra_files = []
     if app.debug:
         db.engine.echo = True
         log.setLevel(logging.DEBUG)
+        extra_files.append('dev_config.py')
 
     log.info("starting up...")
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, extra_files=extra_files)
 
 
 
