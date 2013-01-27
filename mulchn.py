@@ -35,63 +35,69 @@ import urllib
 import urlparse
 import warnings
 
-
-
-app = Flask(__name__)
-app.config.from_object('config')
-app.config.from_envvar('MULCHN_CONFIG', silent=True)
-app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
-
-PAGINATION_NUM=app.config.get("PAGINATION_NUM", 5)
-
 log = create_logger("mulchn")
 
-assets = Environment(app)
 
-css_slicklist = Bundle('css/slicklist.less',
-                       filters="less",
-                       output="css/slicklist.css")
-assets.register('css_slicklist', css_slicklist)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object('config')
+    app.config.from_envvar('MULCHN_CONFIG', silent=True)
+    app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
+    app.config.setdefault('PAGINATION_NUM', 5)
 
-css_main = Bundle('css/main.less',
-                  filters="less",
-                  output="css/main.css")
-assets.register('css_main', css_main)
-
-js_app = Bundle('js/add.coffee',
-                'js/dialog.coffee',
-                'js/geolocation.coffee',
-                'js/logindialog.coffee',
-                'js/router.coffee',
-                'js/account.coffee',
-                'js/question/model.coffee',
-                'js/question/collection.coffee',
-                'js/question/view.coffee',
-                'js/question/list.coffee',
-                'js/question/paginator.coffee',
-                'js/main.coffee',
-                filters='coffeescript,rjsmin',
-                output='js/m.js')
-assets.register('js_app', js_app)
-
-js_frameworks = Bundle(
-    'js/lib/jquery.js',
-    'js/lib/lodash.js',
-    'js/lib/backbone.js',
-    'js/lib/bootstrap.js',
-    'js/lib/geolocation.js',
-    filters='rjsmin',
-    output='js/frameworks.js')
-assets.register('js_frameworks', js_frameworks)
+    db.configure_engine(os.environ.get("DATABASE_URL", app.config.get('DATABASE_URL')))
 
 
-js_d3 = Bundle(
-    'js/lib/topojson.js',
-    'js/lib/d3.js',
-    # filters='rjsmin',
-    output='js/d3.topojson.js')
-assets.register('js_d3', js_d3)
 
+    assets = Environment(app)
+
+    css_slicklist = Bundle('css/slicklist.less',
+                           filters="less",
+                           output="css/slicklist.css")
+    assets.register('css_slicklist', css_slicklist)
+
+    css_main = Bundle('css/main.less',
+                      filters="less",
+                      output="css/main.css")
+    assets.register('css_main', css_main)
+
+    js_app = Bundle('js/add.coffee',
+                    'js/dialog.coffee',
+                    'js/geolocation.coffee',
+                    'js/logindialog.coffee',
+                    'js/router.coffee',
+                    'js/account.coffee',
+                    'js/question/model.coffee',
+                    'js/question/collection.coffee',
+                    'js/question/view.coffee',
+                    'js/question/list.coffee',
+                    'js/question/paginator.coffee',
+                    'js/main.coffee',
+                    filters='coffeescript,rjsmin',
+                    output='js/m.js')
+    assets.register('js_app', js_app)
+
+    js_frameworks = Bundle(
+        'js/lib/jquery.js',
+        'js/lib/lodash.js',
+        'js/lib/backbone.js',
+        'js/lib/bootstrap.js',
+        'js/lib/geolocation.js',
+        filters='rjsmin',
+        output='js/frameworks.js')
+    assets.register('js_frameworks', js_frameworks)
+
+
+    js_d3 = Bundle(
+        'js/lib/topojson.js',
+        'js/lib/d3.js',
+        # filters='rjsmin',
+        output='js/d3.topojson.js')
+    assets.register('js_d3', js_d3)
+
+    return app
+
+app = create_app()
 
 
 ### Forms

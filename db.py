@@ -8,13 +8,18 @@ import flask
 import os
 import re
 
-config = flask.Config("")
-config.from_object('config')
-config.from_envvar('MULCHN_CONFIG', silent=True)
 
-database_url = os.environ.get("DATABASE_URL", config.get('DATABASE_URL'))
-engine = sa.create_engine(database_url)
-session = sa.orm.scoped_session(sa.orm.sessionmaker(bind=engine))
+engine = None
+sessionmaker = sa.orm.sessionmaker()
+session = sa.orm.scoped_session(sessionmaker)
+
+def configure_engine(url):
+    global sessionmaker, engine, session
+
+    engine = sa.create_engine(url)
+    session.remove()
+    sessionmaker.configure(bind=engine)
+
 
 class _Base(object):
     @declared_attr
