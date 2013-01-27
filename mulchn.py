@@ -528,11 +528,13 @@ def new(page):
 
     c = questions.count()
 
-    limit=PAGINATION_NUM
-    offset=(page-1)*PAGINATION_NUM
+    pagination = app.config['PAGINATION_NUM']
+
+    limit=pagination
+    offset=(page-1)*pagination
     q = questions.limit(limit).offset(offset)
 
-    pages = int(math.ceil(c/float(PAGINATION_NUM)))
+    pages = int(math.ceil(c/float(pagination)))
 
     payload = {'questions':questions_dict(q),
                'nextPage': page+1 if page < pages else None,
@@ -563,11 +565,13 @@ def user_unanswered(username, page):
 
     c = questions.count()
 
-    limit=PAGINATION_NUM
-    offset=(page-1)*PAGINATION_NUM
+    pagination = app.config['PAGINATION_NUM']
+
+    limit=pagination
+    offset=(page-1)*pagination
     q = questions.limit(limit).offset(offset)
 
-    pages = int(math.ceil(c/float(PAGINATION_NUM)))
+    pages = int(math.ceil(c/float(pagination)))
 
     payload = {'questions':questions_dict(q),
                'nextPage': page+1 if page < pages else None,
@@ -590,12 +594,13 @@ def questions(page):
         .order_by(sa.sql.expression.desc(Question.modified))
 
     c = questions.count()
+    pagination = app.config['PAGINATION_NUM']
 
-    limit=PAGINATION_NUM
-    offset=(page-1)*PAGINATION_NUM
+    limit=pagination
+    offset=(page-1)*pagination
     q = questions.limit(limit).offset(offset)
 
-    pages = int(math.ceil(c/float(PAGINATION_NUM)))
+    pages = int(math.ceil(c/float(pagination)))
 
     payload = {'questions':questions_dict(q),
                'nextPage': page+1 if page < pages else None,
@@ -624,14 +629,16 @@ def tag(tag_name, page):
                 Question.private==False) \
                 .order_by(sa.sql.expression.desc(Question.added))
 
+    pagination = app.config['PAGINATION_NUM']
+
     c = questions.count()
-    limit=PAGINATION_NUM
-    offset=(page-1)*PAGINATION_NUM
+    limit=pagination
+    offset=(page-1)*pagination
     q = questions.limit(limit).offset(offset)
 
     if not q: abort(404)
 
-    pages = int(math.ceil(c/float(PAGINATION_NUM)))
+    pages = int(math.ceil(c/float(pagination)))
 
     payload = {'questions':questions_dict(q),
                'nextPage': page+1 if page < pages else None,
