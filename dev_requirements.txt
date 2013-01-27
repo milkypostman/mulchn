@@ -1,4 +1,5 @@
 Flask
+fixture
 flask-script
 Flask-Assets
 Flask-WTF
