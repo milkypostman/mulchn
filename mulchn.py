@@ -825,12 +825,12 @@ def login_twitter_authenticated():
         db.session.add(account)
 
         twaccount = Twitter()
-        twaccount.screen_name = account.username = twitter_data['screen_name']
         twaccount.id = twitter_data['id']
         twaccount.account = account
     else:
         account = twaccount.account
 
+    twaccount.screen_name = account.username = twitter_data['screen_name']
     account.image_url = twitter_data['profile_image_url']
     twaccount.raw = jsonify(twitter_data)
 
