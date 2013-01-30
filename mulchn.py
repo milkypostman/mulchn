@@ -45,7 +45,7 @@ def create_app():
     app.config['ASSETS_UGLIFYJS_EXTRA_ARGS'] = '-m'
     app.config.setdefault('PAGINATION_NUM', 5)
 
-    db.configure_engine(os.environ.get("DATABASE_URL", app.config.get('DATABASE_URL')))
+    # db.configure_engine(os.environ.get("DATABASE_URL", app.config.get('DATABASE_URL')))
 
 
 

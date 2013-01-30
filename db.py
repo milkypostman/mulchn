@@ -4,9 +4,9 @@ from sqlalchemy.orm import relationship, backref, deferred
 from sqlalchemy.ext.associationproxy import association_proxy
 
 import sqlalchemy as sa
-import flask
 import os
 import re
+from flask import Config
 
 
 engine = None
@@ -20,6 +20,10 @@ def configure_engine(url):
     session.remove()
     sessionmaker.configure(bind=engine)
 
+_config = Config('')
+_config.from_object('config')
+_config.from_envvar('MULCHN_CONFIG', silent=True)
+configure_engine(os.environ.get("DATABASE_URL", _config['DATABASE_URL']))
 
 class _Base(object):
     @declared_attr
