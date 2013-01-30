@@ -23,7 +23,7 @@ def configure_engine(url):
 _config = Config('')
 _config.from_object('config')
 _config.from_envvar('MULCHN_CONFIG', silent=True)
-configure_engine(os.environ.get("DATABASE_URL", _config['DATABASE_URL']))
+configure_engine(os.environ.get("DATABASE_URL", _config.get('DATABASE_URL')))
 
 class _Base(object):
     @declared_attr
