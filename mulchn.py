@@ -26,7 +26,8 @@ import flask
 import logging
 import math
 import oauth2 as oauth
-import os, os.path
+import os
+import os.path
 import sqlalchemy as sa
 import subprocess
 import time
@@ -47,10 +48,7 @@ def create_app():
 
     # db.configure_engine(os.environ.get("DATABASE_URL", app.config.get('DATABASE_URL')))
 
-
-
     assets = Environment(app)
-
     css_slicklist = Bundle('css/slicklist.less',
                            filters="less",
                            output="css/slicklist.css")
@@ -87,7 +85,6 @@ def create_app():
         output='js/frameworks.js')
     assets.register('js_frameworks', js_frameworks)
 
-
     js_d3 = Bundle(
         'js/lib/topojson.js',
         'js/lib/d3.js',
@@ -110,7 +107,6 @@ def TagLength(max=32, message=None):
         if any(len(val) > max for val in field.data):
             raise wtf.ValidationError(message)
 
-
     return tag_length
 
 
@@ -130,6 +126,7 @@ class TagListField(wtf.Field):
 
 strip_filter = lambda s: s.strip() if s else None
 
+
 class AddForm(wtf.Form):
     """Add Question Form"""
     tags = TagListField("Tags (comma separated: music, beatles, ...)",
@@ -147,15 +144,12 @@ class AddForm(wtf.Form):
                             max_entries=5)
 
 
-
-
-
 ### Request Setup
-
 @app.before_request
 def remove_trailing_slash():
     if request.path != '/' and request.path.endswith('/'):
         return redirect(request.path[:-1])
+
 
 @app.context_processor
 def inject_static_url():
@@ -168,7 +162,7 @@ def inject_static_url():
 @app.context_processor
 def inject_account():
     try:
-        return dict(account = g.account)
+        return dict(account=g.account)
     except AttributeError:
         return dict()
 
@@ -184,18 +178,21 @@ def close_sqlalchemy(exception):
 def start_timer():
     g.starttime = time.time()
 
+
 @app.after_request
 def report_load_time(response):
     if hasattr(g, 'starttime'):
         log.info("load time: %s", time.time() - g.starttime)
     return response
 
+
 @app.before_request
 def find_account():
     """
     Load account information into the global app context if exists in the database.
     """
-    if 'account_id' not in session: return
+    if 'account_id' not in session:
+        return
 
     account = Account.query.filter_by(id=session['account_id']).first()
     if account is None:
@@ -204,9 +201,7 @@ def find_account():
         g.account = account
 
 
-
 ### Response Functions
-
 def json_handler(obj):
     """
     special JSON handler
@@ -221,9 +216,10 @@ def json_handler(obj):
         return obj.isoformat()
     if isinstance(obj, ObjectId):
         return unicode(obj)
-    raise TypeError, \
+
+    raise TypeError(
         'Object of type {0} with value {0} is not JSON serializable'.format(
-        type(obj), repr(obj))
+        type(obj), repr(obj)))
 
 
 def jsonify(data, indent=None):
@@ -231,6 +227,7 @@ def jsonify(data, indent=None):
     jsonfiy `data`
     """
     return json.dumps(data, default=json_handler, indent=indent)
+
 
 def render_json(data):
     indent = None if request.is_xhr else 2
@@ -254,17 +251,15 @@ def render(template, **kwargs):
     return render_template(template, **kwargs)
 
 
-
 #### Error Handlers
-
-def page_not_found(errors = []):
+def page_not_found(errors=[]):
     if not errors:
         errors = [{'message': "Page not found."}]
 
     return render_json({'errors': errors}), 401
 
 
-def access_denied(errors = []):
+def access_denied(errors=[]):
     """
     Generate a 401 JSON response for key 'errors' from kwargs.
 
@@ -277,9 +272,7 @@ def access_denied(errors = []):
     return render_json({'errors': errors}), 401
 
 
-
 ### Helper Functions
-
 def errors_dict(fields):
     """
     Generate dictionary of errors for a set of form fields.
@@ -292,7 +285,8 @@ def errors_dict(fields):
 
     errors = {}
     for field in fields:
-        if field.type == "CSRFTokenField": continue
+        if field.type == "CSRFTokenField":
+            continue
 
         if field.type == "FieldList":
             errors.update(errors_dict(field))
@@ -300,6 +294,7 @@ def errors_dict(fields):
             errors[field.id] = field.errors
 
     return errors
+
 
 def clean_old_votes(questionId):
     """Clean up extra votes on the question `questionId` for the
@@ -313,8 +308,8 @@ def clean_old_votes(questionId):
     """
 
     old_vote = Vote.query.join(Answer).filter(
-        Vote.account_id==g.account.id,
-        Answer.question_id==questionId).first()
+        Vote.account_id == g.account.id,
+        Answer.question_id == questionId).first()
 
     if old_vote is not None:
         log.info("remove old vote: answer.id=%s, question.id=%s, account.id=%s",
@@ -323,7 +318,6 @@ def clean_old_votes(questionId):
         db.session.delete(old_vote)
         return True
     return False
-
 
 
 def question_vote_locations(question):
@@ -350,15 +344,16 @@ def question_vote_locations(question):
     return locations
 
 
-
 ANSWER_KEYS = ['text', 'id']
+
+
 def answer_dict(answer, vote):
-    ret = {key:getattr(answer, key) for key in ANSWER_KEYS}
+    ret = {key: getattr(answer, key) for key in ANSWER_KEYS}
 
     if hasattr(g, 'account'):
         ret['votes'] = len(answer.votes)
         log.debug("followee votes lookup")
-        followers = {f.id:f.username for f in g.account.following}
+        followers = {f.id: f.username for f in g.account.following}
 
         ret['followees'] = [{'id': v.answer_id,
                              'username': followers[v.account_id]}
@@ -369,8 +364,9 @@ def answer_dict(answer, vote):
     return ret
 
 
-
 QUESTION_KEYS = ['text', 'id', 'added']
+
+
 def question_dict(question, votes):
     """
     Arguments:
@@ -378,11 +374,11 @@ def question_dict(question, votes):
     - `votes`: dictionary mapping question._id to answer._id for all
     questions the account has made.
     """
-    if question is None: return None
+    if question is None:
+        return None
 
-    ret = {key:getattr(question, key) for key in QUESTION_KEYS}
+    ret = {key: getattr(question, key) for key in QUESTION_KEYS}
     ret['tags'] = question.tag_list.copy()
-
 
     if question.id in votes:
         ret['vote'] = votes[question.id]
@@ -401,7 +397,7 @@ def question_id_dict(question_id):
     votes = {}
     if hasattr(g, 'account'):
         log.debug("account votes lookup")
-        votes = {v.answer.question_id:v.answer.id for v in g.account.votes}
+        votes = {v.answer.question_id: v.answer.id for v in g.account.votes}
 
     q = Question.query.filter_by(active=True, id=question_id).first()
 
@@ -414,8 +410,7 @@ def questions_dict(questions):
     if hasattr(g, 'account'):
         log.debug("account votes lookup")
         ## FIXME: when a limited subset, only look at those questions
-        votes = {v.answer.question_id:v.answer.id for v in g.account.votes}
-
+        votes = {v.answer.question_id: v.answer.id for v in g.account.votes}
 
     return [question_dict(q, votes) for q in questions]
 
@@ -431,9 +426,7 @@ def tag_rank_query():
     return tags
 
 
-
 ### Decorators
-
 def login_required(f):
     """ decorator to check for valid login
 
@@ -452,11 +445,8 @@ def login_required(f):
     return wrapper
 
 
-
-
 ### API Functions
-
-@app.route("/vote", methods=['POST','PUT'])
+@app.route("/vote", methods=['POST', 'PUT'])
 @login_required
 def vote():
     """
@@ -473,7 +463,7 @@ def vote():
     question_id = data['id']
 
     log.info("answer lookup: id=%s, question.id=%s", data['vote'], question_id)
-    answer = Answer.query.filter(Answer.question_id==question_id,
+    answer = Answer.query.filter(Answer.question_id == question_id,
                                  Answer.id == data['vote']).first()
 
     if answer is None:
@@ -497,8 +487,8 @@ def vote():
     db.session.commit()
 
     log.debug("populate return data")
-    ret = question_dict(Question.query.filter(Question.id==question_id).first(),
-                        {question_id:vote.answer_id})
+    ret = question_dict(Question.query.filter(Question.id == question_id).first(),
+                        {question_id: vote.answer_id})
 
     log.info("commit vote record(s)")
     commit()
@@ -507,11 +497,11 @@ def vote():
     return render_json(ret)
 
 
-
 ### Login / Logout
 @app.route("/login")
 def login():
     return render("login.html")
+
 
 @app.route("/logout")
 def logout():
@@ -520,14 +510,14 @@ def logout():
     return redirect(url_for("questions"))
 
 
-
 ### Pages
-@app.route("/new", defaults={'page':1})
+@app.route("/new", defaults={'page': 1})
 @app.route("/new/<int:page>")
 def new(page):
     log.debug("new questions page: %d", page)
 
-    if page < 1: abort(404)
+    if page < 1:
+        abort(404)
 
     questions = Question.query.filter_by(active=True, private=False) \
         .order_by(sa.sql.expression.desc(Question.added))
@@ -536,15 +526,15 @@ def new(page):
 
     pagination = app.config['PAGINATION_NUM']
 
-    limit=pagination
-    offset=(page-1)*pagination
+    limit = pagination
+    offset = (page - 1) * pagination
     q = questions.limit(limit).offset(offset)
 
-    pages = int(math.ceil(c/float(pagination)))
+    pages = int(math.ceil(c / float(pagination)))
 
-    payload = {'questions':questions_dict(q),
-               'nextPage': page+1 if page < pages else None,
-               'prevPage': page-1 if page > 1 else None,
+    payload = {'questions': questions_dict(q),
+               'nextPage': page + 1 if page < pages else None,
+               'prevPage': page - 1 if page > 1 else None,
                'numPages': pages}
 
     if request.is_xhr:
@@ -552,18 +542,21 @@ def new(page):
 
     return render_taglist("questions.html", data=jsonify(payload))
 
-@app.route("/u/<string:username>/unanswered", defaults={'page':1})
+
+@app.route("/u/<string:username>/unanswered", defaults={'page': 1})
 @app.route("/u/<string:username>/unanswered/<int:page>")
 def user_unanswered(username, page):
     log.debug("%s unanswered page: %d", username, page)
 
-    if page < 1: abort(404)
+    if page < 1:
+        abort(404)
 
     answered = db.session.query(Question.id) \
         .join(Answer, Vote, Account) \
         .filter(Account.username == username)
 
-    if not answered: abort(404)
+    if not answered:
+        abort(404)
 
     questions = Question.query.filter_by(active=True, private=False) \
         .filter(sa.func.not_(Question.id.in_(answered))) \
@@ -573,15 +566,15 @@ def user_unanswered(username, page):
 
     pagination = app.config['PAGINATION_NUM']
 
-    limit=pagination
-    offset=(page-1)*pagination
+    limit = pagination
+    offset = (page - 1) * pagination
     q = questions.limit(limit).offset(offset)
 
-    pages = int(math.ceil(c/float(pagination)))
+    pages = int(math.ceil(c / float(pagination)))
 
-    payload = {'questions':questions_dict(q),
-               'nextPage': page+1 if page < pages else None,
-               'prevPage': page-1 if page > 1 else None,
+    payload = {'questions': questions_dict(q),
+               'nextPage': page + 1 if page < pages else None,
+               'prevPage': page - 1 if page > 1 else None,
                'numPages': pages}
 
     if request.is_xhr:
@@ -589,12 +582,14 @@ def user_unanswered(username, page):
 
     return render_taglist("questions.html", data=jsonify(payload))
 
-@app.route("/", defaults={'page':1})
+
+@app.route("/", defaults={'page': 1})
 @app.route("/<int:page>")
 def questions(page):
     log.debug("questions page: %d", page)
 
-    if page < 1: abort(404)
+    if page < 1:
+        abort(404)
 
     questions = Question.query.filter_by(active=True, private=False) \
         .order_by(sa.sql.expression.desc(Question.modified))
@@ -602,15 +597,15 @@ def questions(page):
     c = questions.count()
     pagination = app.config['PAGINATION_NUM']
 
-    limit=pagination
-    offset=(page-1)*pagination
+    limit = pagination
+    offset = (page - 1) * pagination
     q = questions.limit(limit).offset(offset)
 
-    pages = int(math.ceil(c/float(pagination)))
+    pages = int(math.ceil(c / float(pagination)))
 
-    payload = {'questions':questions_dict(q),
-               'nextPage': page+1 if page < pages else None,
-               'prevPage': page-1 if page > 1 else None,
+    payload = {'questions': questions_dict(q),
+               'nextPage': page + 1 if page < pages else None,
+               'prevPage': page - 1 if page > 1 else None,
                'numPages': pages}
 
     if request.is_xhr:
@@ -619,8 +614,9 @@ def questions(page):
     return render_taglist("questions.html",
                   data=jsonify(payload))
 
-@app.route("/t", defaults={'tag_name':None, 'page':1})
-@app.route("/t/<tag_name>", defaults={'page':1})
+
+@app.route("/t", defaults={'tag_name': None, 'page': 1})
+@app.route("/t/<tag_name>", defaults={'page': 1})
 @app.route("/t/<tag_name>/<int:page>")
 def tag(tag_name, page):
     if tag_name is None:
@@ -630,25 +626,26 @@ def tag(tag_name, page):
                                for tag, count in tag_rank_query()])
 
     questions = Question.query.join((Question.tags, Tag)) \
-        .filter(Tag.name==tag_name,
-                Question.active==True,
-                Question.private==False) \
+        .filter(Tag.name == tag_name,
+                Question.active == True,
+                Question.private == False) \
                 .order_by(sa.sql.expression.desc(Question.added))
 
     pagination = app.config['PAGINATION_NUM']
 
     c = questions.count()
-    limit=pagination
-    offset=(page-1)*pagination
+    limit = pagination
+    offset = (page - 1) * pagination
     q = questions.limit(limit).offset(offset)
 
-    if not q: abort(404)
+    if not q:
+        abort(404)
 
-    pages = int(math.ceil(c/float(pagination)))
+    pages = int(math.ceil(c / float(pagination)))
 
-    payload = {'questions':questions_dict(q),
-               'nextPage': page+1 if page < pages else None,
-               'prevPage': page-1 if page > 1 else None,
+    payload = {'questions': questions_dict(q),
+               'nextPage': page + 1 if page < pages else None,
+               'prevPage': page - 1 if page > 1 else None,
                'numPages': pages}
 
     if request.is_xhr:
@@ -728,7 +725,6 @@ def question(question_id):
         else:
             return access_denied()
 
-
     q = question_id_dict(question_id)
     if q is None:
         abort(404)
@@ -736,9 +732,7 @@ def question(question_id):
     return render_taglist("questions.html", data=jsonify(q))
 
 
-
 ### Twitter MumboJumbo
-
 @app.route("/login/twitter")
 def login_twitter():
     # initialize untokenized client
@@ -752,16 +746,13 @@ def login_twitter():
     # request a temporary request token
     resp, content = client.request(app.config['TWITTER_REQUEST_TOKEN_URL'],
                                    "POST",
-                                   body=urllib.urlencode({'oauth_callback':callback}))
+                                   body=urllib.urlencode({'oauth_callback': callback}))
     if resp['status'] != '200':
         abort(404)
-
 
     # get temporary oauth secret token
     request_token = dict(urlparse.parse_qsl(content))
     session['twitter_request_token_secret'] = request_token['oauth_token_secret']
-
-
 
     # redirect to Twitter login page
     return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHENTICATE_URL"],
@@ -786,6 +777,7 @@ def commit():
 
     return True
 
+
 @app.route("/login/twitter/authenticated")
 def login_twitter_authenticated():
 
@@ -795,7 +787,6 @@ def login_twitter_authenticated():
                         session['twitter_request_token_secret'])
 
     token.set_verifier(request.args['oauth_verifier'])
-
 
     # request an access token
     consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
@@ -809,7 +800,6 @@ def login_twitter_authenticated():
         flash("Failed to login!", 'error')
         return redirect(url_for("questions"))
 
-
     # data contains our final token and secret for the account
     data = dict(urlparse.parse_qsl(content))
 
@@ -819,14 +809,13 @@ def login_twitter_authenticated():
     api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
                       consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
                       access_token_key=oauth_token,
-                      access_token_secret =oauth_token_secret)
+                      access_token_secret=oauth_token_secret)
 
     try:
         twitter_data = api.VerifyCredentials().AsDict()
     except twitter.TwitterError:
         flash("Cannot validate Twitter credentials.", 'error')
         return redirect(url_for("questions"))
-
 
     # print twitter_data
 
@@ -851,8 +840,6 @@ def login_twitter_authenticated():
     twaccount.oauth_token_secret = oauth_token_secret
     db.session.add(twaccount)
 
-
-
     # try to add friends
     try:
         friendIDs = []
@@ -871,17 +858,13 @@ def login_twitter_authenticated():
         account.following = [f.account for f in twaccount.following]
         log.debug("following: %s", [a.username for a in account.following])
 
-
     except twitter.TwitterError:
         pass
-
-
 
     log.info("commiting twitter login info: account.id=%s", account.id)
     if not commit():
         flash("Error while logging in.", 'error')
         return redirect(url_for("questions"))
-
 
     session['account_id'] = twaccount.account_id
 
@@ -892,8 +875,6 @@ def login_twitter_authenticated():
     return redirect(url_for("questions"))
 
 
-
-
 @app.route("/test/twitter")
 @login_required
 def test_twitter():
@@ -901,8 +882,8 @@ def test_twitter():
 
     api = twitter.Api(consumer_key=app.config['TWITTER_CONSUMER_KEY'],
                       consumer_secret=app.config['TWITTER_CONSUMER_SECRET'],
-                      access_token_key = access_token['oauth_token'],
-                      access_token_secret = access_token['oauth_token_secret'])
+                      access_token_key=access_token['oauth_token'],
+                      access_token_secret=access_token['oauth_token_secret'])
     try:
         return render(u"raw.html",
                       title=u"Twitter Data",
@@ -911,9 +892,6 @@ def test_twitter():
                 ) + u"</ul>")
     except twitter.TwitterError:
         return str("TwitterError")
-
-
-
 
 
 if __name__ == '__main__':
@@ -926,6 +904,3 @@ if __name__ == '__main__':
 
     log.info("starting up...")
     app.run(host="0.0.0.0", port=port, extra_files=extra_files)
-
-
-

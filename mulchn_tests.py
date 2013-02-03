@@ -8,6 +8,7 @@ import tempfile
 import unittest
 import db
 
+
 class MulchnTestCase(unittest.TestCase):
     def setUp(self):
         mulchn.app.config['TESTING'] = True
@@ -23,8 +24,6 @@ class MulchnTestCase(unittest.TestCase):
         db.Base.metadata.create_all(bind=db.engine)
 
 
-
-
 class MulchnEmptyTestCase(MulchnTestCase):
     def test_redirect(self):
         resp = self.app.post('/add', data={})
@@ -36,7 +35,6 @@ class MulchnEmptyTestCase(MulchnTestCase):
         resp = self.app.get("/")
         assert "/login" in resp.data
 
-
     def test_empty_db(self):
         resp = self.app.get('/', headers=[('X-Requested-With', 'XMLHttpRequest')])
         data = json.loads(resp.data)
@@ -44,7 +42,6 @@ class MulchnEmptyTestCase(MulchnTestCase):
         assert data['nextPage'] == None
         assert data['prevPage'] == None
         assert data['numPages'] == 0
-
 
 
 class MulchnUserTestCase(MulchnTestCase):
@@ -64,7 +61,6 @@ class MulchnUserTestCase(MulchnTestCase):
         cls.normal_id = db.Account.query.filter_by(username='normal').one().id
         cls.admin_id = db.Account.query.filter_by(username='admin').one().id
 
-
     def test_nil(self):
         pass
 
@@ -76,15 +72,14 @@ class MulchnUserTestCase(MulchnTestCase):
         assert resp.status_code == 200
         assert 'form' in resp.data
 
-
     def test_add_error(self):
         with self.app.session_transaction() as session:
             session['account_id'] = self.normal_id
 
         resp = self.app.post('/add', data={
-            "tags":"tag1, tag2",
-            "question":"Question 1",
-            "answers-1":"Question 1 Answer 1",
+            "tags": "tag1, tag2",
+            "question": "Question 1",
+            "answers-1": "Question 1 Answer 1",
             })
         assert resp.status_code == 200
         assert "field is required" in resp.data
@@ -94,10 +89,10 @@ class MulchnUserTestCase(MulchnTestCase):
             session['account_id'] = self.normal_id
 
         resp = self.app.post('/add', data={
-            "tags":"tag1, tag2",
-            "question":"Question 1",
-            "answers-1":"Question 1 Answer 1",
-            "answers-2":"Question 1 Answer 2",
+            "tags": "tag1, tag2",
+            "question": "Question 1",
+            "answers-1": "Question 1 Answer 1",
+            "answers-2": "Question 1 Answer 2",
             })
 
         # after successfully adding we should get a redirect
@@ -116,7 +111,6 @@ class MulchnUserTestCase(MulchnTestCase):
 
         assert answers[0].text == "Question 1 Answer 1"
         assert answers[1].text == "Question 1 Answer 2"
-
 
     def test_user_logged_in(self):
         with self.app.session_transaction() as sess:
@@ -142,9 +136,6 @@ class MulchnManyTestCase(MulchnUserTestCase):
         print "MulchnManyTestCase"
 
         # FIXME: add a bunch of randomly generated questions here
-
-
-
 
 
 if __name__ == '__main__':
