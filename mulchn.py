@@ -438,7 +438,7 @@ def login_required(f):
         if not hasattr(g, 'account'):
             if request.is_xhr:
                 return access_denied()
-            session['url_after_login'] = f.__name__
+            session['url_after_login'] = url_for(f.__name__)
             return redirect(url_for('login'))
         return f(*args, **kwargs)
 
@@ -500,6 +500,8 @@ def vote():
 ### Login / Logout
 @app.route("/login")
 def login():
+    if hasattr(g, 'account'):
+        return redirect(url_for("questions"))
     return render("login.html")
 
 
@@ -507,6 +509,7 @@ def login():
 def logout():
     if session.pop('account_id', None) is not None and hasattr(g, 'account'):
         flash("{0} has been logged out.".format(g.account.username), 'warn')
+    return redirect(request.referrer)
     return redirect(url_for("questions"))
 
 
@@ -735,6 +738,11 @@ def question(question_id):
 ### Twitter MumboJumbo
 @app.route("/login/twitter")
 def login_twitter():
+    if 'next' in request.args:
+        session['url_after_login'] = request.args['next']
+    else:
+        session['url_after_login'] = request.referrer
+
     # initialize untokenized client
     consumer = oauth.Consumer(app.config['TWITTER_CONSUMER_KEY'],
                               app.config['TWITTER_CONSUMER_SECRET'])
@@ -753,6 +761,7 @@ def login_twitter():
     # get temporary oauth secret token
     request_token = dict(urlparse.parse_qsl(content))
     session['twitter_request_token_secret'] = request_token['oauth_token_secret']
+
 
     # redirect to Twitter login page
     return redirect("{0}?oauth_token={1}".format(app.config["TWITTER_AUTHENTICATE_URL"],
@@ -870,7 +879,7 @@ def login_twitter_authenticated():
 
     flash("Logged in as {0}.".format(account.username), 'success')
     if 'url_after_login' in session:
-        return redirect(url_for(session.pop('url_after_login')))
+        return redirect(session.pop('url_after_login'))
 
     return redirect(url_for("questions"))
 
