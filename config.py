@@ -1,8 +1,10 @@
 ## config.py --- Mulchn Configuration
 
-MONGODB_URL = "mongodb://localhost/mulchn"
+import os
 
-SECRET_KEY='\xfd\x0f;\x17\xf3\xaf\xa7:,3\x87j\xab\x0f\xa2\x0f\xba\x0c\xf1b\x9d\xe1\x1b\xd0'
+SECRET_KEY=os.environ.get('SECRET_KEY', '')
+
+DATABASE_URL="postgres://localhost/mulchn"
 
 CSRF_ENABLED = True
 
@@ -10,9 +12,7 @@ TWITTER_REQUEST_TOKEN_URL = 'https://api.twitter.com/oauth/request_token'
 TWITTER_AUTHORIZE_URL = 'https://api.twitter.com/oauth/authorize'
 TWITTER_AUTHENTICATE_URL = 'https://api.twitter.com/oauth/authenticate'
 TWITTER_ACCESS_TOKEN_URL = 'https://api.twitter.com/oauth/access_token'
-TWITTER_CONSUMER_KEY = 'vpYayPLKb1jeTb90KO14pQ'
-TWITTER_CONSUMER_SECRET = 'hnJRDSzY1JGCdfmvUxoaEsjdTw8vLDOasAuQkZi1J4'
+TWITTER_CONSUMER_KEY = os.environ.get('TWITTER_CONSUMER_KEY', '')
+TWITTER_CONSUMER_SECRET = os.environ.get('TWITTER_CONSUMER_SECRET', '')
 
 PAGINATION_NUM = 256
-
-
