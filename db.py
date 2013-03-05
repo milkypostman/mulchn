@@ -23,7 +23,7 @@ def configure_engine(url):
 _config = Config('')
 _config.from_object('config')
 _config.from_envvar('MULCHN_CONFIG', silent=True)
-configure_engine(os.environ.get("DATABASE_URL", _config.get('DATABASE_URL')))
+configure_engine(_config.get('DATABASE_URL'))
 
 class _Base(object):
     @declared_attr
@@ -273,16 +273,3 @@ class Answer(Base):
         - `answers`: answer text string
         """
         if text is not None: self.text = text
-
-
-
-
-
-
-
-
-
-
-
-
-
