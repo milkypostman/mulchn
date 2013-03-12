@@ -1,0 +1,5 @@
+#!/bin/bash
+
+source /home/mulchn/.virtualenv/default/bin/activate
+
+/home/mulchn/.virtualenv/default/bin/supervisord -c /home/mulchn/mulchn/supervisord.conf
