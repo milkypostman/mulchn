@@ -2,3 +2,5 @@
 *.DS_Store
 /static/.webassets-cache
 /dumps
+/log
+/supervisord.pid
