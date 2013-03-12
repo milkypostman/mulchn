@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from bson.objectid import ObjectId, InvalidId
 from datetime import datetime
 from db import Account, Twitter, Vote, VoteHistory, Tag, Question, Answer, AccountFollow
 from flask import Flask
